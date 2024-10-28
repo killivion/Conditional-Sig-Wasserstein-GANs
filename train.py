@@ -94,20 +94,25 @@ def get_dataset_configuration(dataset):
         generator = (('lag={}'.format(lag), dict(lag=lag)) for lag in [3])
     elif dataset == 'SINE':
         generator = [('a', dict())]
+    elif dataset == 'Blackscholes': #needs adjustment
+        generator = (('mu={}_sigma={}'.format(mu, sigma), dict(params=dict(mu=mu, sigma=sigma))) for mu, sigma in [(0.05, 0.2)]
+        )
     else:
         raise Exception('%s not a valid data type.' % dataset)
     return generator
 
 
 def main(args):
+    """
     if not pt.exists('./data'):
         os.mkdir('./data')
     if not pt.exists('./data/oxfordmanrealizedvolatilityindices.csv'):
         print('Downloading Oxford MAN AHL realised library...')
         download_man_ahl_dataset()
-    #if not pt.exists('./data/mitdb'):
-    #    print('Downloading MIT-ECG database...')
-    #    download_mit_ecg_dataset()
+    if not pt.exists('./data/mitdb'):
+        print('Downloading MIT-ECG database...')
+        download_mit_ecg_dataset()
+    """
 
     print('Start of training. CUDA: %s' % args.use_cuda)
     for dataset in args.datasets:
@@ -147,7 +152,7 @@ if __name__ == '__main__':
     parser.add_argument('-num_seeds', default=1, type=int)
     parser.add_argument('-initial_seed', default=0, type=int)
     #parser.add_argument('-datasets', default=['ARCH', 'STOCKS', 'ECG', 'VAR', ], nargs="+")
-    parser.add_argument('-datasets', default=['STOCKS', 'ARCH', 'VAR', ], nargs="+")
+    parser.add_argument('-datasets', default=['Blackscholes', 'ARCH', 'VAR'], nargs="+")
     parser.add_argument('-algos', default=['SigCWGAN', 'GMMN', 'RCGAN', 'TimeGAN', 'RCWGAN', 'CWGAN',], nargs="+")
 
 

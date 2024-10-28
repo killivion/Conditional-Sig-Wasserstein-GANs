@@ -1,4 +1,3 @@
-name: siglib
 channels:
   - pytorch
   - conda-forge

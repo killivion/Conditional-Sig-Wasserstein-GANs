@@ -169,7 +169,6 @@ def get_mit_arrythmia_dataset(filenames):
     data_pre = pipeline.transform(data_raw)
     return pipeline, data_raw, data_pre
 
-
 def get_data(data_type, p, q, **data_params):
     if data_type == 'VAR':
         pipeline, x_real_raw, x_real = get_var_dataset(
@@ -183,11 +182,13 @@ def get_data(data_type, p, q, **data_params):
         )
     elif data_type == 'ECG':
         pipeline, x_real_raw, x_real = get_mit_arrythmia_dataset(**data_params)
+    elif data_type in ['Blackscholes', 'Heston', 'Portfolio']:
+        pipeline, x_real_raw, x_real = get_test_stocks(data_type=data_type, price=False, **data_params) #outputs: Pipeline, x_real_raw: Diff of logreturns in a tensor, x_real: StandardN scaled x_real_raw
     else:
         raise NotImplementedError('Dataset %s not valid' % data_type)
-    assert x_real.shape[0] == 1
+    assert x_real.shape[0] == 1 #allows only one simulated path
     x_real = rolling_window(x_real[0], p + q)
-    return x_real
+    return x_real #pipeline, x_real_raw
 
 
 def download_man_ahl_dataset():
@@ -222,3 +223,35 @@ def download_mit_ecg_dataset():
     zf.extractall(path='./data')
     zf.close()
     os.remove('./mit_db.zip')
+
+
+
+
+def get_test_stocks(data_type, params, price=False):
+    #generates data via Blackscholes or Hestons models and loads it
+    def get_raw_data(data_type, params):
+        num_Years = 2
+        grid_points = 252
+
+        params["T"] = num_Years
+        params["num_steps"] = grid_points * num_Years
+        params["num_paths"] = 1
+        if data_type in ["Blackscholes", "Heston"]:
+            params["S0"] = 1.
+
+        import lib.DataLoader as DataLoader
+        loader = DataLoader.LoadData(data_type=data_type, params=params)
+        paths, time = loader.create_dataset(output_type="np.ndarray")
+        return paths
+
+    price_paths = get_raw_data(data_type, params)
+    if price:
+        data_raw = torch.from_numpy(price_paths[..., None]).float()
+    else:
+        log_prices = np.log(price_paths)
+        logrtn = np.diff(log_prices, axis=1)
+        data_raw = torch.from_numpy(logrtn[..., None]).float()
+
+    pipeline = Pipeline(steps=[('standard_scale', StandardScalerTS(axis=(0, 1)))])
+    data_pre = pipeline.transform(data_raw) #scales Data to StandardNormal
+    return pipeline, data_raw, data_pre
