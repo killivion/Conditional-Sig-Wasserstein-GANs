@@ -1,0 +1,49 @@
+# Extracted from pip section in requirements.yml
+joblib
+scikit-learn
+scipy
+#signatory
+
+threadpoolctl
+
+# PyTorch and torchvision dependencies (specify appropriate versions)
+#torch
+torch
+signatory
+#torchvision
+torchvision
+
+# Manually converted from Conda dependencies
+# (some may not have a direct PyPI equivalent)
+#certifi
+cffi
+chardet
+cryptography
+cycler
+idna
+kiwisolver
+matplotlib
+numpy
+olefile
+pandas
+pillow
+pycparser
+pyopenssl
+pyparsing
+pysocks
+python-dateutil
+pytz
+#qt
+requests
+setuptools
+sip
+#sip
+six
+tornado
+tqdm
+urllib3
+msgpack
+wheel
+
+dataclasses
+fbm
