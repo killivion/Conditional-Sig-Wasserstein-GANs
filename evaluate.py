@@ -124,7 +124,7 @@ def evaluate_generator(model_name, seed, experiment_dir, dataset, use_cuda=True)
         for i in range(steps):
             x_past_sample = x_past[i * size:(i + 1) * size] if i < (steps - 1) else x_past[i * size:]
             sigs_fake_ce = sample_sig_fake(G, q, sig_config, x_past_sample)[0]
-            sigs_conditional.append(sigs_fake_ce)
+            pd.concat([sigs_conditional, sigs_fake_ce]) #sigs_conditional.append(sigs_fake_ce)
         sigs_conditional = torch.cat(sigs_conditional, dim=0)
         sig_w1_metric = sigcwgan_loss(sigs_pred, sigs_conditional)
     experiment_summary['sig_w1_metric'] = sig_w1_metric.item()
@@ -197,7 +197,7 @@ def evaluate_benchmarks(algos, base_dir, datasets, use_cuda=False):
                     )
                     # add relevant parameters used during training to the experiment summary
                     experiment_summary = complete_experiment_summary(dataset_dir, experiment_dir, experiment_summary)
-                    df = df.append(experiment_summary, ignore_index=True, )
+                    pd.concat([df, experiment_summary], ignore_index=True, ) #df = df.append(experiment_summary, ignore_index=True, )
             df_dst_path = os.path.join(base_dir, dataset_dir, experiment_dir, 'summary.csv')
             df.to_csv(df_dst_path, decimal=',', sep=';', float_format='%.5f', index=False)
 
