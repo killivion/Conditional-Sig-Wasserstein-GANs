@@ -82,7 +82,7 @@ def get_equities_dataset(assets=('SPX', 'DJI'), with_vol=True):
     return pipeline, data_raw, data_preprocessed
 
 
-def get_var_dataset(window_size, batch_size=5000, dim=3, phi=0.8, sigma=0.5):
+def get_var_dataset(window_size, num_paths=5000, dim=3, phi=0.8, sigma=0.5):
     def multi_AR(window_size, dim=3, phi=0.8, sigma=0.5, burn_in=200):
         window_size = window_size + burn_in
         xt = np.zeros((window_size, dim))
@@ -98,7 +98,7 @@ def get_var_dataset(window_size, batch_size=5000, dim=3, phi=0.8, sigma=0.5):
         return xt[burn_in:]
 
     var_samples = []
-    for i in range(batch_size):
+    for i in range(num_paths):
         tmp = multi_AR(window_size, dim, phi=phi, sigma=sigma)
         var_samples.append(tmp)
     data_raw = torch.from_numpy(np.array(var_samples)).float()
@@ -114,32 +114,31 @@ def get_var_dataset(window_size, batch_size=5000, dim=3, phi=0.8, sigma=0.5):
     return pipeline, data_raw, data_preprocessed
 
 
-def get_arch_dataset(window_size, lag=4, bt=0.055, N=5000, dim=1):
-    """
-    Creates the dataset: loads data.
+def get_arch_dataset(window_size, lag=4, bt=0.055, num_paths=5000, dim=1):
+    """ Creates the dataset: loads data.
 
     :param data_path: :param t_lag: :param device: :return:
     """
 
-    def get_raw_data(N=5000, lag=4, T=2000, omega=0.00001, bt=0.055, burn_in=2000):
+    def get_raw_data(window_size=2000, num_paths=5000, lag=4, omega=0.00001, bt=0.055, burn_in=2000):
         beta = bt * np.ones(lag)
-        eps = np.random.randn(N, T + burn_in)
-        logrtn = np.zeros((N, T + burn_in))
+        eps = np.random.randn(num_paths, window_size + burn_in)
+        logrtn = np.zeros((num_paths, window_size + burn_in))
 
         initial_arch = omega / (1 - beta[0])
 
-        arch = initial_arch + np.zeros((N, T + burn_in))
+        arch = initial_arch + np.zeros((num_paths, window_size + burn_in))
 
         logrtn[:, :lag] = np.sqrt(arch[:, :lag]) * eps[:, :lag]
 
-        for t in range(lag - 1, T + burn_in - 1):
+        for t in range(lag - 1, window_size + burn_in - 1):
             arch[:, t + 1] = omega + np.matmul(beta.reshape(1, -1), np.square(
                 logrtn[:, t - lag + 1:t + 1]).transpose())  # * (logrtn[:, t] < 0.)
             logrtn[:, t + 1] = np.sqrt(arch[:, t + 1]) * eps[:, t + 1]
         return arch[:, burn_in:], logrtn[:, burn_in:]
 
     pipeline = Pipeline(steps=[('standard_scale', StandardScalerTS(axis=(0, 1)))])
-    _, logrtn = get_raw_data(T=window_size, N=N, bt=bt)
+    _, logrtn = get_raw_data(window_size=window_size, num_paths=num_paths, bt=bt)
     data_raw = torch.from_numpy(logrtn[..., None]).float()
     data_pre = pipeline.transform(data_raw)
     return pipeline, data_raw, data_pre
@@ -168,27 +167,6 @@ def get_mit_arrythmia_dataset(filenames):
     pipeline = Pipeline(steps=[('standard_scale', StandardScalerTS(axis=(0, 1)))])
     data_pre = pipeline.transform(data_raw)
     return pipeline, data_raw, data_pre
-
-def get_data(data_type, p, q, **data_params):
-    if data_type == 'VAR':
-        pipeline, x_real_raw, x_real = get_var_dataset(
-            40000, batch_size=1, **data_params
-        )
-    elif data_type == 'STOCKS':
-        pipeline, x_real_raw, x_real = get_equities_dataset(**data_params)
-    elif data_type == 'ARCH':
-        pipeline, x_real_raw, x_real = get_arch_dataset(
-            40000, N=1, **data_params
-        )
-    elif data_type == 'ECG':
-        pipeline, x_real_raw, x_real = get_mit_arrythmia_dataset(**data_params)
-    elif data_type in ['Blackscholes', 'Heston', 'Portfolio']:
-        pipeline, x_real_raw, x_real = get_test_stocks(data_type=data_type, price=False, **data_params) #outputs: Pipeline, x_real_raw: Diff of logreturns in a tensor, x_real: StandardN scaled x_real_raw
-    else:
-        raise NotImplementedError('Dataset %s not valid' % data_type)
-    assert x_real.shape[0] == 1 #allows only one simulated path
-    x_real = rolling_window(x_real[0], p + q)
-    return x_real #pipeline, x_real_raw
 
 
 def download_man_ahl_dataset():
@@ -225,33 +203,38 @@ def download_mit_ecg_dataset():
     os.remove('./mit_db.zip')
 
 
-
-
-def get_test_stocks(data_type, params, price=False):
-    #generates data via Blackscholes or Hestons models and loads it
-    def get_raw_data(data_type, params):
-        num_Years = 2
-        grid_points = 252
-
-        params["T"] = num_Years
-        params["num_steps"] = grid_points * num_Years
-        params["num_paths"] = 1
-        if data_type in ["Blackscholes", "Heston"]:
-            params["S0"] = 1.
-
+def get_test_stocks(dataset, data_params):
+    #generates data via Blackscholes or Hestons models and loads it via the DataLoader file
+    def get_raw_data(dataset, data_params):
         import lib.DataLoader as DataLoader
-        loader = DataLoader.LoadData(data_type=data_type, params=params)
+        loader = DataLoader.LoadData(dataset=dataset, data_params=data_params)
         paths, time = loader.create_dataset(output_type="np.ndarray")
         return paths
 
-    price_paths = get_raw_data(data_type, params)
-    if price:
-        data_raw = torch.from_numpy(price_paths[..., None]).float()
-    else:
-        log_prices = np.log(price_paths)
-        logrtn = np.diff(log_prices, axis=1)
-        data_raw = torch.from_numpy(logrtn[..., None]).float()
+    price_paths = get_raw_data(dataset, data_params)
+    log_prices = np.log(price_paths)
+    logrtn = np.diff(log_prices, axis=1)
+    data_raw = torch.from_numpy(logrtn[..., None]).float()
 
     pipeline = Pipeline(steps=[('standard_scale', StandardScalerTS(axis=(0, 1)))])
     data_pre = pipeline.transform(data_raw) #scales Data to StandardNormal
     return pipeline, data_raw, data_pre
+
+
+def get_data(dataset, p, q, **data_params):
+    """Outputs: Pipeline, x_real_raw: Diff of LogReturns in a tensor, x_real: StandardN scaled x_real_raw"""
+    if dataset == 'STOCKS':
+        pipeline, x_real_raw, x_real = get_equities_dataset(**data_params)
+    elif dataset == 'ECG':
+        pipeline, x_real_raw, x_real = get_mit_arrythmia_dataset(**data_params)
+    elif dataset == 'ARCH':
+        pipeline, x_real_raw, x_real = get_arch_dataset(**data_params)
+    elif dataset == 'VAR':
+        pipeline, x_real_raw, x_real = get_var_dataset(**data_params)
+    elif dataset in ['Blackscholes', 'Heston', 'Portfolio']:
+        pipeline, x_real_raw, x_real = get_test_stocks(dataset, **data_params)
+    else:
+        raise NotImplementedError('Dataset %s not valid' % dataset)
+    assert x_real.shape[0] == 1 #allows only one simulated path
+    x_real = rolling_window(x_real[0], p + q)
+    return x_real #pipeline, x_real_raw

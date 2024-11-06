@@ -4,20 +4,20 @@ from typing import Union, Tuple, Dict
 
 
 class LoadData:
-    def __init__(self, data_type: str, params: Dict[str, Union[float, int]], seed: int = None):
-        self.data_type_functions = {
+    def __init__(self, dataset: str, data_params: Dict[str, Union[float, int]], seed: int = None):
+        self.dataset_functions = {
             "Blackscholes": self.generate_multiple_gbm
         }
-        self.data_type = data_type
-        self.params = params
-        self.seed = seed
+        self.dataset = dataset
+        self.data_params = data_params
+        #self.seed = seed
 
     def create_dataset(self, output_type: str):
         """Create specified dataset."""
-        if self.data_type in self.data_type_functions:
-            if self.seed is not None:
-                np.random.seed(self.seed)
-            paths, time = self.data_type_functions[self.data_type](**self.params)#
+        if self.dataset in self.dataset_functions:
+            #if self.seed is not None:
+            #    np.random.seed(self.seed)
+            paths, time = self.dataset_functions[self.dataset](**self.data_params)
             # Transforms data - row: time step, column: path
             if output_type == "np.ndarray":
                 return paths, time
@@ -26,20 +26,21 @@ class LoadData:
             else:
                 raise ValueError(f'output_type={output_type} not implemented.')
         else:
-            data_type_list = "', '".join(self.data_type_functions.keys())
+            dataset_list = "', '".join(self.dataset_functions.keys())
             raise ValueError(
-                f'Dataset "{self.data_type}" type currently not implemented. ' +
-                f'Choose from "{data_type_list}".'
+                f'Dataset "{self.dataset}" type currently not implemented. ' +
+                f'Choose from "{dataset_list}".'
             )
 
 
-    def generate_multiple_gbm(self, S0, mu, sigma, T, num_steps, num_paths):
+    def generate_multiple_gbm(self, mu, sigma, window_size, num_paths, grid_points = 252, S0=1):
         #Generates paths of Black-Scholes
 
-        dt = T / num_steps  # step size
-        t = np.linspace(0, T, num_steps + 1)  # time array
+        T = window_size/grid_points
+        dt = 1/grid_points  # step size
+        t = np.linspace(0, T, window_size + 1)  # time array
 
-        dW = np.random.normal(size=(num_paths, num_steps))
+        dW = np.random.normal(size=(num_paths, window_size))
         W = np.cumsum(np.sqrt(dt) * dW, axis=1)
         W = np.hstack([np.zeros((num_paths, 1)), W])
 
@@ -55,12 +56,11 @@ if __name__ == "__main__": #Testing
         "S0": 1.,  # initial stock price
         "mu": 0.05,  # expected return (drift)
         "sigma": 0.2,  # volatility
-        "T": 1,  # time horizon (in years)
-        "num_steps": 252, #number of steps
+        "window_size": 1000, #number of steps
         "num_paths": 30 #number of paths
     }
 
-    gbm = LoadData(data_type="Blackscholes", params=GBM_parameter)
+    gbm = LoadData(dataset="Blackscholes", data_params=GBM_parameter)
     prices_df = gbm.create_dataset("DataFrame")
 
     # Assuming df_times_as_index is the DataFrame with times as row indices

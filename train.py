@@ -76,7 +76,7 @@ def run(algo_id, base_config, base_dir, dataset, spec, data_params={}):
     savefig('losses.png', experiment_directory)
 
 
-def get_dataset_configuration(dataset):
+def get_dataset_configuration(dataset, window_size, num_paths):
     if dataset == 'ECG':
         generator = [('id=100', dict(filenames=['100']))]
     elif dataset == 'STOCKS':
@@ -87,15 +87,15 @@ def get_dataset_configuration(dataset):
         par3 = itertools.product([3], [(0.2, 0.8), (0.5, 0.8), (0.8, 0.8), (0.8, 0.2), (0.8, 0.5)])
         combinations = itertools.chain(par1, par2, par3)
         generator = (
-            ('dim={}_phi={}_sigma={}'.format(dim, phi, sigma), dict(dim=dim, phi=phi, sigma=sigma))
+            ('dim={}_phi={}_sigma={}_window_size={}'.format(dim, phi, sigma, window_size), dict(dim=dim, phi=phi, sigma=sigma, window_size=window_size, num_paths=num_paths))
             for dim, (phi, sigma) in combinations
         )
     elif dataset == 'ARCH':
-        generator = (('lag={}'.format(lag), dict(lag=lag)) for lag in [3])
+        generator = (('lag={}_window_size={}'.format(lag, window_size), dict(lag=lag, window_size=window_size, num_paths=num_paths)) for lag in [3])
     elif dataset == 'SINE':
         generator = [('a', dict())]
-    elif dataset == 'Blackscholes': #needs adjustment
-        generator = (('mu={}_sigma={}'.format(mu, sigma), dict(params=dict(mu=mu, sigma=sigma))) for mu, sigma in [(0.05, 0.2)]
+    elif dataset in {'Blackscholes', 'Heston', 'Portfolio'}:
+        generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, window_size=window_size, num_paths=num_paths))) for mu, sigma in [(0.05, 0.2)]
         )
     else:
         raise Exception('%s not a valid data type.' % dataset)
@@ -119,17 +119,17 @@ def main(args):
         for algo_id in args.algos:
             for seed in range(args.initial_seed, args.initial_seed + args.num_seeds):
                 base_config = BaseConfig(
-                        device='cuda:{}'.format(args.device) if args.use_cuda and torch.cuda.is_available() else 'cpu',
+                    device='cuda:{}'.format(args.device) if args.use_cuda and torch.cuda.is_available() else 'cpu',
                     seed=seed,
                     batch_size=args.batch_size,
                     hidden_dims=args.hidden_dims,
                     p=args.p,
                     q=args.q,
                     total_steps=args.total_steps,
-                    mc_samples=1000,
+                    mc_samples=1000
                 )
                 set_seed(seed)
-                generator = get_dataset_configuration(dataset)
+                generator = get_dataset_configuration(dataset, window_size=args.window_size, num_paths=args.num_paths)
                 for spec, data_params in generator:
                     run(
                         algo_id=algo_id,
@@ -162,6 +162,8 @@ if __name__ == '__main__':
     parser.add_argument('-q', default=3, type=int)
     parser.add_argument('-hidden_dims', default=3 * (50,), type=tuple)
     parser.add_argument('-total_steps', default=1000, type=int)
+    parser.add_argument('-window_size', default=1000, type=int)
+    parser.add_argument('-num_paths', default=1, type=int) #atm unnecessary because only one path is allowed
 
     args = parser.parse_args()
     main(args)
