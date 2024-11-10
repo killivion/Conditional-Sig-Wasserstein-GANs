@@ -94,9 +94,30 @@ def get_dataset_configuration(dataset, window_size, num_paths):
         generator = (('lag={}_window_size={}'.format(lag, window_size), dict(lag=lag, window_size=window_size, num_paths=num_paths)) for lag in [3])
     elif dataset == 'SINE':
         generator = [('a', dict())]
-    elif dataset in {'Blackscholes', 'Heston', 'Portfolio'}:
-        generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, window_size=window_size, num_paths=num_paths))) for mu, sigma in [(0.05, 0.2)]
+    elif dataset in {'Blackscholes'}:
+        generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, window_size=window_size, num_paths=num_paths)))
+                     for mu, sigma in [(0.05, 0.2)]
         )
+    elif dataset == 'Heston':
+        generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, V0=V0, kappa=kappa, xi=xi, rho=rho, window_size=window_size, num_paths=num_paths)))
+                     for mu, sigma, V0, kappa, xi, rho in [(0.05, 0.2, 0.3, 0.2, 0.2, 0.5)]
+        )
+    elif dataset == 'VarianceGamma':
+        generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, nu=nu, window_size=window_size, num_paths=num_paths)))
+                     for mu, sigma, nu in [(0.05, 0.2, 0.02)]
+        )
+    elif dataset == 'Kou_Jump_Diffusion':
+        generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, kou_lambda=kou_lambda, p=p, eta1=eta1, eta2=eta2, window_size=window_size, num_paths=num_paths)))
+                     for mu, sigma, kou_lambda, p, eta1, eta2 in [(0.05, 0.2, 2, 0.3, 25, 50)]
+        )
+    elif dataset == 'LevyIto':
+        generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, lambda_large=lambda_large, lambda_small=lambda_small, jump_mean_large=jump_mean_large, jump_std_large=jump_std_large, jump_mean_small=jump_mean_small, jump_std_small=jump_std_small, window_size=window_size, num_paths=num_paths)))
+                     for mu, sigma, lambda_large, lambda_small, jump_mean_large, jump_std_large, jump_mean_small, jump_std_small in [(0.05, 0.2, 2, 300, 0.03, 0.05, 0.0005, 0.0005)]
+        )
+    elif dataset == 'YFinance':
+        generator = (('ticker_length={}'.format(len(ticker)), dict(data_params=dict(ticker))) for ticker in ["^GSPC"]
+        )
+
     else:
         raise Exception('%s not a valid data type.' % dataset)
     return generator
@@ -148,11 +169,11 @@ if __name__ == '__main__':
     # Meta parameters
     parser.add_argument('-base_dir', default='./numerical_results', type=str)
     parser.add_argument('-use_cuda', action='store_true')
-    parser.add_argument('-device', default=1, type=int)
+    parser.add_argument('-device', default=0, type=int)
     parser.add_argument('-num_seeds', default=1, type=int)
     parser.add_argument('-initial_seed', default=0, type=int)
     #parser.add_argument('-datasets', default=['ARCH', 'STOCKS', 'ECG', 'VAR', ], nargs="+")
-    parser.add_argument('-datasets', default=['Blackscholes', 'ARCH', 'VAR'], nargs="+")
+    parser.add_argument('-datasets', default=['Stocks', 'ARCH', 'VAR'], nargs="+")  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'LevyIto', 'YFinance'
     parser.add_argument('-algos', default=['SigCWGAN', 'GMMN', 'RCGAN', 'TimeGAN', 'RCWGAN', 'CWGAN',], nargs="+")
 
 

@@ -204,7 +204,7 @@ def download_mit_ecg_dataset():
 
 
 def get_test_stocks(dataset, data_params):
-    #generates data via Blackscholes or Hestons models and loads it via the DataLoader file
+    #generates data via GBM, Heston, VarGamma, KouJumpDiffusion or LevyIto model and loads it via the DataLoader file
     def get_raw_data(dataset, data_params):
         import lib.DataLoader as DataLoader
         loader = DataLoader.LoadData(dataset=dataset, data_params=data_params)
@@ -231,7 +231,7 @@ def get_data(dataset, p, q, **data_params):
         pipeline, x_real_raw, x_real = get_arch_dataset(**data_params)
     elif dataset == 'VAR':
         pipeline, x_real_raw, x_real = get_var_dataset(**data_params)
-    elif dataset in ['Blackscholes', 'Heston', 'Portfolio']:
+    elif dataset in ['Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'LevyIto', 'YFinance']:
         pipeline, x_real_raw, x_real = get_test_stocks(dataset, **data_params)
     else:
         raise NotImplementedError('Dataset %s not valid' % dataset)
