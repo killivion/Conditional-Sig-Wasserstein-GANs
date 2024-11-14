@@ -26,6 +26,11 @@ class LoadData:
             paths, time = self.dataset_functions[self.dataset](**self.data_params)
             # Transforms data - row: time step, column: path
             if output_type == "np.ndarray":
+                # paths[0] = paths[0] / paths[0, 0]  # normalizes paths to S0=1
+                for i in range(1, paths.shape[0]):
+                    paths[i] = paths[i] / paths[i-1, -1]  # normalizes values to the value before
+                paths = paths[:, :-1]  # remove last column, to avoid 0 return
+                paths = paths.flatten()  # GANs only allow for you one path. We reshape all paths into one since we only look at returns anyway
                 return paths, time
             elif output_type == "DataFrame":
                 return pd.DataFrame(paths, columns=time)
@@ -49,14 +54,15 @@ class LoadData:
         t = np.linspace(0, T, window_size + 1)
 
         # Wiener Processes
-        dW = np.random.normal(size=(num_paths, window_size))
-        W = np.cumsum(np.sqrt(dt) * dW, axis=1)
+        dW = np.random.normal(0, np.sqrt(dt), size=(num_paths, window_size))
+        W = np.cumsum(dW, axis=1)
         W = np.hstack([np.zeros((num_paths, 1)), W])
 
         # Asset price process from closed form
-        S = S0 * np.exp((mu - 0.5 * sigma ** 2) * t + sigma * W * np.sqrt(dt))
+        S = S0 * np.exp((mu - 0.5 * sigma ** 2) * t + sigma * W)
 
         return S, t
+
 
     def generate_heston(self, mu, v0_sqrt, kappa, sigma, xi, rho, window_size, num_paths, grid_points=252, S0=1):
         """generates num_paths time series following the Heston model via CIR
@@ -189,14 +195,15 @@ class LoadData:
         raw_data = yf.download(tickers=ticker, start=start, end=end, progress=False)["Adj Close"]
         S = np.array(raw_data).T
 
+        #This gives Info about the Data used
         print('YFinance Dataset includes this many Stocks and days (not only trading days): %s %s' % S.shape)
         S_nanfill = np.where(np.isnan(S), np.nan, S)
         for i in range(1, S.shape[1]):
             S_nanfill[:, i] = np.where(np.isnan(S_nanfill[:, i]), S_nanfill[:, i - 1], S_nanfill[:, i])
         log_returns = np.diff(np.log(S_nanfill), axis=1)
         comb_log = log_returns[~np.isnan(log_returns)].flatten()
-        yearly_return_mean = (np.prod(1 + comb_log) ** (365/len(comb_log))) - 1
-        yearly_vola_mean = np.std(comb_log) * np.sqrt(365)
+        yearly_return_mean = (np.prod(1 + comb_log) ** (252/len(comb_log))) - 1
+        yearly_vola_mean = np.std(comb_log) * np.sqrt(252)
         print('Drift and Volatility: %s %s' % (yearly_return_mean, yearly_vola_mean))
 
         # if split, split the data into chunks of length window_size:
@@ -219,10 +226,8 @@ class LoadData:
             S[:, 0] = S0
             S[:, 1:] = np.cumprod(returns, axis=1)
         else:
-            #S = S.reshape(1, -1)
             if S0 is not None:
                 S = S / S[:, 0].reshape(-1, 1) * S0
-                #S = S / S[0, 0] * S0
             t = np.array((raw_data.index - raw_data.index[0]).days)
             t = t / 365.25  # convert days to years
 
@@ -272,55 +277,54 @@ if __name__ == "__main__": #Testing
         "ticker": [
     # Major Indices
     "^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX",
-
-    # Large-Cap Tech Stocks (FAANG & Others)
-    "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA", "ORCL", "INTC", "CSCO", "IBM", "ADBE", "CRM", "TXN",
-
-    # Financial Sector
-    "JPM", "BAC", "GS", "C", "WFC", "MS", "SCHW", "BLK", "BK", "AXP", "COF", "USB", "TFC", "CME",
-
-    # Consumer Goods & Retail
-    "WMT", "PG", "KO", "PEP", "COST", "MCD", "NKE", "TGT", "SBUX", "HD", "LOW", "DG", "TJX", "YUM",
-
-    # Healthcare
-    "JNJ", "PFE", "UNH", "MRK", "CVS", "LLY", "ABT", "TMO", "BMY", "DHR", "ZTS", "MDT", "BSX",
-
-    # Energy Sector
-    "XOM", "CVX", "SLB", "COP", "OXY", "PSX", "VLO", "HAL", "MPC", "BKR", "EOG", "FANG", "KMI",
-
-    # Industrials
-    "BA", "CAT", "MMM", "GE", "HON", "UPS", "UNP", "LMT", "RTX", "FDX", "CSX", "NSC", "WM", "NOC",
-
-    # Utilities
-    "NEE", "DUK", "SO", "D", "EXC", "AEP", "SRE", "PEG", "WEC", "ED", "XEL", "ES", "AWK", "DTE",
-
-    # Telecommunications
-    "T", "VZ", "TMUS", "CCI", "AMT", "VOD", "S", "CHT", "TU", "NOK", "ORAN", "BTI", "KT", "PHI",
-
-    # Real Estate
-    "PLD", "AMT", "CCI", "SPG", "PSA", "EQIX", "EQR", "ESS", "AVB", "O", "MAA", "UDR", "VTR", "HCP",
-
-    # Consumer Discretionary
-    "DIS", "HD", "MCD", "SBUX", "NKE", "LVS", "GM", "F", "HMC", "TM", "TSLA", "YUM", "MAR", "CCL",
-
-    # ETFs and Funds
-    "SPY", "QQQ", "DIA", "IWM", "GLD", "SLV", "TLT", "XLF", "XLK", "XLE", "XLU", "XLI", "XLY", "XLP",
-
-    # Commodities
-    "CL=F", "GC=F", "SI=F", "NG=F", "HG=F", "ZC=F", "ZW=F", "ZS=F", "LE=F", "HE=F", "KC=F", "CC=F", "CT=F",
-
-    # Forex and Cryptocurrency
-    "EURUSD=X", "GBPUSD=X", "JPY=X", "AUDUSD=X", "BTC-USD", "ETH-USD", "LTC-USD", "XRP-USD", "BCH-USD",
-    "DOT-USD",
     ]
     }
+    """# Large-Cap Tech Stocks (FAANG & Others)
+          "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA", "ORCL", "INTC", "CSCO", "IBM", "ADBE", "CRM", "TXN",
+
+         # Financial Sector
+         "JPM", "BAC", "GS", "C", "WFC", "MS", "SCHW", "BLK", "BK", "AXP", "COF", "USB", "TFC", "CME",
+
+         # Consumer Goods & Retail
+         "WMT", "PG", "KO", "PEP", "COST", "MCD", "NKE", "TGT", "SBUX", "HD", "LOW", "DG", "TJX", "YUM",
+
+         # Healthcare
+         "JNJ", "PFE", "UNH", "MRK", "CVS", "LLY", "ABT", "TMO", "BMY", "DHR", "ZTS", "MDT", "BSX",
+
+         # Energy Sector
+         "XOM", "CVX", "SLB", "COP", "OXY", "PSX", "VLO", "HAL", "MPC", "BKR", "EOG", "FANG", "KMI",
+
+         # Industrials
+         "BA", "CAT", "MMM", "GE", "HON", "UPS", "UNP", "LMT", "RTX", "FDX", "CSX", "NSC", "WM", "NOC",
+
+         # Utilities
+         "NEE", "DUK", "SO", "D", "EXC", "AEP", "SRE", "PEG", "WEC", "ED", "XEL", "ES", "AWK", "DTE",
+
+         # Telecommunications
+         "T", "VZ", "TMUS", "CCI", "AMT", "VOD", "S", "CHT", "TU", "NOK", "ORAN", "BTI", "KT", "PHI",
+
+         # Real Estate
+         "PLD", "AMT", "CCI", "SPG", "PSA", "EQIX", "EQR", "ESS", "AVB", "O", "MAA", "UDR", "VTR", "HCP",
+
+         # Consumer Discretionary
+         "DIS", "HD", "MCD", "SBUX", "NKE", "LVS", "GM", "F", "HMC", "TM", "TSLA", "YUM", "MAR", "CCL",
+
+         # ETFs and Funds
+         "SPY", "QQQ", "DIA", "IWM", "GLD", "SLV", "TLT", "XLF", "XLK", "XLE", "XLU", "XLI", "XLY", "XLP",
+
+         # Commodities
+         "CL=F", "GC=F", "SI=F", "NG=F", "HG=F", "ZC=F", "ZW=F", "ZS=F", "LE=F", "HE=F", "KC=F", "CC=F", "CT=F",
+
+         # Forex and Cryptocurrency
+         "EURUSD=X", "GBPUSD=X", "JPY=X", "AUDUSD=X", "BTC-USD", "ETH-USD", "LTC-USD", "XRP-USD", "BCH-USD",
+         "DOT-USD","""
     general_parameter = {
         "mu": 0.08,  # 0.0618421411431207,  # This is the YFinance data mean;
         "sigma": 0.2,  # 0.34787525475010267,  # This is the YFinance data Volatility;
         "S0": 1,
-        "grid_points": 365,
-        "window_size": 365,
-        "num_paths": 172  # This is the YFinance number of Stocks
+        "grid_points": 252,
+        "window_size": 252 * 4,
+        "num_paths": 100  # This is the YFinance number of Stocks
     }
     """
     #model = LoadData(dataset="Blackscholes", data_params={**GBM_parameter, **general_parameter})
@@ -351,6 +355,8 @@ if __name__ == "__main__": #Testing
         "YFinance": YFinance_parameter
     }
 
+    T = 4
+
     # Set up the figure for multiple subplots
     fig, axes = plt.subplots(1, len(models), figsize=(20, 9), sharey=True)
     fig.suptitle('Comparison of Simulated Paths for Different Models')
@@ -360,7 +366,7 @@ if __name__ == "__main__": #Testing
         model = LoadData(dataset=model_name, data_params=params)
         prices_df = model.create_dataset("DataFrame")
 
-        print('%s %s %s' % (model_name, prices_df.iloc[:, -1].mean(), prices_df.iloc[:, -1].std()))
+        print('%s %s %s' % (model_name, (prices_df.iloc[:, -1].mean()) ** (1 / T) - 1, prices_df.iloc[:, -1].std()/np.sqrt(T)))
 
         ax = axes[i]
         prices_df.T.plot(ax=ax, alpha=0.5, linewidth=0.3, legend=False)
