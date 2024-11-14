@@ -115,7 +115,7 @@ def get_dataset_configuration(dataset, window_size, num_paths):
                      for mu, sigma, lambda_large, lambda_small, jump_mean_large, jump_std_large, jump_mean_small, jump_std_small in [(0.05, 0.2, 2, 300, 0.03, 0.05, 0.0005, 0.0005)]
         )
     elif dataset == 'YFinance':
-        generator = (('ticker_length={}'.format(len(ticker)), dict(data_params=dict(ticker))) for ticker in [["^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX"]]
+        generator = (('ticker_length={}'.format(len(ticker)), dict(data_params=dict(ticker=ticker))) for ticker in [(["^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX"])]
         )
 
     else:
@@ -184,7 +184,7 @@ if __name__ == '__main__':
     parser.add_argument('-hidden_dims', default=3 * (50,), type=tuple)
     parser.add_argument('-total_steps', default=1000, type=int)
     parser.add_argument('-window_size', default=1000, type=int)
-    parser.add_argument('-num_paths', default=1, type=int) #atm unnecessary because only one path is allowed
+    parser.add_argument('-num_paths', default=1, type=int)  # atm unnecessary because only one path is allowed: If this is increased the paths will be merged into one path with [(windowsize - 1) * num_paths] values
 
     args = parser.parse_args()
     main(args)
