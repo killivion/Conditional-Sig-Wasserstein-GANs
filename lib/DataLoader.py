@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 from typing import Union, Tuple, Dict
 import yfinance as yf
+from tqdm import tqdm
+from IPython.display import clear_output
 
 
 class LoadData:
@@ -24,15 +26,15 @@ class LoadData:
             #if self.seed is not None:
             #    np.random.seed(self.seed)
             paths, time = self.dataset_functions[self.dataset](**self.data_params)
-            # Transforms data - row: time step, column: path
-            if output_type == "np.ndarray":
+            if output_type == "np.ndarray":  # for GANs
                 # paths[0] = paths[0] / paths[0, 0]  # normalizes paths to S0=1
-                for i in range(1, paths.shape[0]):
-                    paths[i] = paths[i] / paths[i-1, -1]  # normalizes values to the value before
-                paths = paths[:, :-1]  # remove last column, to avoid 0 return
-                paths = paths.flatten()  # GANs only allow for you one path. We reshape all paths into one since we only look at returns anyway
+                if paths.shape[0] > 1:
+                    for i in range(1, paths.shape[0]):
+                        paths[i] = paths[i] / paths[i, 0] * paths[i-1, -1]  # normalizes values to the last value of the stock before
+                    paths = paths[:, :-1]  # remove last column, to avoid 0 return
+                    paths = paths.reshape(1, -1)  # GANs only allow for you one path. We reshape all paths into one since we only look at returns anyway
                 return paths, time
-            elif output_type == "DataFrame":
+            elif output_type == "DataFrame":  # for testing
                 return pd.DataFrame(paths, columns=time)
             else:
                 raise ValueError(f'output_type={output_type} not implemented.')
@@ -63,11 +65,12 @@ class LoadData:
 
         return S, t
 
-
     def generate_heston(self, mu, v0_sqrt, kappa, sigma, xi, rho, window_size, num_paths, grid_points=252, S0=1):
         """generates num_paths time series following the Heston model via CIR
         mu: Drift, V0_squared->V0: Initial Variance, kappa: Mean reversion rate of Variance, sigma->theta: long Variance, xi: Volatility of Volatility, rho: Correlation of Wiener"""
         #Feller-Condition: 2*kappa*theta > xi**2
+
+        mu = mu * 0.08/0.005  # adjustment of drift due to Variance decrease
 
         T = window_size / grid_points
         dt = 1 / grid_points
@@ -81,7 +84,7 @@ class LoadData:
         sqrt_dt = np.sqrt(dt)
         sqrt_cor = np.sqrt(1 - rho ** 2)
 
-        for i in range(1, window_size + 1):
+        for i in tqdm(range(1, window_size + 1), desc="Heston", leave=False):
             # Generate correlated Wiener Processes
             W1 = np.random.normal(size=num_paths)
             W2 = rho * W1 + sqrt_cor * np.random.normal(size=num_paths)
@@ -132,7 +135,7 @@ class LoadData:
         dN = np.random.poisson(kou_lambda * dt, size=(num_paths, len(t) - 1))  # increments of Poisson process
 
         for i in range(num_paths):
-            for j in range(1, len(t)):
+            for j in tqdm(range(1, len(t)), desc="Kou", leave=False):
                 # iterate through number of jumps
                 # vi contains all jumps that happen in one increment
                 vi = np.ones(dN[i, j - 1])
@@ -160,28 +163,22 @@ class LoadData:
         B = np.cumsum(sigma * dB, axis=1)
         B = np.hstack([np.zeros((num_paths, 1)), B])
 
-        # Large jumps (compound Poisson process, Y_t)
+        # Large jumps (compound Poisson process, Y_t) and Small jumps (compensated Poisson process, Z_t)
         Y = np.zeros((num_paths, window_size + 1))
+        Z = np.zeros((num_paths, window_size + 1))
         for i in range(num_paths):
-            for step in range(1, window_size + 1):
-                # Generate large jumps based on a Poisson process
+            for step in tqdm(range(1, window_size + 1), desc="LevyIto", leave=False):
+                # Generate small/large jumps based on a Poisson process
                 num_large_jumps = np.random.poisson(lambda_large * dt)
                 if num_large_jumps > 0:
                     jumps = np.random.normal(jump_mean_large, jump_std_large, size=num_large_jumps)
                     Y[i, step] = np.sum(jumps)
-        Y = np.cumsum(Y, axis=1)  # Cumulative sum to simulate path over time
-
-        # 4. Small jumps (compensated Poisson process, Z_t)
-        Z = np.zeros((num_paths, window_size + 1))
-        for i in range(num_paths):
-            for step in range(1, window_size + 1):
-                # Generate small jumps based on a Poisson process
                 num_small_jumps = np.random.poisson(lambda_small * dt)
                 if num_small_jumps > 0:
                     jumps = np.random.normal(jump_mean_small, jump_std_small, size=num_small_jumps)
                     Z[i, step] = np.sum(jumps)
-        # Compensate small jumps to ensure Z_t is zero-mean
-        Z = np.cumsum(Z - lambda_small * dt * jump_mean_small, axis=1)
+        Y = np.cumsum(Y, axis=1)  # Cumulative sum to simulate path over time
+        Z = np.cumsum(Z - lambda_small * dt * jump_mean_small, axis=1)  # Compensate small jumps to ensure Z_t is zero-mean
 
         # Asset price process
         S = S0 * np.exp(B + mu*t + Y + Z)
@@ -197,6 +194,7 @@ class LoadData:
 
         #This gives Info about the Data used
         print('YFinance Dataset includes this many Stocks and days (not only trading days): %s %s' % S.shape)
+        """
         S_nanfill = np.where(np.isnan(S), np.nan, S)
         for i in range(1, S.shape[1]):
             S_nanfill[:, i] = np.where(np.isnan(S_nanfill[:, i]), S_nanfill[:, i - 1], S_nanfill[:, i])
@@ -205,6 +203,7 @@ class LoadData:
         yearly_return_mean = (np.prod(1 + comb_log) ** (252/len(comb_log))) - 1
         yearly_vola_mean = np.std(comb_log) * np.sqrt(252)
         print('Drift and Volatility: %s %s' % (yearly_return_mean, yearly_vola_mean))
+        """
 
         # if split, split the data into chunks of length window_size:
         if split:
@@ -226,8 +225,7 @@ class LoadData:
             S[:, 0] = S0
             S[:, 1:] = np.cumprod(returns, axis=1)
         else:
-            if S0 is not None:
-                S = S / S[:, 0].reshape(-1, 1) * S0
+            S = S / S[:, 0].reshape(-1, 1) * S0
             t = np.array((raw_data.index - raw_data.index[0]).days)
             t = t / 365.25  # convert days to years
 
@@ -322,9 +320,9 @@ if __name__ == "__main__": #Testing
         "mu": 0.08,  # 0.0618421411431207,  # This is the YFinance data mean;
         "sigma": 0.2,  # 0.34787525475010267,  # This is the YFinance data Volatility;
         "S0": 1,
-        "grid_points": 252,
-        "window_size": 252 * 4,
-        "num_paths": 100  # This is the YFinance number of Stocks
+        "grid_points": 10000,
+        "window_size": 10000 * 1,
+        "num_paths": 10000
     }
     """
     #model = LoadData(dataset="Blackscholes", data_params={**GBM_parameter, **general_parameter})
@@ -350,31 +348,48 @@ if __name__ == "__main__": #Testing
         "Blackscholes": {**GBM_parameter, **general_parameter},
         "Heston": {**Heston_parameter, **general_parameter},
         "VarianceGamma": {**VarGamma_parameter, **general_parameter},
-        "Kou_Jump_Diffusion": {**Kou_parameter, **general_parameter},
+        #"Kou_Jump_Diffusion": {**Kou_parameter, **general_parameter},
         "Levy_Ito": {**LevyIto_parameter, **general_parameter},
-        "YFinance": YFinance_parameter
+        #"YFinance": YFinance_parameter
     }
 
-    T = 4
+    T = 1
+    plot = False
 
-    # Set up the figure for multiple subplots
-    fig, axes = plt.subplots(1, len(models), figsize=(20, 9), sharey=True)
-    fig.suptitle('Comparison of Simulated Paths for Different Models')
+    if plot:
+        # Set up the figure for multiple subplots
+        fig, axes = plt.subplots(1, len(models), figsize=(20, 9), sharey=True)
+        fig.suptitle('Comparison of Simulated Paths for Different Models')
 
-    for i, (model_name, params) in enumerate(models.items()):
-        # Load model and create simulated price data
-        model = LoadData(dataset=model_name, data_params=params)
-        prices_df = model.create_dataset("DataFrame")
+        for i, (model_name, params) in enumerate(models.items()):
+            # Load model and create simulated price data
+            model = LoadData(dataset=model_name, data_params=params)
+            prices_df = model.create_dataset("DataFrame")
+            clear_output(wait=True)
 
-        print('%s %s %s' % (model_name, (prices_df.iloc[:, -1].mean()) ** (1 / T) - 1, prices_df.iloc[:, -1].std()/np.sqrt(T)))
+            print('%s %s %s' % (model_name, (prices_df.iloc[:, -1].mean()) ** (1 / T) - 1, prices_df.iloc[:, -1].std()/np.sqrt(T)))
 
-        ax = axes[i]
-        prices_df.T.plot(ax=ax, alpha=0.5, linewidth=0.3, legend=False)
-        ax.set_title(f"{model_name} Model")
-        ax.set_xlabel('Timeframe (years)')
-        ax.grid(True)
+            ax = axes[i]
+            prices_df.T.plot(ax=ax, alpha=0.5, linewidth=0.3, legend=False)
+            ax.set_title(f"{model_name} Model")
+            ax.set_xlabel('Timeframe (years)')
+            ax.grid(True)
 
-    axes[0].set_ylabel('Price')
+        axes[0].set_ylabel('Price')
 
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
-    plt.show()
+        plt.tight_layout(rect=[0, 0, 1, 0.95])
+        plt.show()
+
+    else:
+        import time
+        for i, (model_name, params) in enumerate(models.items()):
+            start_time = time.time()
+            # Load model and create simulated price data
+            model = LoadData(dataset=model_name, data_params=params)
+            prices_df = model.create_dataset("DataFrame")
+
+            print('%s %s %s' % (model_name, (prices_df.iloc[:, -1].mean()) ** (1 / T) - 1, prices_df.iloc[:, -1].std() / np.sqrt(T)))
+
+            elapsed = time.time() - start_time
+            print('Time Elapsed: %s' % elapsed)
+
