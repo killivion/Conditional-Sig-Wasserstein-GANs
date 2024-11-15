@@ -112,9 +112,9 @@ def evaluate_generator(model_name, seed, experiment_dir, dataset, use_cuda=True)
     # ----------------------------------------------
     # Compute Sig-W_1 distance.
     # ----------------------------------------------
-    if dataset in ['VAR', 'ARCH']:
-        x_past = x_past[::10]
-        x_future = x_future[::10]
+    #if dataset in ['VAR', 'ARCH']:
+    #    x_past = x_past[::10]
+    #    x_future = x_future[::10]
     sigs_pred = calibrate_sigw1_metric(sig_config, x_future, x_past)
     # generate fake paths
     sigs_conditional = list()
@@ -208,7 +208,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Turn cuda off / on during evalution.')
     parser.add_argument('-base_dir', default='./numerical_results', type=str)
     parser.add_argument('-use_cuda', action='store_true')
-    parser.add_argument('-datasets', default=['ARCH', 'STOCKS', 'ECG', 'VAR', ], nargs="+")
+    parser.add_argument('-datasets', default=['ARCH'], nargs="+")  # , 'STOCKS', 'ECG', 'VAR',
     parser.add_argument('-algos', default=['SigCWGAN', 'GMMN', 'RCGAN', 'TimeGAN', 'RCWGAN', ], nargs="+")
     args = parser.parse_args()
     evaluate_benchmarks(base_dir=args.base_dir, use_cuda=args.use_cuda, datasets=args.datasets, algos=args.algos)

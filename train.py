@@ -115,7 +115,45 @@ def get_dataset_configuration(dataset, window_size, num_paths):
                      for mu, sigma, lambda_large, lambda_small, jump_mean_large, jump_std_large, jump_mean_small, jump_std_small in [(0.05, 0.2, 2, 300, 0.03, 0.05, 0.0005, 0.0005)]
         )
     elif dataset == 'YFinance':
-        generator = (('ticker_length={}'.format(len(ticker)), dict(data_params=dict(ticker=ticker))) for ticker in [(["^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX"])]
+        generator = (('ticker_length={}'.format(len(ticker)), dict(data_params=dict(ticker=ticker))) for ticker in [(["^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX"# Large-Cap Tech Stocks (FAANG & Others)
+         "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA", "ORCL", "INTC", "CSCO", "IBM", "ADBE", "CRM", "TXN",
+
+         # Financial Sector
+         "JPM", "BAC", "GS", "C", "WFC", "MS", "SCHW", "BLK", "BK", "AXP", "COF", "USB", "TFC", "CME",
+
+         # Consumer Goods & Retail
+         "WMT", "PG", "KO", "PEP", "COST", "MCD", "NKE", "TGT", "SBUX", "HD", "LOW", "DG", "TJX", "YUM",
+
+         # Healthcare
+         "JNJ", "PFE", "UNH", "MRK", "CVS", "LLY", "ABT", "TMO", "BMY", "DHR", "ZTS", "MDT", "BSX",
+
+         # Energy Sector
+         "XOM", "CVX", "SLB", "COP", "OXY", "PSX", "VLO", "HAL", "MPC", "BKR", "EOG", "FANG", "KMI",
+
+         # Industrials
+         "BA", "CAT", "MMM", "GE", "HON", "UPS", "UNP", "LMT", "RTX", "FDX", "CSX", "NSC", "WM", "NOC",
+
+         # Utilities
+         "NEE", "DUK", "SO", "D", "EXC", "AEP", "SRE", "PEG", "WEC", "ED", "XEL", "ES", "AWK", "DTE",
+
+         # Telecommunications
+         "T", "VZ", "TMUS", "CCI", "AMT", "VOD", "S", "CHT", "TU", "NOK", "ORAN", "BTI", "KT", "PHI",
+
+         # Real Estate
+         "PLD", "AMT", "CCI", "SPG", "PSA", "EQIX", "EQR", "ESS", "AVB", "O", "MAA", "UDR", "VTR", "HCP",
+
+         # Consumer Discretionary
+         "DIS", "HD", "MCD", "SBUX", "NKE", "LVS", "GM", "F", "HMC", "TM", "TSLA", "YUM", "MAR", "CCL",
+
+         # ETFs and Funds
+         "SPY", "QQQ", "DIA", "IWM", "GLD", "SLV", "TLT", "XLF", "XLK", "XLE", "XLU", "XLI", "XLY", "XLP",
+
+         # Commodities
+         "CL=F", "GC=F", "SI=F", "NG=F", "HG=F", "ZC=F", "ZW=F", "ZS=F", "LE=F", "HE=F", "KC=F", "CC=F", "CT=F",
+
+         # Forex and Cryptocurrency
+         "EURUSD=X", "GBPUSD=X", "JPY=X", "AUDUSD=X", "BTC-USD", "ETH-USD", "LTC-USD", "XRP-USD", "BCH-USD",
+         "DOT-USD",])]
         )
 
     else:
@@ -173,7 +211,7 @@ if __name__ == '__main__':
     parser.add_argument('-num_seeds', default=1, type=int)
     parser.add_argument('-initial_seed', default=0, type=int)
     #parser.add_argument('-datasets', default=['ARCH', 'STOCKS', 'ECG', 'VAR', ], nargs="+")
-    parser.add_argument('-datasets', default=['YFinance'], nargs="+")  # ['Stocks', 'ARCH', 'VAR'] 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'LevyIto', 'YFinance'
+    parser.add_argument('-datasets', default=['YFinance'], nargs="+")  # ['Stocks', 'ARCH', 'VAR'] 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance'
     parser.add_argument('-algos', default=['SigCWGAN', 'GMMN', 'RCGAN', 'TimeGAN', 'RCWGAN', 'CWGAN',], nargs="+")
 
 
