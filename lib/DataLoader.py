@@ -225,6 +225,9 @@ class LoadData:
             S[:, 0] = S0
             S[:, 1:] = np.cumprod(returns, axis=1)
         else:
+            S = np.where(np.isnan(S), np.nan, S)
+            for i in range(1, S.shape[1]):
+                S[:, i] = np.where(np.isnan(S[:, i]), S[:, i - 1], S[:, i])
             S = S / S[:, 0].reshape(-1, 1) * S0
             t = np.array((raw_data.index - raw_data.index[0]).days)
             t = t / 365.25  # convert days to years
