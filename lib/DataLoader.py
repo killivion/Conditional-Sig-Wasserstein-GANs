@@ -185,25 +185,33 @@ class LoadData:
 
         return S, t
 
-    def get_yfinance_data(self, S0 = 1., ticker="^GSPC", start="2020-06-30", end="2024-06-30", window_size: int = 22, split=False):
+    def get_yfinance_data(self, S0 = 1., ticker="^GSPC", start="2020-06-30", end="2024-06-30", window_size: int = 22, split=False, plot=False):
         """Download and reformat yfinance data starting at S0. "
         Parameters: ticker: List of Stocks that are viewed, start, end: None"""
 
-        raw_data = yf.download(tickers=ticker, start=start, end=end, progress=False)["Adj Close"]
-        S = np.array(raw_data).T
-
-        #This gives Info about the Data used
-        print('YFinance Dataset includes this many Stocks and days (not only trading days): %s %s' % S.shape)
-        """
-        S_nanfill = np.where(np.isnan(S), np.nan, S)
-        for i in range(1, S.shape[1]):
-            S_nanfill[:, i] = np.where(np.isnan(S_nanfill[:, i]), S_nanfill[:, i - 1], S_nanfill[:, i])
-        log_returns = np.diff(np.log(S_nanfill), axis=1)
-        comb_log = log_returns[~np.isnan(log_returns)].flatten()
-        yearly_return_mean = (np.prod(1 + comb_log) ** (252/len(comb_log))) - 1
-        yearly_vola_mean = np.std(comb_log) * np.sqrt(252)
-        print('Drift and Volatility: %s %s' % (yearly_return_mean, yearly_vola_mean))
-        """
+        data = yf.download(tickers=ticker, start=start, end=end, progress=False)["Adj Close"]
+        data = np.array(data).T
+        if plot:
+            S = data / data[:, 0].reshape(-1, 1) * S0
+            print('YFinance Dataset includes this many days (not only trading days): %s %s' % S.shape)
+        else:
+            S = np.array([])
+            #for stock in tqdm(ticker, desc="YFinance", leave=False):
+            for raw_stock in tqdm(data, desc="YFinance", leave=False):
+                #raw_data = yf.download(tickers=stock, start=start, end=end, progress=False)["Adj Close"]
+                #raw_stock = np.array(raw_data).T
+                #raw_stock = np.where(np.isnan(raw_stock), np.nan, raw_stock)
+                raw_stock = raw_stock[np.argmax(~np.isnan(raw_stock)):]
+                for i in range(1, len(raw_stock)):
+                    raw_stock[i] = np.where(np.isnan(raw_stock[i]), raw_stock[i - 1], raw_stock[i])
+                if S.size == 0:
+                    raw_stock = raw_stock / raw_stock[0].reshape(-1, 1) * S0
+                else:
+                    raw_stock = raw_stock / raw_stock[0].reshape(-1, 1) * S[-1]
+                    raw_stock = raw_stock[0][1:]
+                S = np.append(S, raw_stock)
+            # This gives Info about the Data used
+            print('YFinance Dataset includes this many days (not only trading days): %s' % S.shape)
 
         # if split, split the data into chunks of length window_size:
         if split:
@@ -214,7 +222,7 @@ class LoadData:
             returns = returns[-n_returns:]
             returns = returns.reshape(n, window_size - 1)
             # t is the annualized time between each return
-            t_raw = np.array((raw_data.index[1:] - raw_data.index[0]).days)[-n_returns:]
+            t_raw = np.array((data.index[1:] - data.index[0]).days)[-n_returns:]
             t_raw = t_raw.reshape(n, window_size - 1)
             t = np.zeros((n, window_size))
             t[1:, 0] = t_raw[:-1, -1]
@@ -225,11 +233,7 @@ class LoadData:
             S[:, 0] = S0
             S[:, 1:] = np.cumprod(returns, axis=1)
         else:
-            S = np.where(np.isnan(S), np.nan, S)
-            for i in range(1, S.shape[1]):
-                S[:, i] = np.where(np.isnan(S[:, i]), S[:, i - 1], S[:, i])
-            S = S / S[:, 0].reshape(-1, 1) * S0
-            t = np.array((raw_data.index - raw_data.index[0]).days)
+            t = np.array(data.shape[1])
             t = t / 365.25  # convert days to years
 
         return S, t
@@ -275,6 +279,7 @@ if __name__ == "__main__": #Testing
     }
     YFinance_parameter = {
         "S0": 1.,
+        "plot": False,
         "ticker": [
     # Major Indices
     "^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX",
