@@ -221,7 +221,7 @@ def get_test_stocks(dataset, data_params):
     return pipeline, data_raw, data_pre
 
 
-def get_data(dataset, p, q, **data_params):
+def get_data(dataset, p, q, isSigLib, **data_params):
     """Outputs: Pipeline, x_real_raw: Diff of LogReturns in a tensor, x_real: StandardN scaled x_real_raw"""
     if dataset == 'STOCKS':
         pipeline, x_real_raw, x_real = get_equities_dataset(**data_params)
@@ -235,6 +235,8 @@ def get_data(dataset, p, q, **data_params):
         pipeline, x_real_raw, x_real = get_test_stocks(dataset, **data_params)
     else:
         raise NotImplementedError('Dataset %s not valid' % dataset)
-    assert x_real.shape[0] == 1  # allows only one simulated path
-    x_real = rolling_window(x_real[0], p + q)
+
+    if isSigLib:
+        assert x_real.shape[0] == 1  # allows only one simulated path
+        x_real = rolling_window(x_real[0], p + q)
     return x_real #pipeline, x_real_raw

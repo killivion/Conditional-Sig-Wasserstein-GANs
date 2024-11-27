@@ -50,7 +50,7 @@ def run(algo_id, base_config, base_dir, dataset, spec, data_params={}):
     # Set seed for exact reproducibility of the experiments
     set_seed(base_config.seed)
     # initialise dataset and algo
-    x_real = get_data(dataset, base_config.p, base_config.q, **data_params)
+    x_real = get_data(dataset, base_config.p, base_config.q, isSigLib=True, **data_params)
     x_real = x_real.to(base_config.device)
     ind_train = int(x_real.shape[0] * 0.8)
     x_real_train, x_real_test = x_real[:ind_train], x_real[ind_train:] #train_test_split(x_real, train_size = 0.8)
@@ -115,8 +115,8 @@ def get_dataset_configuration(dataset, window_size, num_paths):
                      for mu, sigma, lambda_large, lambda_small, jump_mean_large, jump_std_large, jump_mean_small, jump_std_small in [(0.05, 0.2, 2, 300, 0.03, 0.05, 0.0005, 0.0005)]
         )
     elif dataset == 'YFinance':
-        generator = (('ticker_length={}'.format(len(ticker)), dict(data_params=dict(ticker=ticker))) for ticker in [([
-        "^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX",
+        generator = (('ticker_length={}'.format(len(ticker)), dict(data_params=dict(ticker=ticker))) for ticker in [(['AAPL', 'MSFT', 'GOOG'])])
+        """["^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX",
         # Large-Cap Tech Stocks (FAANG & Others)
         "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA", "ORCL", "INTC", "CSCO", "IBM", "ADBE", "CRM", "TXN",
 
@@ -155,8 +155,8 @@ def get_dataset_configuration(dataset, window_size, num_paths):
 
         # Forex and Cryptocurrency
         "EURUSD=X", "GBPUSD=X", "JPY=X", "AUDUSD=X", "BTC-USD", "ETH-USD", "LTC-USD", "XRP-USD", "BCH-USD",
-        "DOT-USD",])]
-        )
+        "DOT-USD",]
+        """
 
     else:
         raise Exception('%s not a valid data type.' % dataset)
