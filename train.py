@@ -94,7 +94,7 @@ def get_dataset_configuration(dataset, window_size, num_paths):
         generator = (('lag={}_window_size={}'.format(lag, window_size), dict(lag=lag, window_size=window_size, num_paths=num_paths)) for lag in [3])
     elif dataset == 'SINE':
         generator = [('a', dict())]
-    elif dataset in {'Blackscholes'}:
+    elif dataset == 'Blackscholes':
         generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, window_size=window_size, num_paths=num_paths)))
                      for mu, sigma in [(0.05, 0.2)]
         )

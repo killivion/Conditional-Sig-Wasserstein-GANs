@@ -7,21 +7,16 @@ def main(args):
     from lib.data import get_data
     from train import get_dataset_configuration
 
-    utility_function = args.utility_function
-    alpha = args.alpha
-    dataset = args.datasets
-    window_size = args.window_size
-    num_paths = args.num_paths
 
-    generator = get_dataset_configuration(dataset, window_size=window_size, num_paths=num_paths)
+    generator = get_dataset_configuration(args.datasets, window_size=args.window_size, num_paths=args.num_paths)
     for spec, data_params in generator:
-        x_real = get_data(dataset, p=1, q=0, isSigLib=False, **data_params)
+        x_real = get_data(args.datasets, p=1, q=0, isSigLib=False, **data_params)
 
     ticker = ['AAPL', 'MSFT', 'GOOG']
     data = yf.download(ticker, start="2020-01-01", end="2023-01-01")['Adj Close']
     returns = data.pct_change().dropna().values  # Compute daily returns
 
-    run(returns, utility_function, alpha)
+    run(returns, args.utility_function, args.alpha)
 
 
 def run(returns, utility_function, alpha):
@@ -34,10 +29,9 @@ def run(returns, utility_function, alpha):
 
     # Add action noise (exploration)
     n_actions = env.action_space.shape[0]
-#    action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
+    action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
 
-    model = 1
-#    model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=1)
+    model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=1)
 
     mode = 'train'
     if mode == 'train':
@@ -73,7 +67,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-utility_function', default="power", type=str)
     parser.add_argument('-alpha', default=0.5, type=int)
-    parser.add_argument('-datasets', default=['YFinance'], nargs="+")  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance'
+    parser.add_argument('-datasets', default='YFinance', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance'
     parser.add_argument('-window_size', default=1000, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
 

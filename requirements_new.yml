@@ -1,0 +1,49 @@
+name: siglib2
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.8.3
+  - pip
+  - stable-baselines3
+  - gymnasium
+  - joblib
+  - scikit-learn
+  - scipy
+  - threadpoolctl
+
+  - torch
+  - torchvision
+
+  - cffi
+  - chardet
+  - cryptography
+  - cycler
+  - idna
+  - kiwisolver
+  - matplotlib
+  - numpy
+  - olefile
+  - pandas
+  - pillow
+  - pycparser
+  - pyopenssl
+  - pyparsing
+  - pysocks
+  - python-dateutil
+  - pytz
+  - qt
+  - requests
+  - setuptools
+  - sip
+  - six
+  - tornado
+  - tqdm
+  - urllib3
+  - wheel
+  - dataclasses
+  - pip:
+      - signatory
+      - msgpack
+      - fbm
+      - yfinance
