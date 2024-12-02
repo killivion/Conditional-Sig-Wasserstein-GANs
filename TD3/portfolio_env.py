@@ -29,9 +29,6 @@ class PortfolioEnv(gym.Env):
         elif self.utility_function == "log":
             reward = np.log(portfolio_return)
 
-        if reward < 0.8:
-            print(reward)
-
         self.current_step += 1
 
         terminated = self.current_step >= len(self.stock_data) - 1
