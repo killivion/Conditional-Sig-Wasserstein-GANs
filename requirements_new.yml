@@ -5,8 +5,7 @@ channels:
 dependencies:
   - python=3.8.3
   - pip
-  - stable-baselines3
-  - gymnasium
+  -
   - joblib
   - scikit-learn
   - scipy
@@ -43,7 +42,11 @@ dependencies:
   - wheel
   - dataclasses
   - pip:
-      - signatory
+      - torch=1.8.1
+      - signatory=1.2.6.1.8.1
+      - stable-baselines3
+      - gymnasium
+      - yfinance
       - msgpack
       - fbm
-      - yfinance
+      - IPython  # actually useless

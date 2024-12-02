@@ -7,24 +7,26 @@ def main(args):
     from lib.data import get_data
     from train import get_dataset_configuration
 
-
-    generator = get_dataset_configuration(args.datasets, window_size=args.window_size, num_paths=args.num_paths)
+    generator = get_dataset_configuration(args.dataset, window_size=args.window_size, num_paths=args.num_paths)
     for spec, data_params in generator:
-        x_real = get_data(args.datasets, p=1, q=0, isSigLib=False, **data_params)
+        if args.dataset == 'YFinance':
+            ticker = data_params['data_params']['ticker']
+            data = yf.download(ticker, start="2020-01-01", end="2024-01-01")['Adj Close']
+            returns = data.pct_change().dropna().values  # Compute daily returns
+        else:
+            data = get_data(args.dataset, p=1, q=0, isSigLib=False, **data_params).T
+            returns = data.pct_change().dropna().values  # Compute daily returns
 
-    ticker = ['AAPL', 'MSFT', 'GOOG']
-    data = yf.download(ticker, start="2020-01-01", end="2023-01-01")['Adj Close']
-    returns = data.pct_change().dropna().values  # Compute daily returns
-
-    run(returns, args.utility_function, args.alpha)
+    run(args.dataset, spec, returns, args.utility_function, args.p)
 
 
-def run(returns, utility_function, alpha):
+def run(dataset, spec, returns, utility_function, p):
+    print('Executing TD3 on %s, %s' % (dataset, spec))
     from portfolio_env import PortfolioEnv
     from stable_baselines3.common.noise import NormalActionNoise
     from stable_baselines3.common.vec_env import DummyVecEnv
 
-    env = PortfolioEnv(utility_function, alpha, stock_data=returns)
+    env = PortfolioEnv(utility_function, p, stock_data=returns)
     vec_env = DummyVecEnv([lambda: env])
 
     # Add action noise (exploration)
@@ -66,8 +68,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-utility_function', default="power", type=str)
-    parser.add_argument('-alpha', default=0.5, type=int)
-    parser.add_argument('-datasets', default='YFinance', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance'
+    parser.add_argument('-p', default=0.5, type=int)
+    parser.add_argument('-dataset', default='YFinance', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance'
     parser.add_argument('-window_size', default=1000, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
 
@@ -76,7 +78,7 @@ if __name__ == '__main__':
 
 
     """
-        env = PortfolioEnv(stock_data=returns, utility_function="power", alpha=0.5)
+        env = PortfolioEnv(stock_data=returns, utility_function="power", p=0.5)
         obs, info = env.reset()
         n_steps = 10
         for _ in range(n_steps):

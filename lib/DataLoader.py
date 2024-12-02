@@ -7,7 +7,7 @@ from IPython.display import clear_output
 
 
 class LoadData:
-    def __init__(self, dataset: str, data_params: Dict[str, Union[float, int]], seed: int = None):
+    def __init__(self, dataset: str, isSigLib: bool, data_params: Dict[str, Union[float, int]], seed: int = None):
         self.dataset_functions = {
             "Blackscholes": self.generate_gbm,
             "Heston": self.generate_heston,
@@ -18,6 +18,7 @@ class LoadData:
         }
         self.dataset = dataset
         self.data_params = data_params
+        self.isSigLib = isSigLib
         #self.seed = seed
 
     def create_dataset(self, output_type: str):
@@ -26,16 +27,10 @@ class LoadData:
             #if self.seed is not None:
             #    np.random.seed(self.seed)
             paths, time = self.dataset_functions[self.dataset](**self.data_params)
-            if output_type == "np.ndarray":  # for GANs
-                # paths[0] = paths[0] / paths[0, 0]  # normalizes paths to S0=1
-                if paths.shape[0] > 1:
-                    for i in range(1, paths.shape[0]):
-                        paths[i] = paths[i] / paths[i, 0] * paths[i-1, -1]  # normalizes values to the last value of the stock before
-                    paths = paths[:, :-1]  # remove last column, to avoid 0 return
-                    paths = paths.reshape(1, -1)  # GANs only allow for you one path. We reshape all paths into one since we only look at returns anyway
-                return paths, time
-            elif output_type == "DataFrame":  # for testing
+            if output_type == "DataFrame" or self.isSigLib == False:  # for testing and TD3
                 return pd.DataFrame(paths, columns=time)
+            elif output_type == "np.ndarray":  # for GANs
+                return paths, time
             else:
                 raise ValueError(f'output_type={output_type} not implemented.')
         else:
@@ -185,33 +180,30 @@ class LoadData:
 
         return S, t
 
-    def get_yfinance_data(self, S0 = 1., ticker="^GSPC", start="2020-06-30", end="2024-06-30", window_size: int = 22, split=False, plot=False):
+    def get_yfinance_data(self, S0 = 1., ticker="^GSPC", start="2020-01-01", end="2024-01-01", window_size=22, split=False, plot=False):
         """Download and reformat yfinance data starting at S0. "
         Parameters: ticker: List of Stocks that are viewed, start, end: None"""
 
         data = yf.download(tickers=ticker, start=start, end=end, progress=False)["Adj Close"]
         data = np.array(data).T
-        if plot:
+        if plot or self.isSigLib == False:
             S = data / data[:, 0].reshape(-1, 1) * S0
             print('YFinance Dataset includes this many days (not only trading days): %s %s' % S.shape)
         else:
-            S = np.array([])
-            #for stock in tqdm(ticker, desc="YFinance", leave=False):
+            first_stock = True
             for raw_stock in tqdm(data, desc="YFinance", leave=False):
-                #raw_data = yf.download(tickers=stock, start=start, end=end, progress=False)["Adj Close"]
-                #raw_stock = np.array(raw_data).T
-                #raw_stock = np.where(np.isnan(raw_stock), np.nan, raw_stock)
                 raw_stock = raw_stock[np.argmax(~np.isnan(raw_stock)):]
                 for i in range(1, len(raw_stock)):
                     raw_stock[i] = np.where(np.isnan(raw_stock[i]), raw_stock[i - 1], raw_stock[i])
-                if S.size == 0:
-                    raw_stock = raw_stock / raw_stock[0].reshape(-1, 1) * S0
+                if first_stock:
+                    S = raw_stock / raw_stock[0].reshape(-1, 1) * S0  # normalize to S0
+                    first_stock = False
                 else:
-                    raw_stock = raw_stock / raw_stock[0].reshape(-1, 1) * S[-1]
-                    raw_stock = raw_stock[0][1:]
-                S = np.append(S, raw_stock)
+                    raw_stock = raw_stock / raw_stock[0].reshape(-1, 1) * S[0][-1]  # normalizes values to the last value of the stock before
+                    raw_stock = raw_stock[0][1:].reshape(1, -1)  # remove first value, to avoid 0 return
+                    S = np.append(S, raw_stock, axis=1)  # GANs only allow for you one path. We reshape all paths into one since we only look at returns anyway
             # This gives Info about the Data used
-            print('YFinance Dataset includes this many days (not only trading days): %s' % S.shape)
+            print('YFinance Dataset includes this many days (not only trading days): %s %s' % S.shape)
 
         # if split, split the data into chunks of length window_size:
         if split:
@@ -233,7 +225,7 @@ class LoadData:
             S[:, 0] = S0
             S[:, 1:] = np.cumprod(returns, axis=1)
         else:
-            t = np.array(data.shape[1])
+            t = np.arange(0, S.shape[1], 1)
             t = t / 365.25  # convert days to years
 
         return S, t
