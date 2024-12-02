@@ -47,6 +47,7 @@ dependencies:
       - stable-baselines3
       - gymnasium
       - yfinance
+      - rich
       - msgpack
       - fbm
       - IPython  # actually useless

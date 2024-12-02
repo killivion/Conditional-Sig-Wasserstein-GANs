@@ -115,8 +115,7 @@ def get_dataset_configuration(dataset, window_size, num_paths):
                      for mu, sigma, lambda_large, lambda_small, jump_mean_large, jump_std_large, jump_mean_small, jump_std_small in [(0.05, 0.2, 2, 300, 0.03, 0.05, 0.0005, 0.0005)]
         )
     elif dataset == 'YFinance':
-        generator = (('ticker_length={}'.format(len(ticker)), dict(data_params=dict(ticker=ticker))) for ticker in [(['AAPL', 'MSFT', 'GOOG'])])
-        """["^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX",
+        generator = (('ticker_length={}'.format(len(ticker)), dict(data_params=dict(ticker=ticker))) for ticker in [(["^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX",
         # Large-Cap Tech Stocks (FAANG & Others)
         "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA", "ORCL", "INTC", "CSCO", "IBM", "ADBE", "CRM", "TXN",
 
@@ -156,8 +155,7 @@ def get_dataset_configuration(dataset, window_size, num_paths):
         # Forex and Cryptocurrency
         "EURUSD=X", "GBPUSD=X", "JPY=X", "AUDUSD=X", "BTC-USD", "ETH-USD", "LTC-USD", "XRP-USD", "BCH-USD",
         "DOT-USD",]
-        """
-
+        )])
     else:
         raise Exception('%s not a valid data type.' % dataset)
     return generator

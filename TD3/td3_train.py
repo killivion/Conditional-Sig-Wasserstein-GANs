@@ -20,10 +20,10 @@ def main(args):
     risk_free_column = np.full((returns.shape[0], 1), daily_risk_free_rate)
     returns = np.hstack((risk_free_column, returns))
 
-    run(args.dataset, spec, returns, args.utility_function, args.p)
+    run(args.dataset, spec, returns, args.utility_function, args.p, args.mode)
 
 
-def run(dataset, spec, returns, utility_function, p):
+def run(dataset, spec, returns, utility_function, p, mode):
     print('Executing TD3 on %s, %s' % (dataset, spec))
     from portfolio_env import PortfolioEnv
     from stable_baselines3.common.noise import NormalActionNoise
@@ -38,9 +38,8 @@ def run(dataset, spec, returns, utility_function, p):
 
     model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=1)
 
-    mode = 'train'
     if mode == 'train':
-        model.learn(total_timesteps=1000)
+        model.learn(total_timesteps=10000, progress_bar=True)
     elif mode == 'test':
         obs = env.reset()
         for _ in range(len(returns) - 1):
@@ -72,10 +71,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-utility_function', default="power", type=str)
     parser.add_argument('-p', default=0.5, type=int)
-    parser.add_argument('-dataset', default='YFinance', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance'
+    parser.add_argument('-dataset', default='Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance'
     parser.add_argument('-risk_free_rate', default=0.025, type=int)
     parser.add_argument('-window_size', default=1000, type=int)
-    parser.add_argument('-num_paths', default=1, type=int)
+    parser.add_argument('-num_paths', default=1000, type=int)
+    parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval'
 
     args = parser.parse_args()
     main(args)

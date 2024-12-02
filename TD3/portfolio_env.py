@@ -22,11 +22,15 @@ class PortfolioEnv(gym.Env):
 
         returns = self.stock_data[self.current_step]
         portfolio_return = np.dot(action, returns) + 1  # adjusted by 1 to compensate that sum(action)=0, hence portfolio return 1 is baseline
-
-        if self.utility_function == "power":
-            reward = (portfolio_return**(1-self.p)) / (1-self.p)
+        if portfolio_return <= 0:
+            reward = -1000 * abs(portfolio_return)  # punishment for negative performance
+        elif self.utility_function == "power":
+            reward = (portfolio_return ** (1 - self.p)) / (1 - self.p)
         elif self.utility_function == "log":
             reward = np.log(portfolio_return)
+
+        if reward < 0.8:
+            print(reward)
 
         self.current_step += 1
 
