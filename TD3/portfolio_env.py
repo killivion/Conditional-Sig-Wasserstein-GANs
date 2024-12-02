@@ -10,7 +10,7 @@ class PortfolioEnv(gym.Env):
         self.p = p  # Risk aversion parameter for power utility
 
         # Define action and observation space
-        self.action_space = gym.spaces.Box(low=0, high=1, shape=(self.num_stocks,), dtype=np.float32)
+        self.action_space = gym.spaces.Box(low=-1, high=1, shape=(self.num_stocks,), dtype=np.float32)
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(self.num_stocks,), dtype=np.float32)
 
         # Initialize state
@@ -18,12 +18,10 @@ class PortfolioEnv(gym.Env):
         self.current_weights = np.zeros(self.num_stocks)
 
     def step(self, action):
-        # Normalize action to sum to 1
-        action = action / np.sum(action)
+        action -= np.mean(action)  # Normalize action to sum to 0
 
-        # Compute portfolio return
         returns = self.stock_data[self.current_step]
-        portfolio_return = np.dot(action, returns)
+        portfolio_return = np.dot(action, returns) + 1  # adjusted by 1 to compensate that sum(action)=0, hence portfolio return 1 is baseline
 
         if self.utility_function == "power":
             reward = (portfolio_return**(1-self.p)) / (1-self.p)
