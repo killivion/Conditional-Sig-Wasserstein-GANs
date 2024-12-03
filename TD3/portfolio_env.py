@@ -37,11 +37,16 @@ class PortfolioEnv(gym.Env):
         obs = self.stock_data[self.current_step]
         return obs, reward, terminated, truncated, info
 
-    def reset(self, seed=None, **kwargs):
+    def reset(self, dataset='', data_params={}, risk_free_rate=0.025, mode='not_eval', seed=None, **kwargs):
         super().reset(seed=seed)
         if seed is not None:
             np.random.seed(seed)
         self.current_step = 0
-        obs = np.array(self.stock_data[self.current_step], dtype=np.float32)
-        info = {}  # Empty dictionary, or add custom info if needed
+        if mode == 'eval':
+            from td3_train import pull_data
+            np.random.seed(seed)
+            obs = np.array(pull_data(data_params, dataset, risk_free_rate)[self.current_step], dtype=np.float32)
+        else:
+            obs = np.array(self.stock_data[self.current_step], dtype=np.float32)
+        info = {}  # Empty dictionary
         return obs, info

@@ -19,13 +19,13 @@ class LoadData:
         self.dataset = dataset
         self.data_params = data_params
         self.isSigLib = isSigLib
-        #self.seed = seed
+        self.seed = seed
 
     def create_dataset(self, output_type: str):
         """Create specified dataset."""
         if self.dataset in self.dataset_functions:
-            #if self.seed is not None:
-            #    np.random.seed(self.seed)
+            if self.seed is not None:
+                np.random.seed(self.seed)
             paths, time = self.dataset_functions[self.dataset](**self.data_params)
             if output_type == "DataFrame" or self.isSigLib == False:  # for testing and TD3
                 return pd.DataFrame(paths, columns=time)
