@@ -1,6 +1,7 @@
 from stable_baselines3 import TD3
 import numpy as np
 import yfinance as yf
+import os
 
 
 def main(args):
@@ -20,16 +21,17 @@ def main(args):
     risk_free_column = np.full((returns.shape[0], 1), daily_risk_free_rate)
     returns = np.hstack((risk_free_column, returns))
 
-    run(args.dataset, spec, returns, args.utility_function, args.p, args.mode)
+    run(args.dataset, spec, returns, args.utility_function, args.p, args.mode, args.total_timesteps, args.num_episodes, args.actor_dataset)
 
 
-def run(dataset, spec, returns, utility_function, p, mode):
+def run(dataset, spec, returns, utility_function, p, mode, total_timesteps, num_episodes, actor_dataset):
     print('Executing TD3 on %s, %s' % (dataset, spec))
     from portfolio_env import PortfolioEnv
     from stable_baselines3.common.noise import NormalActionNoise
     from stable_baselines3.common.vec_env import DummyVecEnv
+    from stable_baselines3.common.monitor import Monitor
 
-    env = PortfolioEnv(utility_function, p, stock_data=returns)
+    env = Monitor(PortfolioEnv(utility_function, p, stock_data=returns))
     vec_env = DummyVecEnv([lambda: env])
 
     # Add action noise (exploration)
@@ -38,28 +40,43 @@ def run(dataset, spec, returns, utility_function, p, mode):
 
     model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=1)
 
+    model_save_path = f"./agent/td3_agent_{actor_dataset}"
+    if os.path.exists(model_save_path):
+        model = TD3.load(model_save_path)
     if mode == 'train':
-        model.learn(total_timesteps=10000, progress_bar=True)
+        model.learn(total_timesteps=total_timesteps, progress_bar=True, tb_log_name="TD3")
+        model.save(model_save_path)
+        # tensorboard --logdir ./logs
     elif mode == 'test':
-        obs = env.reset()
+        obs, info = env.reset()
+        total_reward = 0
         for _ in range(len(returns) - 1):
             action, _ = model.predict(obs)
-            obs, reward, done, info = env.step(action)
-            if done:
+            obs, reward, terminated, truncated, info = env.step(action)
+            total_reward += reward
+            if terminated:
+                print("Total reward during test:", total_reward)
                 break
     elif mode == 'eval':
-        portfolio_value = [1.0]  # Initial portfolio value
-        obs = env.reset()
-        for _ in range(len(returns) - 1):
-            action, _ = model.predict(obs)
-            obs, reward, done, info = env.step(action)
-            portfolio_value.append(portfolio_value[-1] * (1 + np.dot(action, returns[env.current_step])))
+        from tqdm import tqdm
+        portfolio_values = []
+        for episode in tqdm(range(num_episodes), desc="Episodes", leave=False):
+            portfolio_value = [1.0]  # Initial portfolio value
+            obs, info = env.reset()
+            for _ in range(len(returns) - 1):
+                action, _ = model.predict(obs, deterministic=True)
+                obs, reward, terminated, truncated, info = env.step(action)
+                portfolio_value.append(portfolio_value[-1] * (1 + np.dot(action, returns[env.unwrapped.current_step])))
+            portfolio_values.append(portfolio_value)
 
-        # Plot portfolio value
+        portfolio_values = np.array(portfolio_values)
+        mean_portfolio_value = portfolio_values.mean(axis=0)
+
         import matplotlib.pyplot as plt
-        plt.plot(portfolio_value, label="TD3 Portfolio")
-        plt.title("Portfolio Value Over Time")
-        plt.xlabel("Time Step")
+        plt.plot(range(len(returns)), mean_portfolio_value, color="red")
+        plt.plot(portfolio_values.T)
+        plt.title("Portfolio Value Episodes")
+        plt.xlabel("Episode")
         plt.ylabel("Portfolio Value")
         plt.legend()
         plt.show()
@@ -72,9 +89,12 @@ if __name__ == '__main__':
     parser.add_argument('-utility_function', default="power", type=str)
     parser.add_argument('-p', default=0.5, type=int)
     parser.add_argument('-dataset', default='Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance'
+    parser.add_argument('-actor_dataset', default='Blackscholes', type=str)  # An Actor ID to determine which actor will be loaded (if it exists), then trained or tested/evaluated on
     parser.add_argument('-risk_free_rate', default=0.025, type=int)
     parser.add_argument('-window_size', default=1000, type=int)
     parser.add_argument('-num_paths', default=1000, type=int)
+    parser.add_argument('-total_timesteps', default=1000, type=int)
+    parser.add_argument('-num_episodes', default=10, type=int)
     parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval'
 
     args = parser.parse_args()
