@@ -8,7 +8,7 @@ def evaluate_actor(args, data_params, actor, env, num_episodes, random_actor=Fal
 
     for episode in range(num_episodes):
         returns = pull_data(data_params, args.dataset, args.risk_free_rate)
-        for random_actor in [True, False]:
+        for random_actor in [False, True]:
             obs, info = env.reset()
             obs = np.array(returns[0], dtype=np.float32)
             episode_reward = 0
