@@ -71,7 +71,8 @@ class LoadData:
         S = np.zeros((num_paths, window_size+1))
         S[:, 0] = S0
 
-        for i in tqdm(range(1, window_size+1), desc="Correlated_BS", leave=False):
+        #for i in tqdm(range(1, window_size + 1), desc="Correlated_BS", leave=False):
+        for i in range(1, window_size+1):
             Z = np.random.normal(size=num_paths)  # Independent standard normals
             S[:, i] = S[:, i - 1] * np.exp((mu - 0.5 * np.sum(sigma_cov, axis=1)) * dt + cholesky @ Z * np.sqrt(dt))
 
