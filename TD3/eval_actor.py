@@ -3,6 +3,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
+
+def test_actor(model, env):
+    obs, info = env.reset()
+    total_reward = 0
+    done = False
+    while not done:
+        action, _ = model.predict(obs)
+        obs, reward, done, truncated, info = env.step(action)
+        total_reward += reward
+    print("Total reward during test:", total_reward)
+
+
 def evaluate_actor(args, data_params, model, env):
     portfolio_values = []
     for episode in tqdm(range(args.num_episodes), desc="Episodes", leave=False):
@@ -12,7 +24,7 @@ def evaluate_actor(args, data_params, model, env):
         while not done:
             action, _ = model.predict(obs, deterministic=True)
             obs, reward, done, _, info = env.step(action)
-            if done==False:
+            if not done:
                 portfolio_value.append(info)
         portfolio_values.append(portfolio_value)
 
@@ -32,24 +44,22 @@ def evaluate_actor(args, data_params, model, env):
 
 def compare_actor(args, data_params, actor, env):
     trained_cum_rewards, random_cum_rewards, trained_portfolio, random_portfolio = [], [], [], []
-
     for episode in tqdm(range(args.num_episodes), desc="Episodes", leave=False):
-        returns = pull_data(data_params, args.dataset, args.risk_free_rate)
         for random_actor in [False, True]:
             obs, info = env.reset()
-            obs = np.array(returns[0], dtype=np.float32)
             portfolio_value = [1.0]
             episode_reward = 0
             done = False
             while not done:
-                if random_actor:
-                    action = np.zeros(returns.shape[1], dtype=np.float32)  # env.action_space.sample()
+                if random_actor:  # the null investor
+                    action = env.action_space.sample()  # np.zeros(args.num_paths+1, dtype=np.float32)
                 else:
                     action, _ = actor.predict(obs, deterministic=True)
 
                 obs, reward, done, _, info = env.step(action)
                 episode_reward += reward
-                portfolio_value.append(portfolio_value[-1] * (1 + np.dot(action, returns[env.unwrapped.current_step])))
+                if not done:
+                    portfolio_value.append(info)
 
             if random_actor:
                 random_cum_rewards.append(episode_reward)
@@ -71,12 +81,12 @@ def compare_actor(args, data_params, actor, env):
     fig, axs = plt.subplots(1, 3, figsize=(15, 5))
 
     axs[0].plot(trained_portfolio.T, color="blue", linewidth=0.3)
-    axs[0].plot(range(args.window_size), trained_portfolio.mean(axis=0), color="red")
+    axs[0].plot(range(args.window_size-1), trained_portfolio.mean(axis=0), color="red")
     axs[0].set_title("Trained Portfolio")
     axs[0].set_ylabel("Portfolio Value")
 
     axs[1].plot(random_portfolio.T, color="blue", linewidth=0.3)
-    axs[1].plot(range(args.window_size), random_portfolio.mean(axis=0), color="red")
+    axs[1].plot(range(args.window_size-1), random_portfolio.mean(axis=0), color="red")
     axs[1].set_title("Random Portfolio")
     axs[1].set_ylabel("Portfolio Value")
 

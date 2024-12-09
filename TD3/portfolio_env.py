@@ -31,7 +31,7 @@ class PortfolioEnv(gym.Env):
         self.current_weights = np.zeros(self.num_stocks)
 
     def step(self, action):
-        action -= np.mean(action)  # Normalize action to sum to 0
+        action -= np.mean(action)
 
         portfolio_return = np.dot(action, self.stock_data[self.current_step]) + 1  # adjusted by 1 to compensate that sum(action)=0, hence portfolio return 1 is baseline
         self.portfolio_value *= portfolio_return
@@ -40,7 +40,7 @@ class PortfolioEnv(gym.Env):
         self.current_step += 1
 
         truncated = False
-        info = self.portfolio_value if not done and self.args.mode == 'test' else {}
+        info = self.portfolio_value if not done and self.args.mode in ['eval', 'compare'] else {}
 
         # obs = self.stock_data[self.current_step]
         obs = self._get_feature_map()
@@ -57,7 +57,7 @@ class PortfolioEnv(gym.Env):
             np.random.seed(seed)
             if self.args.mode in ['eval', 'compare']:  # pulls new rdm parameters
                 from td3_train import generate_random_params
-                mu, sigma_cov = generate_random_params(self.num_stocks)
+                mu, sigma_cov = generate_random_params(self.num_stocks-1)
                 data_params = dict(data_params=dict(mu=mu, sigma_cov=sigma_cov, window_size=self.args.window_size, num_paths=self.args.num_paths,grid_points=self.args.window_size))
                 self.sigma_cov = np.zeros((self.num_stocks, self.num_stocks))
                 self.sigma_cov[1:, 1:] = data_params['data_params']['sigma_cov']
@@ -80,7 +80,7 @@ class PortfolioEnv(gym.Env):
             reward = (self.portfolio_value ** (1 - self.args.p))  # / (1 - self.args.p) we leave out the constant divisor since it only scales the expectation
             if self.args.mode == 'test':
                 print('Terminal Reward is: %s' % reward)
-        else:
+        elif self.args.mode != ['compare']:
             if portfolio_return <= 0:  # intermediate reward function
                 reward = -1000 * abs(portfolio_return)  # punishment for negative performance
             elif self.args.utility_function == "power":

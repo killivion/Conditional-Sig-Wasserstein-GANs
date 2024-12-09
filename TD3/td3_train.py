@@ -3,6 +3,7 @@ import numpy as np
 import yfinance as yf
 import os
 import torch
+import eval_actor
 
 
 def main(args):
@@ -58,14 +59,14 @@ def run(args, spec, data_params, returns):
     from stable_baselines3.common.vec_env import DummyVecEnv
     from stable_baselines3.common.monitor import Monitor
 
-    env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns), filename='monitor_log.csv')
+    env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns), filename='log')
     vec_env = DummyVecEnv([lambda: env])
 
     # Add action noise (exploration)
     n_actions = env.action_space.shape[0]
     action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
 
-    model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=1)
+    model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=1, tensorboard_log="./logs")
 
     hardware = 'LRZ' if torch.cuda.is_available() else 'cpu'
     model_save_path = f"./agent/{hardware}_td3_agent_{args.actor_dataset}"
@@ -74,25 +75,15 @@ def run(args, spec, data_params, returns):
     if args.mode == 'train':
         model.learn(total_timesteps=args.total_timesteps, progress_bar=True, tb_log_name="TD3")
         model.save(model_save_path)
-        from learning_evaluation import monitor_plot
-        monitor_plot()
+        import track_learning
+        track_learning.monitor_plot()
         # tensorboard --logdir ./logs
     if args.mode in ['test', 'train']:
-        obs, info = env.reset()
-        total_reward = 0
-        for _ in range(len(returns) - 1):
-            action, _ = model.predict(obs)
-            obs, reward, done, truncated, info = env.step(action)
-            total_reward += reward
-            if done:
-                print("Total reward during test:", total_reward)
-                break
+        eval_actor.test_actor(model, env)
     elif args.mode == 'eval':
-        from eval_actor import evaluate_actor
-        evaluate_actor(args, data_params, model, env)
+        eval_actor.evaluate_actor(args, data_params, model, env)
     elif args.mode == 'compare':
-        from eval_actor import compare_actor
-        compare_actor(args, data_params, model, env)
+        eval_actor.compare_actor(args, data_params, model, env)
         # trained_rewards, random_rewards, trained_portfolio_values, random_portfolio_values
 
 
@@ -101,14 +92,14 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-utility_function', default="power", type=str)
-    parser.add_argument('-p', default=0.5, type=int)
+    parser.add_argument('-p', default=0.8, type=int)
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes'
     parser.add_argument('-actor_dataset', default='correlated_Blackscholes', type=str)  # An Actor ID to determine which actor will be loaded (if it exists), then trained or tested/evaluated on
     parser.add_argument('-risk_free_rate', default=0.025, type=int)
     parser.add_argument('-window_size', default=100, type=int)
     parser.add_argument('-num_paths', default=30, type=int)
-    parser.add_argument('-total_timesteps', default=10000, type=int)
-    parser.add_argument('-num_episodes', default=10, type=int)
+    parser.add_argument('-total_timesteps', default=2000, type=int)
+    parser.add_argument('-num_episodes', default=200, type=int)
     parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare'
 
     args = parser.parse_args()
