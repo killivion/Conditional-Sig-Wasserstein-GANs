@@ -216,7 +216,7 @@ def get_test_stocks(dataset, isSigLib, data_params):
         data_pre = pipeline.transform(data_raw)  # scales Data to StandardNormal
     else:  # for TD3
         data_pre = loader.create_dataset(output_type="DataFrame")
-        data_raw, pipeline = 1, 1  # dummy return so it doesnt bug out
+        data_raw, pipeline = 1, 1  # dummy return so it doesnt bug
     return pipeline, data_raw, data_pre
 
 
@@ -230,7 +230,7 @@ def get_data(dataset, p, q, isSigLib, **data_params):
         pipeline, x_real_raw, x_real = get_arch_dataset(**data_params)
     elif dataset == 'VAR':
         pipeline, x_real_raw, x_real = get_var_dataset(**data_params)
-    elif dataset in ['Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance']:
+    elif dataset in ['Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes']:
         pipeline, x_real_raw, x_real = get_test_stocks(dataset, isSigLib, **data_params)
     else:
         raise NotImplementedError('Dataset %s not valid' % dataset)

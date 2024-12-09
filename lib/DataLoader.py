@@ -10,6 +10,7 @@ class LoadData:
     def __init__(self, dataset: str, isSigLib: bool, data_params: Dict[str, Union[float, int]], seed: int = None):
         self.dataset_functions = {
             "Blackscholes": self.generate_gbm,
+            "correlated_Blackscholes": self.generate_correlated_BS,
             "Heston": self.generate_heston,
             "VarianceGamma": self.generate_vargamma,
             "Kou_Jump_Diffusion": self.generate_kou,
@@ -60,12 +61,32 @@ class LoadData:
 
         return S, t
 
+    def generate_correlated_BS(self, mu, sigma_cov, window_size, num_paths, grid_points=252, S0=1):
+
+        T = window_size / grid_points
+        dt = 1 / grid_points
+        t = np.linspace(0, T, window_size + 1)
+
+        cholesky = np.linalg.cholesky(sigma_cov)
+        S = np.zeros((num_paths, window_size+1))
+        S[:, 0] = S0
+
+        for i in tqdm(range(1, window_size+1), desc="Correlated_BS", leave=False):
+            Z = np.random.normal(size=num_paths)  # Independent standard normals
+            S[:, i] = S[:, i - 1] * np.exp((mu - 0.5 * np.sum(sigma_cov, axis=1)) * dt + cholesky @ Z * np.sqrt(dt))
+
+        prices_df = pd.DataFrame(S, columns=t)
+        print(' %s %s' % (prices_df.iloc[:, -1].mean()**(1 / T) - 1, prices_df.iloc[:, -1].std() / np.sqrt(T)))
+
+        return S, t
+
+
     def generate_heston(self, mu, v0_sqrt, kappa, sigma, xi, rho, window_size, num_paths, grid_points=252, S0=1):
         """generates num_paths time series following the Heston model via CIR
         mu: Drift, V0_squared->V0: Initial Variance, kappa: Mean reversion rate of Variance, sigma->theta: long Variance, xi: Volatility of Volatility, rho: Correlation of Wiener"""
         #Feller-Condition: 2*kappa*theta > xi**2
 
-        mu = mu * 0.08/0.005  # adjustment of drift due to Variance decrease
+        mu = mu * 0.08/0.02  # adjustment of drift due to Variance decrease
 
         T = window_size / grid_points
         dt = 1 / grid_points
@@ -129,8 +150,8 @@ class LoadData:
         dv = np.ones((num_paths, len(t)))  # Jump component
         dN = np.random.poisson(kou_lambda * dt, size=(num_paths, len(t) - 1))  # increments of Poisson process
 
-        for i in range(num_paths):
-            for j in tqdm(range(1, len(t)), desc="Kou", leave=False):
+        for i in tqdm(range(num_paths), desc="Kou", leave=False):
+            for j in range(1, len(t)):
                 # iterate through number of jumps
                 # vi contains all jumps that happen in one increment
                 vi = np.ones(dN[i, j - 1])
@@ -161,8 +182,8 @@ class LoadData:
         # Large jumps (compound Poisson process, Y_t) and Small jumps (compensated Poisson process, Z_t)
         Y = np.zeros((num_paths, window_size + 1))
         Z = np.zeros((num_paths, window_size + 1))
-        for i in range(num_paths):
-            for step in tqdm(range(1, window_size + 1), desc="LevyIto", leave=False):
+        for i in tqdm(range(num_paths), desc="LevyIto", leave=False):
+            for step in range(1, window_size + 1):
                 # Generate small/large jumps based on a Poisson process
                 num_large_jumps = np.random.poisson(lambda_large * dt)
                 if num_large_jumps > 0:
@@ -320,41 +341,39 @@ if __name__ == "__main__": #Testing
         "mu": 0.08,  # 0.0618421411431207,  # This is the YFinance data mean;
         "sigma": 0.2,  # 0.34787525475010267,  # This is the YFinance data Volatility;
         "S0": 1,
-        "grid_points": 10000,
-        "window_size": 10000 * 1,
-        "num_paths": 10000
+        "grid_points": 252,
+        "window_size": 252 * 1,
+        "num_paths": 1000
     }
-    """
-    #model = LoadData(dataset="Blackscholes", data_params={**GBM_parameter, **general_parameter})
-    #model = LoadData(dataset="Heston", data_params={**Heston_parameter, **general_parameter})
-    model = LoadData(dataset="VarianceGamma", data_params={**VarGamma_parameter, **general_parameter})
-    #model = LoadData(dataset="Kou_Jump_Diffusion", data_params={**Kou_parameter, **general_parameter})
-    #model = LoadData(dataset="Levy_Ito", data_params={**LevyIto_parameter, **general_parameter})
-    prices_df = model.create_dataset("DataFrame")
+    def generate_random_params(num_paths):
+        low_vol = 0.1 * 3*(np.log(1000))**(0.8)/(np.log(num_paths)**(1.8))  # Adjustment of up and lower bound depending on num_paths size (number of correlations)
+        up_vol = 0.25 * 3*(np.log(1000))**(0.8)/(np.log(num_paths)**(1.8))  # amounts to 22% vol
 
-    prices_df.T.plot(figsize=(15, 9), alpha=1, legend=False)
-    #prices_df.T.plot(figsize=(15, 9), linewidth=0.1, alpha=0.5, color='blue', legend=False) # many paths
-    #prices_df.T.plot(figsize=(15, 9), linewidth=0.1, alpha=0.2, color='blue', legend=False) # lot of paths 1000
+        mu = np.random.uniform(0.03, 0.13, size=num_paths)
+        volatilities = np.random.uniform(low_vol, up_vol, size=num_paths)
+        correlation = np.random.uniform(-1, 1, size=(num_paths, num_paths))
+        np.fill_diagonal(correlation, 1)
+        correlation = (correlation + correlation.T) / 2
+        eigvals, eigvecs = np.linalg.eigh(correlation)
+        eigvals[eigvals < 0] = 1e-5
+        correlation = eigvecs @ np.diag(eigvals) @ eigvecs.T
 
+        sigma_cov = correlation * np.outer(volatilities, volatilities)
+        return mu, sigma_cov
+    num_paths = general_parameter['num_paths']
+    mu, sigma_cov = generate_random_params(num_paths)
+    T = general_parameter['window_size']/general_parameter['grid_points']
 
-    plt.title('Simulated Paths over Time')
-    plt.xlabel('Timeframe (years)')
-    plt.ylabel('Price')
-    plt.grid(True)
-    plt.show()
-    """
-
+    plot = True
     models = {
-        "Blackscholes": {**GBM_parameter, **general_parameter},
-        "Heston": {**Heston_parameter, **general_parameter},
-        "VarianceGamma": {**VarGamma_parameter, **general_parameter},
+        #"Blackscholes": {**GBM_parameter, **general_parameter},
+        #"Heston": {**Heston_parameter, **general_parameter},
+        #"VarianceGamma": {**VarGamma_parameter, **general_parameter},
         #"Kou_Jump_Diffusion": {**Kou_parameter, **general_parameter},
-        "Levy_Ito": {**LevyIto_parameter, **general_parameter},
-        #"YFinance": YFinance_parameter
+        #"Levy_Ito": {**LevyIto_parameter, **general_parameter},
+        #"YFinance": YFinance_parameter,
+        "correlated_Blackscholes": {"mu": mu, "sigma_cov": sigma_cov, "window_size": general_parameter['window_size'], "num_paths": num_paths},
     }
-
-    T = 1
-    plot = False
 
     if plot:
         # Set up the figure for multiple subplots
@@ -363,11 +382,11 @@ if __name__ == "__main__": #Testing
 
         for i, (model_name, params) in enumerate(models.items()):
             # Load model and create simulated price data
-            model = LoadData(dataset=model_name, data_params=params)
+            model = LoadData(dataset=model_name, data_params=params, isSigLib=False)
             prices_df = model.create_dataset("DataFrame")
             clear_output(wait=True)
 
-            print('%s %s %s' % (model_name, (prices_df.iloc[:, -1].mean()) ** (1 / T) - 1, prices_df.iloc[:, -1].std()/np.sqrt(T)))
+            print('%s %s %s' % (model_name, prices_df.iloc[:, -1].mean()**(1 / T) - 1, prices_df.iloc[:, -1].std()/np.sqrt(T)))
 
             ax = axes[i]
             prices_df.T.plot(ax=ax, alpha=0.5, linewidth=0.3, legend=False)
@@ -385,7 +404,7 @@ if __name__ == "__main__": #Testing
         for i, (model_name, params) in enumerate(models.items()):
             start_time = time.time()
             # Load model and create simulated price data
-            model = LoadData(dataset=model_name, data_params=params)
+            model = LoadData(dataset=model_name, data_params=params, isSigLib=False)
             prices_df = model.create_dataset("DataFrame")
 
             print('%s %s %s' % (model_name, (prices_df.iloc[:, -1].mean()) ** (1 / T) - 1, prices_df.iloc[:, -1].std() / np.sqrt(T)))
