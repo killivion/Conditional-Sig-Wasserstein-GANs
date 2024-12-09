@@ -98,9 +98,9 @@ if __name__ == '__main__':
     parser.add_argument('-risk_free_rate', default=0.025, type=int)
     parser.add_argument('-window_size', default=100, type=int)
     parser.add_argument('-num_paths', default=30, type=int)
-    parser.add_argument('-total_timesteps', default=2000, type=int)
-    parser.add_argument('-num_episodes', default=200, type=int)
-    parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare'
+    parser.add_argument('-total_timesteps', default=5000, type=int)
+    parser.add_argument('-num_episodes', default=1000, type=int)
+    parser.add_argument('-mode', default='compare', type=str)  # 'train' 'test' 'eval' 'compare'
 
     args = parser.parse_args()
     main(args)

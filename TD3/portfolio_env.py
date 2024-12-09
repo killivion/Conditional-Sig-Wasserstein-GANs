@@ -80,7 +80,7 @@ class PortfolioEnv(gym.Env):
             reward = (self.portfolio_value ** (1 - self.args.p))  # / (1 - self.args.p) we leave out the constant divisor since it only scales the expectation
             if self.args.mode == 'test':
                 print('Terminal Reward is: %s' % reward)
-        elif self.args.mode != ['compare']:
+        elif self.args.mode not in ['compare', 'eval']:
             if portfolio_return <= 0:  # intermediate reward function
                 reward = -1000 * abs(portfolio_return)  # punishment for negative performance
             elif self.args.utility_function == "power":
@@ -88,4 +88,6 @@ class PortfolioEnv(gym.Env):
             elif self.args.utility_function == "log":
                 reward = np.log(portfolio_return)
             reward /= (3 * self.args.window_size)  # terminal reward weighted more important
+        else:
+            reward = 0
         return reward
