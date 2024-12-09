@@ -12,7 +12,7 @@ class PortfolioEnv(gym.Env):
         self.args = args
         self.data_params = data_params
 
-        self.mu = np.insert(data_params['data_params']['mu'], 0, args.risk_free_rate)
+        self.mu = np.insert(data_params['data_params']['mu'], 0, self.args.risk_free_rate)
         self.sigma_cov = np.zeros((self.num_stocks, self.num_stocks))
         self.sigma_cov[1:, 1:] = data_params['data_params']['sigma_cov']
 
@@ -40,7 +40,7 @@ class PortfolioEnv(gym.Env):
         self.current_step += 1
 
         truncated = False
-        info = {} if done else self.portfolio_value
+        info = self.portfolio_value if not done and self.args.mode == 'test' else {}
 
         # obs = self.stock_data[self.current_step]
         obs = self._get_feature_map()
@@ -55,12 +55,19 @@ class PortfolioEnv(gym.Env):
             self.first_episode = False
         else:  # if it's not the first episode, new data is pulled
             np.random.seed(seed)
+            if self.args.mode in ['eval', 'compare']:  # pulls new rdm parameters
+                from td3_train import generate_random_params
+                mu, sigma_cov = generate_random_params(self.num_stocks)
+                data_params = dict(data_params=dict(mu=mu, sigma_cov=sigma_cov, window_size=self.args.window_size, num_paths=self.args.num_paths,grid_points=self.args.window_size))
+                self.sigma_cov = np.zeros((self.num_stocks, self.num_stocks))
+                self.sigma_cov[1:, 1:] = data_params['data_params']['sigma_cov']
+                self.mu = np.insert(data_params['data_params']['mu'], 0, self.args.risk_free_rate)
             self.portfolio_value = 1
             self.stock_data = pull_data(self.data_params, self.args.dataset, self.args.risk_free_rate)
             self.normalized_stock_data = (self.stock_data - 1) / np.std(self.stock_data, axis=1, keepdims=True)
         # obs = np.array(self.stock_data[self.current_step], dtype=np.float32)
         obs = self._get_feature_map()
-        info = self.stock_data
+        info = {}
         return obs, info
 
     def _get_feature_map(self):

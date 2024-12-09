@@ -8,22 +8,6 @@ import torch
 def main(args):
     from train import get_dataset_configuration
     if args.dataset == 'correlated_Blackscholes':
-        def generate_random_params(num_paths):
-            low_vol = 0.1 * 3 * (np.log(1000)) ** (0.8) / (np.log(num_paths) ** (1.8))  # Adjustment of up and lower bound depending on num_paths size (number of correlations)
-            up_vol = 0.25 * 3 * (np.log(1000)) ** (0.8) / (np.log(num_paths) ** (1.8))  # amounts to slightly more than 20% vol
-
-            mu = np.random.uniform(0.03, 0.13, size=num_paths)
-            volatilities = np.random.uniform(low_vol, up_vol, size=num_paths)
-            correlation = np.random.uniform(-1, 1, size=(num_paths, num_paths))
-            np.fill_diagonal(correlation, 1)
-            correlation = (correlation + correlation.T) / 2
-            eigvals, eigvecs = np.linalg.eigh(correlation)
-            eigvals[eigvals < 0] = 1e-5
-            correlation = eigvecs @ np.diag(eigvals) @ eigvecs.T
-
-            sigma_cov = correlation * np.outer(volatilities, volatilities)
-            return mu, sigma_cov
-
         mu, sigma_cov = generate_random_params(args.num_paths)
         spec = 'args.num_paths={}_window_size={}'.format(args.num_paths, args.window_size)
         data_params = dict(data_params=dict(mu=mu, sigma_cov=sigma_cov, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.window_size))
@@ -35,6 +19,23 @@ def main(args):
     returns = pull_data(data_params, args.dataset, args.risk_free_rate)
     run(args, spec, data_params, returns)
 
+
+def generate_random_params(num_paths):
+    low_vol = 0.1 * 3 * (np.log(1000)) ** (0.8) / (np.log(num_paths) ** (
+        1.8))  # Adjustment of up and lower bound depending on num_paths size (number of correlations)
+    up_vol = 0.25 * 3 * (np.log(1000)) ** (0.8) / (np.log(num_paths) ** (1.8))  # amounts to slightly more than 20% vol
+
+    mu = np.random.uniform(0.03, 0.13, size=num_paths)
+    volatilities = np.random.uniform(low_vol, up_vol, size=num_paths)
+    correlation = np.random.uniform(-1, 1, size=(num_paths, num_paths))
+    np.fill_diagonal(correlation, 1)
+    correlation = (correlation + correlation.T) / 2
+    eigvals, eigvecs = np.linalg.eigh(correlation)
+    eigvals[eigvals < 0] = 1e-5
+    correlation = eigvecs @ np.diag(eigvals) @ eigvecs.T
+
+    sigma_cov = correlation * np.outer(volatilities, volatilities)
+    return mu, sigma_cov
 
 def pull_data(data_params, dataset, risk_free_rate):
     from lib.data import get_data
@@ -106,7 +107,7 @@ if __name__ == '__main__':
     parser.add_argument('-risk_free_rate', default=0.025, type=int)
     parser.add_argument('-window_size', default=100, type=int)
     parser.add_argument('-num_paths', default=30, type=int)
-    parser.add_argument('-total_timesteps', default=20000, type=int)
+    parser.add_argument('-total_timesteps', default=10000, type=int)
     parser.add_argument('-num_episodes', default=10, type=int)
     parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare'
 
