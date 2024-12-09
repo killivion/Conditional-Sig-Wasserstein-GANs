@@ -12,7 +12,8 @@ def evaluate_actor(args, data_params, model, env):
         while not done:
             action, _ = model.predict(obs, deterministic=True)
             obs, reward, done, _, info = env.step(action)
-            portfolio_value.append(portfolio_value[-1] * (1 + np.dot(action, obs)))
+            if done==False:
+                portfolio_value.append(info)
         portfolio_values.append(portfolio_value)
 
     portfolio_values = np.array(portfolio_values)
@@ -20,10 +21,10 @@ def evaluate_actor(args, data_params, model, env):
 
     print(f"Trained Actor Average Portfolio: {mean_portfolio_value}")
 
-    plt.plot(range(args.window_size), mean_portfolio_value, color="red")
+    plt.plot(range(args.window_size-1), mean_portfolio_value, color="red")
     plt.plot(portfolio_values.T, color="blue")
     plt.title("Portfolio Value Episodes")
-    plt.xlabel("Episode")
+    plt.xlabel("Time")
     plt.ylabel("Portfolio Value")
     #plt.legend()
     plt.show()

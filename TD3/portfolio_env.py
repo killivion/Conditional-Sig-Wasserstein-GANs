@@ -7,7 +7,7 @@ class PortfolioEnv(gym.Env):
         super(PortfolioEnv, self).__init__()
         self.stock_data = stock_data
         self.num_stocks = stock_data.shape[1]
-        self.portfolio_value = 0
+        self.portfolio_value = 1
         self.first_episode = True
         self.args = args
         self.data_params = data_params
@@ -17,6 +17,7 @@ class PortfolioEnv(gym.Env):
         self.sigma_cov[1:, 1:] = data_params['data_params']['sigma_cov']
 
         # Normalization:
+        self.normalized_stock_data = (self.stock_data - 1) / np.std(self.stock_data, axis=1, keepdims=True)
         self.mu = (self.mu - np.mean(self.mu)) / np.std(self.mu)
         self.sigma_cov = self.sigma_cov / np.max(self.sigma_cov)
 
@@ -34,14 +35,16 @@ class PortfolioEnv(gym.Env):
 
         portfolio_return = np.dot(action, self.stock_data[self.current_step]) + 1  # adjusted by 1 to compensate that sum(action)=0, hence portfolio return 1 is baseline
         self.portfolio_value *= portfolio_return
-        terminated = self.current_step + 1 >= len(self.stock_data) - 1
-        reward = self._calc_reward(action, terminated, portfolio_return)
+        done = self.current_step + 1 >= len(self.stock_data) - 1
+        reward = self._calc_reward(done, portfolio_return)
         self.current_step += 1
 
-        info, truncated = {}, False
+        truncated = False
+        info = {} if done else self.portfolio_value
+
         # obs = self.stock_data[self.current_step]
         obs = self._get_feature_map()
-        return obs, reward, terminated, truncated, info
+        return obs, reward, done, truncated, info
 
     def reset(self, seed=None, **kwargs):
         super().reset(seed=seed)
@@ -52,26 +55,30 @@ class PortfolioEnv(gym.Env):
             self.first_episode = False
         else:  # if it's not the first episode, new data is pulled
             np.random.seed(seed)
+            self.portfolio_value = 1
             self.stock_data = pull_data(self.data_params, self.args.dataset, self.args.risk_free_rate)
+            self.normalized_stock_data = (self.stock_data - 1) / np.std(self.stock_data, axis=1, keepdims=True)
         # obs = np.array(self.stock_data[self.current_step], dtype=np.float32)
         obs = self._get_feature_map()
-        info = {}
+        info = self.stock_data
         return obs, info
 
     def _get_feature_map(self):
-        returns = self.stock_data[self.current_step]
-        feature_map = np.concatenate([returns, self.mu, self.sigma_cov.flatten()])
+        normalized_returns = self.normalized_stock_data[self.current_step]
+        feature_map = np.concatenate([normalized_returns, self.mu, self.sigma_cov.flatten()])
         return feature_map
 
-    def _calc_reward(self, action, terminated, portfolio_return):
-        if terminated:  # Terminal utility -> Central Reward-fct.
+    def _calc_reward(self, done, portfolio_return):
+        if done:  # Terminal utility -> Central Reward-fct.
             reward = (self.portfolio_value ** (1 - self.args.p))  # / (1 - self.args.p) we leave out the constant divisor since it only scales the expectation
+            if self.args.mode == 'test':
+                print('Terminal Reward is: %s' % reward)
         else:
             if portfolio_return <= 0:  # intermediate reward function
                 reward = -1000 * abs(portfolio_return)  # punishment for negative performance
             elif self.args.utility_function == "power":
-                reward = (portfolio_return ** (1 - self.args.p))  # / (1 - self.args.p) we leave out the constant divisor since it only scales the expectation
+                reward = (portfolio_return ** (1 - self.args.p))
             elif self.args.utility_function == "log":
                 reward = np.log(portfolio_return)
-            reward /= 100  # terminal reward weighted more important
+            reward /= (3 * self.args.window_size)  # terminal reward weighted more important
         return reward

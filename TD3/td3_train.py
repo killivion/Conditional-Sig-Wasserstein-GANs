@@ -2,6 +2,7 @@ from stable_baselines3 import TD3
 import numpy as np
 import yfinance as yf
 import os
+import torch
 
 
 def main(args):
@@ -25,9 +26,9 @@ def main(args):
 
         mu, sigma_cov = generate_random_params(args.num_paths)
         spec = 'args.num_paths={}_window_size={}'.format(args.num_paths, args.window_size)
-        data_params = dict(data_params=dict(mu=mu, sigma_cov=sigma_cov, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.grid_points))
+        data_params = dict(data_params=dict(mu=mu, sigma_cov=sigma_cov, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.window_size))
     else:
-        generator = get_dataset_configuration(args.dataset, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.grid_points)
+        generator = get_dataset_configuration(args.dataset, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.window_size)
         for s, d in generator:
             spec, data_params = s, d  # odd way to do it, works in 1-d
 
@@ -56,7 +57,7 @@ def run(args, spec, data_params, returns):
     from stable_baselines3.common.vec_env import DummyVecEnv
     from stable_baselines3.common.monitor import Monitor
 
-    env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns))
+    env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns), filename='monitor_log.csv')
     vec_env = DummyVecEnv([lambda: env])
 
     # Add action noise (exploration)
@@ -65,21 +66,24 @@ def run(args, spec, data_params, returns):
 
     model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=1)
 
-    model_save_path = f"./agent/td3_agent_{args.actor_dataset}"
+    hardware = 'LRZ' if torch.cuda.is_available() else 'cpu'
+    model_save_path = f"./agent/{hardware}_td3_agent_{args.actor_dataset}"
     if os.path.exists(model_save_path):
         model = TD3.load(model_save_path)
     if args.mode == 'train':
         model.learn(total_timesteps=args.total_timesteps, progress_bar=True, tb_log_name="TD3")
         model.save(model_save_path)
+        from learning_evaluation import monitor_plot
+        monitor_plot()
         # tensorboard --logdir ./logs
-    elif args.mode == 'test':
+    if args.mode in ['test', 'train']:
         obs, info = env.reset()
         total_reward = 0
         for _ in range(len(returns) - 1):
             action, _ = model.predict(obs)
-            obs, reward, terminated, truncated, info = env.step(action)
+            obs, reward, done, truncated, info = env.step(action)
             total_reward += reward
-            if terminated:
+            if done:
                 print("Total reward during test:", total_reward)
                 break
     elif args.mode == 'eval':
@@ -100,10 +104,9 @@ if __name__ == '__main__':
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes'
     parser.add_argument('-actor_dataset', default='correlated_Blackscholes', type=str)  # An Actor ID to determine which actor will be loaded (if it exists), then trained or tested/evaluated on
     parser.add_argument('-risk_free_rate', default=0.025, type=int)
-    parser.add_argument('-grid_points', default=100, type=int)
     parser.add_argument('-window_size', default=100, type=int)
-    parser.add_argument('-num_paths', default=50, type=int)
-    parser.add_argument('-total_timesteps', default=10000, type=int)
+    parser.add_argument('-num_paths', default=30, type=int)
+    parser.add_argument('-total_timesteps', default=20000, type=int)
     parser.add_argument('-num_episodes', default=10, type=int)
     parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare'
 
