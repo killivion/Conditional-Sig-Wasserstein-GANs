@@ -11,9 +11,9 @@ def main(args):
     if args.dataset == 'correlated_Blackscholes':
         mu, sigma_cov = generate_random_params(args.num_paths)
         spec = 'args.num_paths={}_window_size={}'.format(args.num_paths, args.window_size)
-        data_params = dict(data_params=dict(mu=mu, sigma_cov=sigma_cov, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.window_size))
+        data_params = dict(data_params=dict(mu=mu, sigma_cov=sigma_cov, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.grid_points))
     else:
-        generator = get_dataset_configuration(args.dataset, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.window_size)
+        generator = get_dataset_configuration(args.dataset, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.grid_points)
         for s, d in generator:
             spec, data_params = s, d  # odd way to do it, works in 1-d
 
@@ -22,11 +22,10 @@ def main(args):
 
 
 def generate_random_params(num_paths):
-    low_vol = 0.1 * 3 * (np.log(1000)) ** (0.8) / (np.log(num_paths) ** (
-        1.8))  # Adjustment of up and lower bound depending on num_paths size (number of correlations)
-    up_vol = 0.25 * 3 * (np.log(1000)) ** (0.8) / (np.log(num_paths) ** (1.8))  # amounts to slightly more than 20% vol
+    low_vol = 0.1 * 3 * (np.log(1000)) ** (0.8) / (np.log(num_paths) ** (1.8)) if num_paths != 1 else np.sqrt(0.02) # Adjustment of up and lower bound depending on num_paths size (number of correlations)
+    up_vol = 0.25 * 3 * (np.log(1000)) ** (0.8) / (np.log(num_paths) ** (1.8)) if num_paths != 1 else np.sqrt(0.02) # amounts to slightly more than 20% vol
 
-    mu = np.random.uniform(0.03, 0.13, size=num_paths)
+    mu = np.random.uniform(0.03, 0.13, size=num_paths) if num_paths != 1 else 0.8
     volatilities = np.random.uniform(low_vol, up_vol, size=num_paths)
     correlation = np.random.uniform(-1, 1, size=(num_paths, num_paths))
     np.fill_diagonal(correlation, 1)
@@ -69,7 +68,7 @@ def run(args, spec, data_params, returns):
     model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=1, tensorboard_log="./logs")
 
     hardware = 'LRZ' if torch.cuda.is_available() else 'cpu'
-    model_save_path = f"./agent/{hardware}_td3_agent_{args.actor_dataset}"
+    model_save_path = f"./agent/{hardware}_td3_agent_{args.actor_dataset}_{args.num_paths}"
     if os.path.exists(model_save_path):
         model = TD3.load(model_save_path)
     if args.mode == 'train':
@@ -92,15 +91,16 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-utility_function', default="power", type=str)
-    parser.add_argument('-p', default=0.8, type=int)
+    parser.add_argument('-p', default=0.8, type=float)
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes'
     parser.add_argument('-actor_dataset', default='correlated_Blackscholes', type=str)  # An Actor ID to determine which actor will be loaded (if it exists), then trained or tested/evaluated on
-    parser.add_argument('-risk_free_rate', default=0.025, type=int)
-    parser.add_argument('-window_size', default=100, type=int)
-    parser.add_argument('-num_paths', default=30, type=int)
-    parser.add_argument('-total_timesteps', default=5000, type=int)
+    parser.add_argument('-risk_free_rate', default=0.04, type=int)
+    parser.add_argument('-grid_points', default=252, type=int)
+    parser.add_argument('-window_size', default=50, type=int)
+    parser.add_argument('-num_paths', default=1, type=int)
+    parser.add_argument('-total_timesteps', default=100000, type=int)
     parser.add_argument('-num_episodes', default=1000, type=int)
-    parser.add_argument('-mode', default='compare', type=str)  # 'train' 'test' 'eval' 'compare'
+    parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare'
 
     args = parser.parse_args()
     main(args)

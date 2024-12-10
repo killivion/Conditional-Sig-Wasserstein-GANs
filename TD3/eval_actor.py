@@ -73,8 +73,8 @@ def compare_actor(args, data_params, actor, env):
     trained_portfolio = np.array(trained_portfolio)
     random_portfolio = np.array(random_portfolio)
 
-    print(f"Trained Actor Average Reward: {np.mean(trained_cum_rewards)}")
-    print(f"Random Actor Average Reward: {np.mean(random_cum_rewards)}")
+    print(f"Trained Actor Average Terminal Reward: {np.mean(trained_cum_rewards)}")
+    print(f"Random Actor Average Terminal Reward: {np.mean(random_cum_rewards)}")
     print(f"Trained Actor Average Portfolio: {np.mean(trained_portfolio[:,-1])}")
     print(f"Random Actor Average Portfolio: {np.mean(random_portfolio[:,-1])}")
 

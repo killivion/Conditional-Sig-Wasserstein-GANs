@@ -23,7 +23,7 @@ class PortfolioEnv(gym.Env):
 
         # Define action and observation space
         feature_size = self.num_stocks + len(self.mu) + len(self.sigma_cov.flatten())
-        self.action_space = gym.spaces.Box(low=-1, high=1, shape=(self.num_stocks,), dtype=np.float32)
+        self.action_space = gym.spaces.Box(low=0, high=1, shape=(self.num_stocks,), dtype=np.float32)
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(feature_size,),dtype=np.float32,)
 
         # Initialize state
@@ -31,10 +31,10 @@ class PortfolioEnv(gym.Env):
         self.current_weights = np.zeros(self.num_stocks)
 
     def step(self, action):
-        action -= np.mean(action)
-
-        portfolio_return = np.dot(action, self.stock_data[self.current_step]) + 1  # adjusted by 1 to compensate that sum(action)=0, hence portfolio return 1 is baseline
+        action = action/np.mean(action)  # action -= np.mean(action)
+        portfolio_return = np.dot(action, self.stock_data[self.current_step])  #+1 # adjusted by 1 to compensate that sum(action)=0, hence portfolio return 1 is baseline
         self.portfolio_value *= portfolio_return
+
         done = self.current_step + 1 >= len(self.stock_data) - 1
         reward = self._calc_reward(done, portfolio_return)
         self.current_step += 1
