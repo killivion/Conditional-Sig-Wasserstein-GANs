@@ -12,14 +12,8 @@ class PortfolioEnv(gym.Env):
         self.args = args
         self.data_params = data_params
 
-        self.mu = np.insert(data_params['data_params']['mu'], 0, self.args.risk_free_rate)
-        self.sigma_cov = np.zeros((self.num_stocks, self.num_stocks))
-        self.sigma_cov[1:, 1:] = data_params['data_params']['sigma_cov']
-
-        # Normalization:
         self.normalized_stock_data = (self.stock_data - 1) / np.std(self.stock_data, axis=1, keepdims=True)
-        self.mu = (self.mu - np.mean(self.mu)) / np.std(self.mu)
-        self.sigma_cov = self.sigma_cov / np.max(self.sigma_cov)
+        self._normalize_parameter()
 
         # Define action and observation space
         feature_size = self.num_stocks + len(self.mu) + len(self.sigma_cov.flatten())
@@ -31,7 +25,7 @@ class PortfolioEnv(gym.Env):
         self.current_weights = np.zeros(self.num_stocks)
 
     def step(self, action):
-        action = action/np.mean(action)  # action -= np.mean(action)
+        action /= sum(action)  # action -= np.mean(action)
         portfolio_return = np.dot(action, self.stock_data[self.current_step])  #+1 # adjusted by 1 to compensate that sum(action)=0, hence portfolio return 1 is baseline
         self.portfolio_value *= portfolio_return
 
@@ -58,10 +52,8 @@ class PortfolioEnv(gym.Env):
             if self.args.mode in ['eval', 'compare']:  # pulls new rdm parameters
                 from td3_train import generate_random_params
                 mu, sigma_cov = generate_random_params(self.num_stocks-1)
-                data_params = dict(data_params=dict(mu=mu, sigma_cov=sigma_cov, window_size=self.args.window_size, num_paths=self.args.num_paths,grid_points=self.args.window_size))
-                self.sigma_cov = np.zeros((self.num_stocks, self.num_stocks))
-                self.sigma_cov[1:, 1:] = data_params['data_params']['sigma_cov']
-                self.mu = np.insert(data_params['data_params']['mu'], 0, self.args.risk_free_rate)
+                self.data_params = dict(data_params=dict(mu=mu, sigma_cov=sigma_cov, window_size=self.args.window_size, num_paths=self.args.num_paths,grid_points=self.args.window_size))
+                self._normalize_parameter()
             self.portfolio_value = 1
             self.stock_data = pull_data(self.data_params, self.args.dataset, self.args.risk_free_rate)
             self.normalized_stock_data = (self.stock_data - 1) / np.std(self.stock_data, axis=1, keepdims=True)
@@ -91,3 +83,13 @@ class PortfolioEnv(gym.Env):
         else:
             reward = 0
         return reward
+
+    def _normalize_parameter(self):
+        self.mu = np.insert(self.data_params['data_params']['mu'], 0, self.args.risk_free_rate)
+        self.sigma_cov = np.zeros((self.num_stocks, self.num_stocks))
+        self.sigma_cov[1:, 1:] = np.sqrt(self.data_params['data_params']['sigma_cov'])
+
+        # Normalization:
+        if self.num_stocks != 2:
+            self.mu = (self.mu - np.mean(self.mu)) / np.std(self.mu)
+            self.sigma_cov = self.sigma_cov / np.max(self.sigma_cov)

@@ -4,15 +4,26 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 
-def test_actor(model, env):
+def test_actor(args, data_params, model, env):
     obs, info = env.reset()
     total_reward = 0
+    average_riskfree_action, average_risky_action = [], []
     done = False
     while not done:
         action, _ = model.predict(obs)
         obs, reward, done, truncated, info = env.step(action)
         total_reward += reward
+        average_riskfree_action.append(action[0])
+        average_risky_action.append(sum(action[1:]))
+        print(action)
     print("Total reward during test:", total_reward)
+    print("Average Riskfree Action:", np.mean(average_riskfree_action))
+    print("Average Risky Action:", np.mean(average_risky_action))
+
+    cholesky = np.linalg.cholesky(data_params['data_params']['sigma_cov'])
+    analytical_risky_action = 1/args.p * (data_params['data_params']['mu']-args.risk_free_rate) @ ((cholesky @ cholesky.T) ** (-1))
+    print("Analytical Risky Action:", sum(analytical_risky_action))
+    print("Analytical Riskfree Action:", 1-sum(analytical_risky_action))
 
 
 def evaluate_actor(args, data_params, model, env):
