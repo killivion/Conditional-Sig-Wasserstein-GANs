@@ -40,11 +40,13 @@ class PortfolioEnv(gym.Env):
         obs = self._get_feature_map()
         return obs, reward, done, truncated, info
 
-    def reset(self, seed=None, **kwargs):
+    def reset(self, seed=None, test=False, **kwargs):
         super().reset(seed=seed)
         self.current_step = 0
         if seed is not None:
             np.random.seed(seed)
+        if test:
+            self.args.mode = 'test'
         if self.first_episode:
             self.first_episode = False
         else:  # if it's not the first episode, new data is pulled
@@ -67,7 +69,7 @@ class PortfolioEnv(gym.Env):
         feature_map = np.concatenate([normalized_returns, self.mu, self.sigma_cov.flatten()])
         return feature_map
 
-    def _calc_reward(self, done, portfolio_return):
+    def _calc_reward(self, done, portfolio_return, test=False):
         if done:  # Terminal utility -> Central Reward-fct.
             reward = (self.portfolio_value ** (1 - self.args.p))  # / (1 - self.args.p) we leave out the constant divisor since it only scales the expectation
             if self.args.mode == 'test':
