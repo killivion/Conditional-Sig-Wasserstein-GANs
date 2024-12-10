@@ -77,7 +77,7 @@ class LoadData:
             S[:, i] = S[:, i - 1] * np.exp((mu - 0.5 * np.sum(sigma_cov, axis=1)) * dt + cholesky @ Z * np.sqrt(dt))
 
         #prices_df = pd.DataFrame(S, columns=t)
-        #print(' %s %s' % (prices_df.iloc[:, -1].mean()**(1 / T) - 1, prices_df.iloc[:, -1].std() / np.sqrt(T)))
+        #print('Mean and Std of correlated BS %s %s' % (prices_df.iloc[:, -1].mean()**(1 / T) - 1, prices_df.iloc[:, -1].std() / np.sqrt(T)))
 
         return S, t
 

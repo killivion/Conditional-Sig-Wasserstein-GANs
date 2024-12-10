@@ -82,7 +82,7 @@ def run(args, spec, data_params, returns):
         track_learning.monitor_plot()
         # tensorboard --logdir ./TD3/logs
     if args.mode in ['test', 'train']:
-        eval_actor.test_actor(args, data_params, model, env)
+        eval_actor.test_actor(args=args, data_params=data_params, model=model, env=env)
     elif args.mode == 'eval':
         eval_actor.evaluate_actor(args, data_params, model, env)
     elif args.mode == 'compare':

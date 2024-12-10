@@ -25,7 +25,7 @@ class PortfolioEnv(gym.Env):
         self.current_weights = np.zeros(self.num_stocks)
 
     def step(self, action):
-        action /= sum(action)  # action -= np.mean(action)
+        action /= sum(action) if sum(action) != 0 else [0.5, 0.5]  # action -= np.mean(action)
         portfolio_return = np.dot(action, self.stock_data[self.current_step])  #+1 # adjusted by 1 to compensate that sum(action)=0, hence portfolio return 1 is baseline
         self.portfolio_value *= portfolio_return
 
