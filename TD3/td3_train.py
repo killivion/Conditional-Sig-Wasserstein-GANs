@@ -82,7 +82,7 @@ def run(args, spec, data_params, returns):
         track_learning.monitor_plot()
         # tensorboard --logdir ./TD3/logs
     if args.mode in ['test', 'train']:
-        eval_actor.test_actor(args=args, data_params=data_params, model=model, env=env)
+        eval_actor.test_actor(args, data_params, model, env)
     elif args.mode == 'eval':
         eval_actor.evaluate_actor(args, data_params, model, env)
     elif args.mode == 'compare':
@@ -102,7 +102,7 @@ if __name__ == '__main__':
     parser.add_argument('-grid_points', default=50, type=int)
     parser.add_argument('-window_size', default=50, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
-    parser.add_argument('-total_timesteps', default=10000, type=int)
+    parser.add_argument('-total_timesteps', default=1000, type=int)
     parser.add_argument('-num_episodes', default=1000, type=int)
     parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare'
 
