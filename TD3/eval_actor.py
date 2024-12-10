@@ -11,8 +11,8 @@ def test_actor(args, data_params, model, env):
     done = False
     while not done:
         action, _ = model.predict(obs)
-        print(action)
         obs, reward, done, truncated, info = env.step(action)
+        print(action) if not done else print('_____')
         total_reward += reward
         average_riskfree_action.append(action[0])
         average_risky_action.append(sum(action[1:]))

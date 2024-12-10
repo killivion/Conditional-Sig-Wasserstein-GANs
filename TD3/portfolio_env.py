@@ -89,7 +89,7 @@ class PortfolioEnv(gym.Env):
     def _normalize_parameter(self):
         self.mu = np.insert(self.data_params['data_params']['mu'], 0, self.args.risk_free_rate)
         self.sigma_cov = np.zeros((self.num_stocks, self.num_stocks))
-        self.sigma_cov[1:, 1:] = np.sqrt(self.data_params['data_params']['sigma_cov'])
+        self.sigma_cov[1:, 1:] = np.sign(self.data_params['data_params']['sigma_cov']) * np.sqrt(np.abs(self.data_params['data_params']['sigma_cov']))
 
         # Normalization:
         if self.num_stocks != 2:
