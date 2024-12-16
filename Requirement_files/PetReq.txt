@@ -5,7 +5,7 @@ gymnasium
 yfinance
 #rich
 ipywidgets
-tensorboard
+#tensorboard
 
 # Extracted from pip section in requirements.yml
 joblib
