@@ -4,6 +4,7 @@ import yfinance as yf
 import os
 import torch
 import eval_actor
+import json
 
 
 def main(args):
@@ -19,6 +20,49 @@ def main(args):
 
     returns = pull_data(data_params, args.dataset, args.risk_free_rate)
     run(args, spec, data_params, returns)
+
+
+def run(args, spec, data_params, returns):
+    print('Executing TD3 on %s, %s' % (args.dataset, spec))
+    from portfolio_env import PortfolioEnv
+    from stable_baselines3.common.noise import NormalActionNoise
+    from stable_baselines3.common.vec_env import DummyVecEnv
+    from stable_baselines3.common.monitor import Monitor
+
+    env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns), filename='log')
+    vec_env = DummyVecEnv([lambda: env])
+
+    # Add action noise (exploration)
+    n_actions = env.action_space.shape[0]
+    action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
+
+    hardware = 'LRZ' if torch.cuda.is_available() else 'cpu'
+    model_save_path = f"./agent/{hardware}_td3_agent_{args.actor_dataset}_assets_{args.num_paths}_2"
+
+    if os.path.exists(f"{model_save_path}.zip"):
+        model = TD3.load(model_save_path)
+        model.set_env(vec_env)
+        print(f"Uses {model_save_path} trained on {model.num_timesteps}")
+        already_trained_timesteps = model.num_timesteps
+    else:
+        print("No saved model found; starting new training.")
+        model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=1, tensorboard_log="./logs")
+
+    if args.mode == 'train':  # tensorboard --logdir ./TD3/logs
+        model.learn(total_timesteps=args.total_timesteps, progress_bar=True, tb_log_name="TD3")
+        model.num_timesteps += already_trained_timesteps
+        model.save(model_save_path)
+        print(f"Model saved at: {model_save_path}")
+        import track_learning
+        track_learning.monitor_plot()
+    if args.mode in ['test', 'train']:
+        print("Params:", data_params)
+        eval_actor.test_actor(args, data_params, model, vec_env)
+    elif args.mode == 'eval':
+        eval_actor.evaluate_actor(args, data_params, model, env)
+    elif args.mode == 'compare':
+        eval_actor.compare_actor(args, data_params, model, env)
+        # trained_rewards, random_rewards, trained_portfolio_values, random_portfolio_values
 
 
 def generate_random_params(num_paths):
@@ -54,44 +98,6 @@ def pull_data(data_params, dataset, risk_free_rate):
     return np.hstack((risk_free_column, returns))
 
 
-def run(args, spec, data_params, returns):
-    print('Executing TD3 on %s, %s' % (args.dataset, spec))
-    from portfolio_env import PortfolioEnv
-    from stable_baselines3.common.noise import NormalActionNoise
-    from stable_baselines3.common.vec_env import DummyVecEnv
-    from stable_baselines3.common.monitor import Monitor
-
-    env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns), filename='log')
-    vec_env = DummyVecEnv([lambda: env])
-
-    # Add action noise (exploration)
-    n_actions = env.action_space.shape[0]
-    action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
-
-    hardware = 'LRZ' if torch.cuda.is_available() else 'cpu'
-    model_save_path = f"./agent/{hardware}_td3_agent_{args.actor_dataset}_assets_{args.num_paths}"
-
-    if os.path.exists(model_save_path):
-        model = TD3.load(model_save_path)
-        model.set_env(vec_env)
-    else:
-        model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=1, tensorboard_log="./logs")
-
-    if args.mode == 'train':  # tensorboard --logdir ./TD3/logs
-        model.learn(total_timesteps=args.total_timesteps, progress_bar=True, tb_log_name="TD3")
-        model.save(model_save_path)
-        import track_learning
-        track_learning.monitor_plot()
-    if args.mode in ['test', 'train']:
-        print("Params:", data_params)
-        eval_actor.test_actor(args, data_params, model, env)
-    elif args.mode == 'eval':
-        eval_actor.evaluate_actor(args, data_params, model, env)
-    elif args.mode == 'compare':
-        eval_actor.compare_actor(args, data_params, model, env)
-        # trained_rewards, random_rewards, trained_portfolio_values, random_portfolio_values
-
-
 if __name__ == '__main__':
     import argparse
 
@@ -105,9 +111,9 @@ if __name__ == '__main__':
     parser.add_argument('-grid_points', default=50, type=int)
     parser.add_argument('-window_size', default=50, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
-    parser.add_argument('-total_timesteps', default=20000, type=int)
-    parser.add_argument('-num_episodes', default=5000, type=int)
-    parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare'
+    parser.add_argument('-total_timesteps', default=300, type=int)
+    parser.add_argument('-num_episodes', default=500, type=int)
+    parser.add_argument('-mode', default='compare', type=str)  # 'train' 'test' 'eval' 'compare'
 
     args = parser.parse_args()
     main(args)
@@ -115,5 +121,4 @@ if __name__ == '__main__':
     """
     Actor-Loss [small neg]: Large -> Instability, Close to 0: Yields high/good Q Values
     Critic-Loss: High -> Instability, Very low<0.02 -> Convergence / Overfitting
-    
     """

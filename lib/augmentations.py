@@ -5,7 +5,7 @@ signature.
 from dataclasses import dataclass
 from typing import List, Tuple
 
-import signatory
+#import signatory
 import torch
 
 __all__ = ['AddLags', 'Concat', 'Cumsum', 'LeadLag', 'Scale']
@@ -123,7 +123,7 @@ class SignatureConfig:
 
 def augment_path_and_compute_signatures(x: torch.Tensor, config: SignatureConfig) -> torch.Tensor:
     y = apply_augmentations(x, config.augmentations)
-    return signatory.signature(y, config.depth, basepoint=config.basepoint)
+    #return signatory.signature(y, config.depth, basepoint=config.basepoint)
 
 
 def get_standard_augmentation(scale: float) -> Tuple:

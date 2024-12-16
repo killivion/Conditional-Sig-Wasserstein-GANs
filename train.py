@@ -23,7 +23,7 @@ def get_algo_config(dataset, data_params):
         key += str(data_params['dim'])
     elif dataset == 'STOCKS':
         key += '_' + '_'.join(data_params['assets'])
-    return SIGCWGAN_CONFIGS[key]
+#    return SIGCWGAN_CONFIGS[key]
 
 
 def set_seed(seed):

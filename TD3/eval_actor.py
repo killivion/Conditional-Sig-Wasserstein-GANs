@@ -5,22 +5,19 @@ from tqdm import tqdm
 
 
 def test_actor(args, data_params, model, env):
-    obs, info = env.reset(test=True)
+    obs = env.reset()  # obs, info = env.reset(test=True)
     total_reward = 0
     average_riskfree_action, average_risky_action = [], []
     done = False
     while not done:
         action, _ = model.predict(obs, deterministic=True)
-        obs, reward, done, truncated, info = env.step(action)
+        obs, reward, done, truncated = env.step(action)  #obs, reward, done, truncated, info = env.step(action)
         print(action) if not done else print('_____')
         #total_reward += reward
         average_risky_action.append(action[0])
         average_riskfree_action.append(sum(action[1:])) if args.num_paths > 1 else average_riskfree_action.append(1 - action[0])
 
-    cholesky = np.linalg.cholesky(data_params['data_params']['sigma_cov'])
-    risky_lambda = data_params['data_params']['mu'] - args.risk_free_rate
-    analytical_risky_action = 1/args.p * risky_lambda @ ((cholesky @ cholesky.T) ** (-1))
-    analytical_utility = np.exp((1-args.p) * (args.risk_free_rate + 1/2 * analytical_risky_action @ risky_lambda))
+    analytical_risky_action, analytical_utility = analytical_solutions(args, data_params)
 
     # print("Total reward during test:", total_reward)
     print("Average Riskfree Action:", np.mean(average_riskfree_action))
@@ -46,10 +43,8 @@ def evaluate_actor(args, data_params, model, env):
     portfolio_values = np.array(portfolio_values)
     mean_portfolio_value = portfolio_values.mean(axis=0)
 
-    print(f"Trained Actor Average Portfolio: {mean_portfolio_value}")
-
-    plt.plot(range(args.window_size-1), mean_portfolio_value, color="red")
     plt.plot(portfolio_values.T, color="blue")
+    plt.plot(range(args.window_size - 1), mean_portfolio_value, color="red")
     plt.title("Portfolio Value Episodes")
     plt.xlabel("Time")
     plt.ylabel("Portfolio Value")
@@ -59,6 +54,8 @@ def evaluate_actor(args, data_params, model, env):
 
 def compare_actor(args, data_params, actor, env):
     trained_cum_rewards, random_cum_rewards, trained_portfolio, random_portfolio = [], [], [], []
+    average_risky_action = []
+    analytical_risky_action, analytical_utility = analytical_solutions(args, data_params)
     for episode in tqdm(range(args.num_episodes), desc="Episodes", leave=False):
         for random_actor in [False, True]:
             obs, info = env.reset(random_actor=random_actor)
@@ -69,13 +66,10 @@ def compare_actor(args, data_params, actor, env):
                 if random_actor:  # or perfect_actor, or null-actor
                     #action = env.action_space.sample()
                     #action = np.zeros(args.num_paths+1, dtype=np.float32)
-                    cholesky = np.linalg.cholesky(data_params['data_params']['sigma_cov'])
-                    risky_lambda = data_params['data_params']['mu'] - args.risk_free_rate
-                    analytical_risky_action = 1 / args.p * risky_lambda @ ((cholesky @ cholesky.T) ** (-1))
-                    analytical_utility = np.exp((1 - args.p) * (args.risk_free_rate + 1 / 2 * analytical_risky_action @ risky_lambda))
                     action = analytical_risky_action
                 else:
                     action, _ = actor.predict(obs, deterministic=True)
+                    average_risky_action.append(action[0])
 
                 obs, reward, done, _, info = env.step(action)
                 episode_reward += reward
@@ -94,11 +88,15 @@ def compare_actor(args, data_params, actor, env):
     trained_portfolio = np.array(trained_portfolio)
     random_portfolio = np.array(random_portfolio)
 
-    print(f"Trained Actor Average Terminal Reward: {np.mean(trained_cum_rewards)}")
-    print(f"Random Actor Average Terminal Reward: {np.mean(random_cum_rewards)}")
     print(f"Trained Actor Average Portfolio: {np.mean(trained_portfolio[:,-1])}")
     print(f"Random Actor Average Portfolio: {np.mean(random_portfolio[:,-1])}")
+    print("_____")
+    print(f"Trained Actor Average Terminal Reward: {np.mean(trained_cum_rewards)}")
+    print(f"Random Actor Average Terminal Reward: {np.mean(random_cum_rewards)}")
+    print("_____")
     print("Analytical Expected Utility:", analytical_utility)
+    print("Analytical Risky Action:", analytical_risky_action)
+    print("Average Risky Action:", np.mean(average_risky_action))
 
     fig, axs = plt.subplots(1, 3, figsize=(15, 5))
 
@@ -118,3 +116,11 @@ def compare_actor(args, data_params, actor, env):
 
     plt.tight_layout()
     plt.show()
+
+def analytical_solutions(args, data_params):
+    cholesky = np.linalg.cholesky(data_params['data_params']['sigma_cov'])
+    risky_lambda = data_params['data_params']['mu'] - args.risk_free_rate
+    analytical_risky_action = 1 / args.p * risky_lambda @ ((cholesky @ cholesky.T) ** (-1))
+    analytical_utility = np.exp((1 - args.p) * (args.risk_free_rate + 1 / 2 * analytical_risky_action @ risky_lambda))
+
+    return analytical_risky_action, analytical_utility

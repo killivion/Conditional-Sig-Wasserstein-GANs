@@ -6,7 +6,7 @@ def monitor_plot():
     rewards = log_data["r"]  # Rewards per episode
     episode_lengths = log_data["l"]  # Episode lengths
 
-    rolling_mean = pd.Series(rewards).rolling(window=20).mean()
+    rolling_mean = pd.Series(rewards).rolling(window=40).mean()
     time = np.arange(len(rewards))
 
     import matplotlib.pyplot as plt

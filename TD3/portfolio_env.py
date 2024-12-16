@@ -14,7 +14,7 @@ class PortfolioEnv(gym.Env):
         self._normalize_parameter()
 
         # Define action and observation space
-        feature_size = self.num_stocks + len(self.mu) + len(self.sigma_cov.flatten())
+        feature_size = len(self.mu) + len(self.sigma_cov.flatten())  #self.num_stocks + len(self.mu) + len(self.sigma_cov.flatten())
         self.action_space = gym.spaces.Box(low=0, high=1, shape=(self.num_stocks,), dtype=np.float32) if self.num_stocks > 2 else gym.spaces.Box(low=-8, high=8, shape=(1,), dtype=np.float32)
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(feature_size,),dtype=np.float32,)
 
@@ -42,6 +42,7 @@ class PortfolioEnv(gym.Env):
         super().reset(seed=seed)
         self.episode_cycle += 1
         self.current_step = 0
+        self.portfolio_value = 1
         if seed is not None:
             np.random.seed(seed)
         if test:
@@ -56,7 +57,6 @@ class PortfolioEnv(gym.Env):
                 mu, sigma_cov = generate_random_params(self.num_stocks-1)
                 self.data_params = dict(data_params=dict(mu=mu, sigma_cov=sigma_cov, window_size=self.args.window_size, num_paths=self.args.num_paths,grid_points=self.args.window_size))
                 self._normalize_parameter()
-            self.portfolio_value = 1
             self.stock_data = pull_data(self.data_params, self.args.dataset, self.args.risk_free_rate)
             self.normalized_stock_data = (self.stock_data - 1) / np.std(self.stock_data, axis=1, keepdims=True)
         # obs = np.array(self.stock_data[self.current_step], dtype=np.float32)
@@ -66,7 +66,7 @@ class PortfolioEnv(gym.Env):
 
     def _get_feature_map(self):
         normalized_returns = self.normalized_stock_data[self.current_step]
-        feature_map = np.concatenate([normalized_returns, self.mu, self.sigma_cov.flatten()])
+        feature_map = np.concatenate([self.mu, self.sigma_cov.flatten()])  #np.concatenate([normalized_returns, self.mu, self.sigma_cov.flatten()])
         return feature_map
 
     def _calc_reward(self, done, portfolio_return):
