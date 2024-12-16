@@ -47,7 +47,7 @@ def run(args, spec, data_params, returns):
         already_trained_timesteps = model.num_timesteps
     else:
         print("No saved model found; starting new training.")
-        model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=1, tensorboard_log="./logs")
+        model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=1, tensorboard_log="./logs", train_freq=(1, "episode"))
         already_trained_timesteps = 0
 
     # Train, Test, Eval [Evaluate], Compare [with some benchmark]
@@ -55,7 +55,7 @@ def run(args, spec, data_params, returns):
         model.learn(total_timesteps=args.total_timesteps, progress_bar=True, tb_log_name="TD3")
         model.num_timesteps += already_trained_timesteps
         model.save(model_save_path)
-        print(f"Model saved at: {model_save_path}")
+        print(f"Model saved at: {model_save_path} with {model.num_timesteps} timesteps trained of which {already_trained_timesteps} were trained before")
         import track_learning
         track_learning.monitor_plot()
     if args.mode in ['test', 'train']:
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     parser.add_argument('-num_paths', default=1, type=int)
     parser.add_argument('-total_timesteps', default=100000, type=int)
     parser.add_argument('-num_episodes', default=500, type=int)
-    parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare'
+    parser.add_argument('-mode', default='test', type=str)  # 'train' 'test' 'eval' 'compare'
 
     args = parser.parse_args()
     main(args)

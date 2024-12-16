@@ -1,11 +1,11 @@
 torch  #torch==1.8.1 not available in jupyter
-#signatory==1.2.6.1.8.1
+signatory==1.2.6.1.8.1
 stable-baselines3
 gymnasium
 yfinance
 #rich
 ipywidgets
-#tensorboard
+tensorboard
 
 # Extracted from pip section in requirements.yml
 joblib

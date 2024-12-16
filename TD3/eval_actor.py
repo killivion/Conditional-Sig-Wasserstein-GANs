@@ -8,11 +8,12 @@ def test_actor(args, data_params, model, env):
     obs = env.reset()  # obs, info = env.reset(test=True)
     total_reward = 0
     average_riskfree_action, average_risky_action = [], []
+    actions = []
     done = False
     while not done:
         action, _ = model.predict(obs, deterministic=True)
         obs, reward, done, truncated = env.step(action)  #obs, reward, done, truncated, info = env.step(action)
-        print(action) if not done else print('_____')
+        actions.append(action[0][0]) if not done else print(actions)
         #total_reward += reward
         average_risky_action.append(action[0])
         average_riskfree_action.append(sum(action[1:])) if args.num_paths > 1 else average_riskfree_action.append(1 - action[0])
