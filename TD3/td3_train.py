@@ -115,9 +115,9 @@ if __name__ == '__main__':
     parser.add_argument('-grid_points', default=50, type=int)
     parser.add_argument('-window_size', default=50, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
-    parser.add_argument('-total_timesteps', default=100000, type=int)
+    parser.add_argument('-total_timesteps', default=20000, type=int)
     parser.add_argument('-num_episodes', default=500, type=int)
-    parser.add_argument('-mode', default='test', type=str)  # 'train' 'test' 'eval' 'compare'
+    parser.add_argument('-mode', default='compare', type=str)  # 'train' 'test' 'eval' 'compare'
 
     args = parser.parse_args()
     main(args)
