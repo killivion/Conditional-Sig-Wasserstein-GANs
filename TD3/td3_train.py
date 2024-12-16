@@ -4,7 +4,6 @@ import yfinance as yf
 import os
 import torch
 import eval_actor
-import json
 
 
 def main(args):
@@ -47,8 +46,9 @@ def run(args, spec, data_params, returns):
         already_trained_timesteps = model.num_timesteps
     else:
         print("No saved model found; starting new training.")
-        model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=1, tensorboard_log="./logs", train_freq=(1, "episode"))
+        model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=0, tensorboard_log="./logs", train_freq=(1, "episode"))
         already_trained_timesteps = 0
+    model.verbose = 1 if hardware == 'cpu' else 0
 
     # Train, Test, Eval [Evaluate], Compare [with some benchmark]
     if args.mode == 'train':  # tensorboard --logdir ./TD3/logs
@@ -115,9 +115,9 @@ if __name__ == '__main__':
     parser.add_argument('-grid_points', default=50, type=int)
     parser.add_argument('-window_size', default=50, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
-    parser.add_argument('-total_timesteps', default=20000, type=int)
-    parser.add_argument('-num_episodes', default=500, type=int)
-    parser.add_argument('-mode', default='compare', type=str)  # 'train' 'test' 'eval' 'compare'
+    parser.add_argument('-total_timesteps', default=10000, type=int)
+    parser.add_argument('-num_episodes', default=10000, type=int)
+    parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare'
 
     args = parser.parse_args()
     main(args)
