@@ -37,7 +37,7 @@ def run(args, spec, data_params, returns):
     action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
 
     hardware = 'LRZ' if torch.cuda.is_available() else 'cpu'
-    model_save_path = f"./agent/{hardware}_td3_agent_{args.actor_dataset}_assets_{args.num_paths}_3"
+    model_save_path = f"./agent/{hardware}_td3_agent_{args.actor_dataset}_assets_{args.num_paths}_{args.model_ID}"
 
     if os.path.exists(f"{model_save_path}.zip"):
         model = TD3.load(model_save_path)
@@ -104,6 +104,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-utility_function', default="power", type=str)
     parser.add_argument('-episode_reset', default=20, type=int)
+    parser.add_argument('-model_ID', default=0, type=int)
     parser.add_argument('-p', default=0.8, type=float)
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes'
     parser.add_argument('-actor_dataset', default='correlated_Blackscholes', type=str)  # An Actor ID to determine which actor will be loaded (if it exists), then trained or tested/evaluated on
