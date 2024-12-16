@@ -37,7 +37,7 @@ def run(args, spec, data_params, returns):
     action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
 
     hardware = 'LRZ' if torch.cuda.is_available() else 'cpu'
-    model_save_path = f"./agent/{hardware}_td3_agent_{args.actor_dataset}_assets_{args.num_paths}_2"
+    model_save_path = f"./agent/{hardware}_td3_agent_{args.actor_dataset}_assets_{args.num_paths}_3"
 
     if os.path.exists(f"{model_save_path}.zip"):
         model = TD3.load(model_save_path)
