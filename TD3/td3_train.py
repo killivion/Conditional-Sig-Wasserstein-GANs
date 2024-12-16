@@ -39,6 +39,7 @@ def run(args, spec, data_params, returns):
     hardware = 'LRZ' if torch.cuda.is_available() else 'cpu'
     model_save_path = f"./agent/{hardware}_td3_agent_{args.actor_dataset}_assets_{args.num_paths}_{args.model_ID}"
 
+    # Load Model
     if os.path.exists(f"{model_save_path}.zip"):
         model = TD3.load(model_save_path)
         model.set_env(vec_env)
@@ -46,8 +47,10 @@ def run(args, spec, data_params, returns):
         already_trained_timesteps = model.num_timesteps
     else:
         print("No saved model found; starting new training.")
-        model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=1, tensorboard_log="./logs")
+        model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=0, tensorboard_log="./logs")
+        already_trained_timesteps = 0
 
+    # Train, Test, Eval [Evaluate], Compare [with some benchmark]
     if args.mode == 'train':  # tensorboard --logdir ./TD3/logs
         model.learn(total_timesteps=args.total_timesteps, progress_bar=True, tb_log_name="TD3")
         model.num_timesteps += already_trained_timesteps
@@ -112,9 +115,9 @@ if __name__ == '__main__':
     parser.add_argument('-grid_points', default=50, type=int)
     parser.add_argument('-window_size', default=50, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
-    parser.add_argument('-total_timesteps', default=300, type=int)
+    parser.add_argument('-total_timesteps', default=10000, type=int)
     parser.add_argument('-num_episodes', default=500, type=int)
-    parser.add_argument('-mode', default='compare', type=str)  # 'train' 'test' 'eval' 'compare'
+    parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare'
 
     args = parser.parse_args()
     main(args)
