@@ -56,10 +56,8 @@ def run(args, spec, data_params, returns, i=0):
         model.num_timesteps += already_trained_timesteps
         model.save(model_save_path)
         print(f"Model saved at: {model_save_path} with {model.num_timesteps} timesteps trained of which {already_trained_timesteps} were trained before")
-        import track_learning
-        if i == 0:
-            rewards = []
-        rewards = track_learning.monitor_plot(args, i, rewards)
+        from track_learning import TrackLearning
+        TrackLearning().monitor_plot(args, i)
     if args.mode in ['test', 'train']:
         print("Params:", data_params)
         eval_actor.test_actor(args, data_params, model, vec_env)
@@ -117,7 +115,7 @@ if __name__ == '__main__':
     parser.add_argument('-grid_points', default=50, type=int)
     parser.add_argument('-window_size', default=50, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
-    parser.add_argument('-laps', default=10, type=int)
+    parser.add_argument('-laps', default=2, type=int)
     parser.add_argument('-total_timesteps', default=100000, type=int)
     parser.add_argument('-num_episodes', default=100, type=int)
     parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare'
