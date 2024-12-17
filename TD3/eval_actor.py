@@ -94,8 +94,8 @@ def compare_actor(args, data_params, actor, env):
     print("_____")
     print(f"Trained Actor Average Terminal Reward: {np.mean(trained_cum_rewards)}")
     print(f"Random Actor Average Terminal Reward: {np.mean(random_cum_rewards)}")
-    print("_____")
     print("Analytical Expected Utility:", analytical_utility)
+    print("_____")
     print("Analytical Risky Action:", analytical_risky_action)
     print("Average Risky Action:", np.mean(average_risky_action))
 

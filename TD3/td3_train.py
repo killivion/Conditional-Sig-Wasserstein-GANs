@@ -6,7 +6,7 @@ import torch
 import eval_actor
 
 
-def main(args):
+def main(args, i=0):
     from train import get_dataset_configuration
     if args.dataset == 'correlated_Blackscholes':
         mu, sigma_cov = generate_random_params(args.num_paths)
@@ -18,10 +18,10 @@ def main(args):
             spec, data_params = s, d  # odd way to do it, works in 1-d
 
     returns = pull_data(data_params, args.dataset, args.risk_free_rate)
-    run(args, spec, data_params, returns)
+    run(args, spec, data_params, returns, i)
 
 
-def run(args, spec, data_params, returns):
+def run(args, spec, data_params, returns, i=0):
     print('Executing TD3 on %s, %s' % (args.dataset, spec))
     from portfolio_env import PortfolioEnv
     from stable_baselines3.common.noise import NormalActionNoise
@@ -57,7 +57,9 @@ def run(args, spec, data_params, returns):
         model.save(model_save_path)
         print(f"Model saved at: {model_save_path} with {model.num_timesteps} timesteps trained of which {already_trained_timesteps} were trained before")
         import track_learning
-        track_learning.monitor_plot()
+        if i == 0:
+            rewards = []
+        rewards = track_learning.monitor_plot(args, i, rewards)
     if args.mode in ['test', 'train']:
         print("Params:", data_params)
         eval_actor.test_actor(args, data_params, model, vec_env)
@@ -107,7 +109,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-utility_function', default="power", type=str)
     parser.add_argument('-episode_reset', default=20, type=int)
-    parser.add_argument('-model_ID', default=2, type=int)
+    parser.add_argument('-model_ID', default=0, type=int)
     parser.add_argument('-p', default=0.8, type=float)
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes'
     parser.add_argument('-actor_dataset', default='correlated_Blackscholes', type=str)  # An Actor ID to determine which actor will be loaded (if it exists), then trained or tested/evaluated on
@@ -115,12 +117,18 @@ if __name__ == '__main__':
     parser.add_argument('-grid_points', default=50, type=int)
     parser.add_argument('-window_size', default=50, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
-    parser.add_argument('-total_timesteps', default=10000, type=int)
-    parser.add_argument('-num_episodes', default=10000, type=int)
+    parser.add_argument('-laps', default=10, type=int)
+    parser.add_argument('-total_timesteps', default=1000000, type=int)
+    parser.add_argument('-num_episodes', default=100, type=int)
     parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare'
 
     args = parser.parse_args()
-    main(args)
+    if args.mode == 'train':
+        for i in range(args.laps-1):
+            print(f"This is lap {i+1} of {args.laps}")
+            main(args, i)
+    else:
+        main(args)
 
     """
     Actor-Loss [small neg]: Large -> Instability, Close to 0: Yields high/good Q Values
