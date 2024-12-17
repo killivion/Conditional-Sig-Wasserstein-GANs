@@ -71,7 +71,7 @@ class PortfolioEnv(gym.Env):
 
     def _calc_reward(self, done, portfolio_return):
         if done:  # Terminal utility -> Central Reward-fct.
-            reward = (self.portfolio_value ** (1 - self.args.p)) if not portfolio_return <= 0 else -1000 * abs(portfolio_return)  # / (1 - self.args.p) leave out the constant divisor since it only scales the expectation
+            reward = (self.portfolio_value ** (1 - self.args.p)) if not self.portfolio_value <= 0 else -1000 * abs(self.portfolio_value)  # / (1 - self.args.p) leave out the constant divisor since it only scales the expectation
             normalized_reward = 2 * (1.2 * reward - 0.9) if self.args.mode not in ['compare', 'eval'] else reward
             if self.args.mode == 'test':
                 print('Terminal Utility is: %s' % ((self.portfolio_value) ** (1 - self.args.p)))

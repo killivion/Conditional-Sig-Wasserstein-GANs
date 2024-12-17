@@ -118,13 +118,13 @@ if __name__ == '__main__':
     parser.add_argument('-window_size', default=50, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
     parser.add_argument('-laps', default=10, type=int)
-    parser.add_argument('-total_timesteps', default=1000000, type=int)
+    parser.add_argument('-total_timesteps', default=100000, type=int)
     parser.add_argument('-num_episodes', default=100, type=int)
     parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare'
 
     args = parser.parse_args()
     if args.mode == 'train':
-        for i in range(args.laps-1):
+        for i in range(args.laps):
             print(f"This is lap {i+1} of {args.laps}")
             main(args, i)
     else:
