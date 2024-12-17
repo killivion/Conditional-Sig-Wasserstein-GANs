@@ -5,10 +5,10 @@ class TrackLearning:
     def __init__(self):
         self.rewards = []
 
-    def monitor_plot(self, args, i, rewards):
+    def monitor_plot(self, args, i):
         log_data = pd.read_csv("log.monitor.csv", skiprows=1)  # Skip the header
         reward = log_data["r"]  # Rewards per episode
-        if i < args.laps:
+        if i < args.laps - 1:
             self.rewards.append(reward)
         else:
             rolling_mean = pd.Series(self.rewards).rolling(window=50).mean()
