@@ -47,9 +47,9 @@ def run(args, spec, data_params, returns, i=0):
         already_trained_timesteps = model.num_timesteps
     else:
         print("No saved model found; starting new training.")
-        model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=0, tensorboard_log="./logs", train_freq=(1, "episode"))
+        model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=0, tensorboard_log="./logs", train_freq=(args.train_freq, "episode"))
         already_trained_timesteps = 0
-    model.verbose = 1 if hardware == 'cpu' else 0
+    model.verbose = 0 if hardware == 'cpu' else 0
 
     # Train, Test, Eval [Evaluate], Compare [with some benchmark]
     if args.mode == 'train':  # tensorboard --logdir ./TD3/logs
@@ -107,7 +107,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-utility_function', default="power", type=str)
     parser.add_argument('-episode_reset', default=20, type=int)
-    parser.add_argument('-model_ID', default=0, type=int)
+    parser.add_argument('-model_ID', default=4, type=int)
+    parser.add_argument('-train_freq', default=20, type=int)
     parser.add_argument('-p', default=0.8, type=float)
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes'
     parser.add_argument('-actor_dataset', default='correlated_Blackscholes', type=str)  # An Actor ID to determine which actor will be loaded (if it exists), then trained or tested/evaluated on
@@ -116,9 +117,9 @@ if __name__ == '__main__':
     parser.add_argument('-window_size', default=50, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
     parser.add_argument('-laps', default=10, type=int)
-    parser.add_argument('-total_timesteps', default=100000, type=int)
+    parser.add_argument('-total_timesteps', default=500000, type=int)
     parser.add_argument('-num_episodes', default=100, type=int)
-    parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare'
+    parser.add_argument('-mode', default='test', type=str)  # 'train' 'test' 'eval' 'compare'
 
     args = parser.parse_args()
     if args.mode == 'train':
