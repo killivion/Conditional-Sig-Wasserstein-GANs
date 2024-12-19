@@ -1,10 +1,10 @@
 from stable_baselines3 import TD3
 import numpy as np
-import yfinance as yf
 import os
 import torch
 import eval_actor
-from track_learning import TrackLearning
+from track_learning import monitor_plot
+from help_fct import find_largest_td3_folder, ActionLoggingCallback, generate_random_params, pull_data
 
 
 def main(args, i=0):
@@ -47,17 +47,18 @@ def run(args, spec, data_params, returns, i=0):
         already_trained_timesteps = model.num_timesteps
     else:
         print("No saved model found; starting new training.")
-        model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=0, tensorboard_log="./logs", train_freq=(args.train_freq, "episode"))
+        model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=0, learning_starts=100, tensorboard_log="./logs", train_freq=(args.train_freq, "episode"))
         already_trained_timesteps = 0
     model.verbose = 0 if hardware == 'cpu' else 0
 
     # Train, Test, Eval [Evaluate], Compare [with some benchmark]
     if args.mode == 'train':  # tensorboard --logdir ./TD3/logs
-        model.learn(total_timesteps=args.total_timesteps, progress_bar=True, tb_log_name="TD3")
+        action_logging_callback = ActionLoggingCallback(log_dir=find_largest_td3_folder())
+        model.learn(total_timesteps=args.total_timesteps, progress_bar=True, tb_log_name="TD3", callback=action_logging_callback)
         model.num_timesteps += already_trained_timesteps
         model.save(model_save_path)
         print(f"Model saved at: {model_save_path} with {model.num_timesteps} timesteps trained of which {already_trained_timesteps} were trained before")
-        TrackLearning().monitor_plot(args, i)
+        monitor_plot(args)
     if args.mode in ['test', 'train']:
         print("Params:", data_params)
         eval_actor.test_actor(args, data_params, model, vec_env)
@@ -67,48 +68,12 @@ def run(args, spec, data_params, returns, i=0):
         eval_actor.compare_actor(args, data_params, model, env)
         # trained_rewards, random_rewards, trained_portfolio_values, random_portfolio_values
 
-
-def generate_random_params(num_paths):
-    if num_paths!= 1:
-        low_vol = 0.1 * 3 * (np.log(1000)) ** (0.8) / (np.log(num_paths) ** (1.8)) if num_paths != 1 else 0.2 # Adjustment of up and lower bound depending on num_paths size (number of correlations)
-        up_vol = 0.25 * 3 * (np.log(1000)) ** (0.8) / (np.log(num_paths) ** (1.8)) if num_paths != 1 else 0.2 # amounts to slightly more than 20% vol
-        low_mu, up_mu = 0.03, 0.13
-    else:
-        low_vol, up_vol, low_mu, up_mu = 0.2, 0.2, 0.15, 0.15
-    mu = np.random.uniform(low_mu, up_mu, size=num_paths)
-    volatilities = np.random.uniform(low_vol, up_vol, size=num_paths)
-    correlation = np.random.uniform(-1, 1, size=(num_paths, num_paths))
-    np.fill_diagonal(correlation, 1)
-    correlation = (correlation + correlation.T) / 2
-    eigvals, eigvecs = np.linalg.eigh(correlation)
-    eigvals[eigvals < 0] = 1e-5
-    correlation = eigvecs @ np.diag(eigvals) @ eigvecs.T
-
-    sigma_cov = correlation * np.outer(volatilities, volatilities)
-    return mu, sigma_cov
-
-
-def pull_data(data_params, dataset, risk_free_rate):
-    from lib.data import get_data
-    if dataset == 'YFinance':
-        ticker = data_params['data_params']['ticker']
-        data = yf.download(ticker, start="2020-01-01", end="2024-01-01")['Adj Close']
-    else:
-        data = get_data(dataset, p=1, q=0, isSigLib=False, **data_params).T
-    returns = data.pct_change().dropna().values + 1  # Compute daily change ratio [not daily returns]
-    daily_risk_free_rate = (1 + risk_free_rate) ** (1 / 252)
-    risk_free_column = np.full((returns.shape[0], 1), daily_risk_free_rate)
-    return np.hstack((risk_free_column, returns))
-
-
 if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-utility_function', default="power", type=str)
     parser.add_argument('-episode_reset', default=20, type=int)
-    parser.add_argument('-model_ID', default=4, type=int)
-    parser.add_argument('-train_freq', default=20, type=int)
     parser.add_argument('-p', default=0.8, type=float)
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes'
     parser.add_argument('-actor_dataset', default='correlated_Blackscholes', type=str)  # An Actor ID to determine which actor will be loaded (if it exists), then trained or tested/evaluated on
@@ -116,10 +81,13 @@ if __name__ == '__main__':
     parser.add_argument('-grid_points', default=50, type=int)
     parser.add_argument('-window_size', default=50, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
-    parser.add_argument('-laps', default=10, type=int)
-    parser.add_argument('-total_timesteps', default=500000, type=int)
+
+    parser.add_argument('-model_ID', default=5, type=int)
+    parser.add_argument('-train_freq', default=1, type=int)
+    parser.add_argument('-laps', default=1, type=int)
+    parser.add_argument('-total_timesteps', default=100000, type=int)
     parser.add_argument('-num_episodes', default=100, type=int)
-    parser.add_argument('-mode', default='test', type=str)  # 'train' 'test' 'eval' 'compare'
+    parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare'
 
     args = parser.parse_args()
     if args.mode == 'train':

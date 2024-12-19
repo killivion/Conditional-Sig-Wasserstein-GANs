@@ -1,4 +1,3 @@
-from td3_train import pull_data
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
