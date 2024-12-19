@@ -72,5 +72,5 @@ def find_largest_td3_folder():
     largest_number = 0
     for folder_name in os.listdir("./logs"):
         largest_number = max(largest_number, int(folder_name.split('_')[1]))
-    return f"./logs/actions_{largest_number+1}"  # f"./logs/TD3_{largest_number}"
+    return f"./logs/TD3_actions_{largest_number+1}"  # f"./logs/TD3_{largest_number}"
 
