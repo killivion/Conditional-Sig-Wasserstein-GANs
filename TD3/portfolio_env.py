@@ -15,7 +15,7 @@ class PortfolioEnv(gym.Env):
         self._normalize_parameter()
 
         # Define action and observation space
-        feature_size = 1  # len(self.mu) + len(self.sigma_cov.flatten())  #self.num_stocks + len(self.mu) + len(self.sigma_cov.flatten())
+        feature_size = len(self.mu) + len(self.sigma_cov.flatten())  #self.num_stocks + len(self.mu) + len(self.sigma_cov.flatten())
         self.action_space = gym.spaces.Box(low=0, high=1, shape=(self.num_stocks,), dtype=np.float32) if self.num_stocks > 2 else gym.spaces.Box(low=-8, high=8, shape=(1,), dtype=np.float32)
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(feature_size,), dtype=np.float32,)
 
@@ -25,14 +25,14 @@ class PortfolioEnv(gym.Env):
         self.max_intermediary_reward, self.max_terminal_reward = 0, 0
         self.analytical_risky_action, self.analytical_utility = analytical_solutions(self.args, self.data_params)
         self.reward_window = deque(maxlen=1000)
-        self.step_count, self.i_steps = 0, 1
+        self.step_count, self.i_steps = 0, 2
 
     def step(self, action):
         self.current_step += 1
         self.step_count += 1
-        if self.step_count >= self.args.total_timesteps * self.i_steps:
-            print(f"{self.i_steps*10}% done")
-            self.i_steps += 1
+        if self.step_count >= self.args.total_timesteps/10 * self.i_steps:
+            print(f"{self.i_steps}% done")
+            self.i_steps += 2
 
         done = self.current_step >= len(self.stock_data) - 1
 
@@ -77,7 +77,7 @@ class PortfolioEnv(gym.Env):
     def _get_feature_map(self):
         normalized_returns = self.normalized_stock_data[self.current_step]
         feature_map = np.concatenate([self.mu, self.sigma_cov.flatten()])  #np.concatenate([normalized_returns, self.mu, self.sigma_cov.flatten()])
-        return self.current_step  # feature_map
+        return feature_map
 
     def _calc_reward(self, done):
         if done:  # Terminal utility -> Central Reward-fct.
