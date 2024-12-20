@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-utility_function', default="power", type=str)
-    parser.add_argument('-episode_reset', default=20, type=int)
+    parser.add_argument('-episode_reset', default=10000000, type=int)
     parser.add_argument('-p', default=0.8, type=float)
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes'
     parser.add_argument('-actor_dataset', default='correlated_Blackscholes', type=str)  # An Actor ID to determine which actor will be loaded (if it exists), then trained or tested/evaluated on
@@ -83,9 +83,9 @@ if __name__ == '__main__':
     parser.add_argument('-window_size', default=50, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
 
-    parser.add_argument('-model_ID', default=6, type=int)
+    parser.add_argument('-model_ID', default=0, type=int)
     parser.add_argument('-train_freq', default=1, type=int)
-    parser.add_argument('-laps', default=5, type=int)
+    parser.add_argument('-laps', default=1, type=int)
     parser.add_argument('-total_timesteps', default=1000000, type=int)
     parser.add_argument('-num_episodes', default=100, type=int)
     parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare'

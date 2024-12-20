@@ -24,14 +24,14 @@ class PortfolioEnv(gym.Env):
         self.first_episode, self.episode_cycle = True, 0
         self.max_intermediary_reward, self.max_terminal_reward = 0, 0
         self.analytical_risky_action, self.analytical_utility = analytical_solutions(self.args, self.data_params)
-        self.reward_window = deque(maxlen=1000)
+        self.reward_window, self.fixed = [], False # deque(maxlen=1000)
         self.step_count, self.i_steps = 0, 2
 
     def step(self, action):
         self.current_step += 1
         self.step_count += 1
         if self.step_count >= self.args.total_timesteps/10 * self.i_steps:
-            print(f"{self.i_steps}% done")
+            print(f"{self.i_steps*10}% done")
             self.i_steps += 2
 
         done = self.current_step >= len(self.stock_data) - 1
@@ -85,9 +85,12 @@ class PortfolioEnv(gym.Env):
             optimal_utility = (self.optimal_portfolio ** (1 - self.args.p))
             reward = reward - optimal_utility
             self.reward_window.append(reward)
-            mean_reward = np.mean(self.reward_window) if self.reward_window else 0.0
-            std_reward = np.std(self.reward_window) if self.reward_window else 1.0
-            normalized_reward = (reward - mean_reward) / (std_reward if std_reward > 0 else 1.0) if self.args.mode not in ['compare', 'eval'] else reward
+            if not self.fixed:
+                self.mean_reward = np.mean(self.reward_window) if self.reward_window else 0.0
+                self.std_reward = np.std(self.reward_window) if self.reward_window else 1.0
+            if len(self.reward_window) == 1000:
+                self.fixed = True
+            normalized_reward = (reward - self.mean_reward) / (np.sqrt(self.std_reward) if self.std_reward > 0 else 1.0) if self.args.mode not in ['compare', 'eval'] else reward
             #normalized_reward = 2 * (1.2 * (reward) - 0.9) if self.args.mode not in ['compare', 'eval'] else reward
             if self.args.mode == 'test':
                 print('Terminal Utility is: %s' % ((self.portfolio_value) ** (1 - self.args.p)))
