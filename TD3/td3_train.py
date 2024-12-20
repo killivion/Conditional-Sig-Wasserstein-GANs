@@ -93,7 +93,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.mode == 'train':
         for i in range(args.laps):
-            args.model_ID = 6 + i
+            #args.model_ID = 6 + i
             print(f"This is lap {i+1} of {args.laps}")
             main(args, i)
     else:
