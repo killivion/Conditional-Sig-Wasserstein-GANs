@@ -25,15 +25,15 @@ class ActionLoggingCallback(BaseCallback):
         return True
 
 
-def pull_data(data_params, dataset, risk_free_rate):
+def pull_data(args, data_params):
     from lib.data import get_data
-    if dataset == 'YFinance':
+    if args.dataset == 'YFinance':
         ticker = data_params['data_params']['ticker']
         data = yf.download(ticker, start="2020-01-01", end="2024-01-01")['Adj Close']
     else:
-        data = get_data(dataset, p=1, q=0, isSigLib=False, **data_params).T
+        data = get_data(args.dataset, p=1, q=0, isSigLib=False, **data_params).T
     returns = data.pct_change().dropna().values + 1  # Compute daily change ratio [not daily returns]
-    daily_risk_free_rate = (1 + risk_free_rate) ** (1 / 252)
+    daily_risk_free_rate = (1 + args.risk_free_rate) ** (1 / args.grid_points)
     risk_free_column = np.full((returns.shape[0], 1), daily_risk_free_rate)
     return np.hstack((risk_free_column, returns))
 

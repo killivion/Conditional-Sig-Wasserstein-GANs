@@ -39,7 +39,7 @@ class PortfolioEnv(gym.Env):
         action = action/sum(action) if self.num_stocks > 2 else [1 - action[0], action[0]]  # action -= np.mean(action)
         portfolio_return = np.dot(action, self.stock_data[self.current_step])  #+1 # adjusted by 1 to compensate that sum(action)=0, hence portfolio return 1 is baseline
         self.portfolio_value *= portfolio_return
-        self.optimal_portfolio *= np.dot([self.analytical_risky_action[0], 1 - self.analytical_risky_action[0]],self.stock_data[self.current_step])
+        self.optimal_portfolio *= np.dot([1 - self.analytical_risky_action[0], self.analytical_risky_action[0]], self.stock_data[self.current_step])
         reward = self._calc_reward(done)
 
         # obs = self.stock_data[self.current_step]
@@ -67,22 +67,22 @@ class PortfolioEnv(gym.Env):
                 self.data_params = dict(data_params=dict(mu=mu, sigma_cov=sigma_cov, window_size=self.args.window_size, num_paths=self.args.num_paths,grid_points=self.args.window_size))
                 self.analytical_risky_action, self.analytical_utility = analytical_solutions(self.args, self.data_params)
                 self._normalize_parameter()
-            self.stock_data = pull_data(self.data_params, self.args.dataset, self.args.risk_free_rate)
-            self.normalized_stock_data = (self.stock_data - 1) / np.std(self.stock_data, axis=1, keepdims=True)
+            self.stock_data = pull_data(self.args, self.data_params)
+            # self.normalized_stock_data = (self.stock_data - 1) / np.std(self.stock_data, axis=1, keepdims=True)
         # obs = np.array(self.stock_data[self.current_step], dtype=np.float32)
         obs = self._get_feature_map()
         info = {}
         return obs, info
 
     def _get_feature_map(self):
-        normalized_returns = self.normalized_stock_data[self.current_step]
+        # normalized_returns = self.normalized_stock_data[self.current_step]
         feature_map = np.concatenate([self.mu, self.sigma_cov.flatten()])  #np.concatenate([normalized_returns, self.mu, self.sigma_cov.flatten()])
         return feature_map
 
     def _calc_reward(self, done):
         if done:  # Terminal utility -> Central Reward-fct.
             reward = (self.portfolio_value ** (1 - self.args.p)) if not self.portfolio_value <= 0 else -1000 * abs(self.portfolio_value)  # / (1 - self.args.p) leave out the constant divisor since it only scales the expectation
-            optimal_utility = (self.optimal_portfolio ** (1 - self.args.p))
+            optimal_utility = (self.optimal_portfolio ** (1 - self.args.p)) if not self.optimal_portfolio <= 0 else 0
             reward = reward - optimal_utility
             self.reward_window.append(reward)
             if not self.fixed:

@@ -18,7 +18,7 @@ def main(args, i=0):
         for s, d in generator:
             spec, data_params = s, d  # odd way to do it, works in 1-d
 
-    returns = pull_data(data_params, args.dataset, args.risk_free_rate)
+    returns = pull_data(args, data_params)
     run(args, spec, data_params, returns, i)
 
 
@@ -74,20 +74,22 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-utility_function', default="power", type=str)
-    parser.add_argument('-episode_reset', default=10000000, type=int)
+    parser.add_argument('-episode_reset', default=10000000, type=int)  #currently off
     parser.add_argument('-p', default=0.8, type=float)
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes'
     parser.add_argument('-actor_dataset', default='correlated_Blackscholes', type=str)  # An Actor ID to determine which actor will be loaded (if it exists), then trained or tested/evaluated on
     parser.add_argument('-risk_free_rate', default=0.04, type=float)
-    parser.add_argument('-grid_points', default=50, type=int)
-    parser.add_argument('-window_size', default=50, type=int)
+    parser.add_argument('-grid_points', default=3, type=int)
+    parser.add_argument('-window_size', default=3, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
 
-    parser.add_argument('-model_ID', default=0, type=int)
     parser.add_argument('-train_freq', default=1, type=int)
-    parser.add_argument('-laps', default=1, type=int)
     parser.add_argument('-total_timesteps', default=1000000, type=int)
+    #parser.add_argument('-batch_size', default=256, type=int)
     parser.add_argument('-num_episodes', default=100, type=int)
+
+    parser.add_argument('-model_ID', default=1, type=int)
+    parser.add_argument('-laps', default=1, type=int)
     parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare'
 
     args = parser.parse_args()
