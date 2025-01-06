@@ -24,7 +24,7 @@ class PortfolioEnv(gym.Env):
         self.first_episode, self.episode_cycle = True, 0
         self.max_intermediary_reward, self.max_terminal_reward = 0, 0
         self.analytical_risky_action, self.analytical_utility = analytical_solutions(self.args, self.data_params)
-        self.reward_window, self.fixed = [], False # deque(maxlen=1000)
+        self.reward_window, self.fixed = [], False  # deque(maxlen=1000)
         self.step_count, self.i_steps = 0, 2
 
     def step(self, action):
@@ -34,15 +34,14 @@ class PortfolioEnv(gym.Env):
             print(f"{self.i_steps*10}% done")
             self.i_steps += 2
 
-        done = self.current_step >= len(self.stock_data) - 1
+        done = self.current_step >= len(self.stock_data) #- 1
 
         action = action/sum(action) if self.num_stocks > 2 else [1 - action[0], action[0]]  # action -= np.mean(action)
-        portfolio_return = np.dot(action, self.stock_data[self.current_step])  #+1 # adjusted by 1 to compensate that sum(action)=0, hence portfolio return 1 is baseline
+        portfolio_return = np.dot(action, self.stock_data[self.current_step-1])  #+1 # adjust by 1 to compensate if sum(action)=0, so portfolio return 1 stays baseline
         self.portfolio_value *= portfolio_return
-        self.optimal_portfolio *= np.dot([1 - self.analytical_risky_action[0], self.analytical_risky_action[0]], self.stock_data[self.current_step])
+        self.optimal_portfolio *= np.dot([1 - self.analytical_risky_action[0], self.analytical_risky_action[0]], self.stock_data[self.current_step-1])
         reward = self._calc_reward(done)
 
-        # obs = self.stock_data[self.current_step]
         obs = self._get_feature_map()
         truncated = False
         info = self.portfolio_value if not done and self.args.mode in ['eval', 'compare'] else {}
@@ -57,7 +56,7 @@ class PortfolioEnv(gym.Env):
             np.random.seed(seed)
         if test:
             self.args.mode = 'test'
-        if self.first_episode or random_actor:
+        if self.first_episode or random_actor:  # in the random_actor case ensures that in compare random_actor and the trained actor use the same dataset
             self.first_episode = False
         else:  # if it's not the first episode, new data is pulled
             if self.args.mode in ['eval', 'compare'] or self.episode_cycle == self.args.episode_reset:  # pulls new rdm parameters
@@ -69,13 +68,12 @@ class PortfolioEnv(gym.Env):
                 self._normalize_parameter()
             self.stock_data = pull_data(self.args, self.data_params)
             # self.normalized_stock_data = (self.stock_data - 1) / np.std(self.stock_data, axis=1, keepdims=True)
-        # obs = np.array(self.stock_data[self.current_step], dtype=np.float32)
         obs = self._get_feature_map()
         info = {}
         return obs, info
 
     def _get_feature_map(self):
-        # normalized_returns = self.normalized_stock_data[self.current_step]
+        # normalized_returns = self.normalized_stock_data[self.current_step-1]
         feature_map = np.concatenate([self.mu, self.sigma_cov.flatten()])  #np.concatenate([normalized_returns, self.mu, self.sigma_cov.flatten()])
         return feature_map
 

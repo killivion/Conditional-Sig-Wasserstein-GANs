@@ -3,6 +3,7 @@ import tensorflow as tf
 from stable_baselines3.common.callbacks import BaseCallback
 import yfinance as yf
 import numpy as np
+import shutil
 
 
 class ActionLoggingCallback(BaseCallback):
@@ -96,11 +97,30 @@ def analytical_solutions(args, data_params):
 def find_largest_td3_folder(args):
     largest_number = 0
     for folder_name in os.listdir("./logs"):
-        if folder_name[0].isdigit() and "_" in folder_name:  # if folder_name.startswith("TD3_") and "_" in folder_name:
+        if folder_name.startswith("TD3_") and "_" in folder_name:
             try:
-                largest_number = max(largest_number, int(folder_name.split('_')[0]))
+                largest_number = max(largest_number, int(folder_name.split('_')[1]))
             except ValueError:
                 pass
-    return f"./logs/{largest_number+1}_ID_{args.model_ID}_window_{args.window_size}_timesteps_{args.total_timesteps}"  # f"./logs/TD3_{largest_number}"
+    return f"./logs/TD3_{largest_number+1}_actions", largest_number+1  # f"./logs/TD3_{largest_number}"
 
+
+def fuse_folders(number, args):
+    folder_actions = f"./logs/TD3_{number}_actions"
+    folder_tensorboard = f"./logs/TD3_{number}"
+    new_folder = f"./logs/{number}_ID_{args.model_ID}_window_{args.window_size}_batchsize_{args.batch_size}_trainfreq_{args.train_freq}"
+    os.makedirs(new_folder)
+
+    for folder in [folder_actions, folder_tensorboard]:
+        for item in os.listdir(folder):
+            item_path = os.path.join(folder, item)
+            new_item_path = os.path.join(new_folder, item)
+            # Move each item (file or folder)
+            if os.path.isdir(item_path):
+                shutil.move(item_path, new_item_path)
+            else:
+                shutil.move(item_path, new_item_path)
+
+    shutil.rmtree(folder_actions)
+    shutil.rmtree(folder_tensorboard)
 

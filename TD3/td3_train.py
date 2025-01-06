@@ -4,10 +4,17 @@ import os
 import torch
 import eval_actor
 from track_learning import monitor_plot
-from help_fct import find_largest_td3_folder, ActionLoggingCallback, generate_random_params, pull_data
+from help_fct import find_largest_td3_folder, ActionLoggingCallback, generate_random_params, pull_data, fuse_folders
 
+"""
+tensorboard --logdir ./TD3/logs
+tensorboard --logdir ./logs
 
-def main(args, i=0):  # tensorboard --logdir ./TD3/logs
+$env:PYTHONPATH="."
+python TD3/td3_train.py -mode train -model_ID 2 -total_timesteps 100000
+"""
+
+def main(args, i=0):
     from train import get_dataset_configuration
     if args.dataset == 'correlated_Blackscholes':
         mu, sigma_cov = generate_random_params(args.num_paths)
@@ -47,22 +54,24 @@ def run(args, spec, data_params, returns, i=0):
         already_trained_timesteps = model.num_timesteps
     else:
         print("No saved model found; starting new training.")
-        model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=0, learning_starts=100, tensorboard_log="./logs/", train_freq=(args.train_freq, "episode"))
+        model = TD3("MlpPolicy", vec_env, action_noise=action_noise, batch_size=args.batch_size, verbose=0, learning_starts=1000, tensorboard_log="./logs/", train_freq=(args.train_freq, "episode"))
         already_trained_timesteps = 0
-    model.verbose = 0 if hardware == 'cpu' else 0
+    #model.verbose = 0 if hardware == 'cpu' else 0
 
     # Train, Test, Eval [Evaluate], Compare [with some benchmark]
     if args.mode == 'train':  # tensorboard --logdir ./TD3/logs
-        action_logging_callback = ActionLoggingCallback(log_dir=find_largest_td3_folder(args))
+        tensorboard_path, number = find_largest_td3_folder(args)
+        action_logging_callback = ActionLoggingCallback(log_dir=tensorboard_path)
         model.learn(total_timesteps=args.total_timesteps, progress_bar=True, tb_log_name="TD3", callback=action_logging_callback)
+        fuse_folders(number, args)
         model.num_timesteps += already_trained_timesteps
         model.save(model_save_path)
         print(f"Model saved at: {model_save_path} with {model.num_timesteps} timesteps trained of which {already_trained_timesteps} were trained before")
-        if i == args.laps - 1:
-            monitor_plot(args)
-    if args.mode in ['test', 'train']:
-        print("Params:", data_params)
-        eval_actor.test_actor(args, data_params, model, vec_env)
+        #if i == args.laps - 1:
+        #    monitor_plot(args)
+    #if args.mode in ['test', 'train']:
+    #    print("Params:", data_params)
+    #    eval_actor.test_actor(args, data_params, model, vec_env)
     elif args.mode == 'eval':
         eval_actor.evaluate_actor(args, data_params, model, env)
     elif args.mode == 'compare':
@@ -79,24 +88,24 @@ if __name__ == '__main__':
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes'
     parser.add_argument('-actor_dataset', default='correlated_Blackscholes', type=str)  # An Actor ID to determine which actor will be loaded (if it exists), then trained or tested/evaluated on
     parser.add_argument('-risk_free_rate', default=0.04, type=float)
-    parser.add_argument('-grid_points', default=50, type=int)
-    parser.add_argument('-window_size', default=50, type=int)
+    parser.add_argument('-grid_points', default=1, type=int)
+    parser.add_argument('-window_size', default=1, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
 
-    parser.add_argument('-train_freq', default=1, type=int)
+    parser.add_argument('-train_freq', default=20, type=int)
     parser.add_argument('-total_timesteps', default=1000000, type=int)
-    #parser.add_argument('-batch_size', default=256, type=int)
+    parser.add_argument('-batch_size', default=256, type=int)
     parser.add_argument('-num_episodes', default=3000, type=int)
 
     parser.add_argument('-model_ID', default=1, type=int)
     parser.add_argument('-laps', default=1, type=int)
-    parser.add_argument('-mode', default='compare', type=str)  # 'train' 'test' 'eval' 'compare'
+    parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare'
 
     args = parser.parse_args()
     if args.mode == 'train':
         for i in range(args.laps):
             #args.model_ID = 6 + i
-            print(f"This is lap {i+1} of {args.laps}")
+            #print(f"This is lap {i+1} of {args.laps}")
             main(args, i)
     else:
         main(args)
