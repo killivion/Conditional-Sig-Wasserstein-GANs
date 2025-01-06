@@ -30,7 +30,7 @@ class PortfolioEnv(gym.Env):
     def step(self, action):
         self.current_step += 1
         self.step_count += 1
-        if self.step_count >= self.args.total_timesteps/10 * self.i_steps:
+        if self.step_count >= self.args.total_timesteps/10 * self.i_steps and self.args.mode == 'train':
             print(f"{self.i_steps*10}% done")
             self.i_steps += 2
 

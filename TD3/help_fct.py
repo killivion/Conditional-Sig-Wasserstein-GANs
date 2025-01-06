@@ -10,17 +10,42 @@ class ActionLoggingCallback(BaseCallback):
         super(ActionLoggingCallback, self).__init__(verbose)
         self.log_dir = log_dir
         self.summary_writer = tf.summary.create_file_writer(log_dir)
+        self.episode_rewards = []  # To track rewards for the current episode
 
     def _on_step(self) -> bool:
-        # Log action at the end of each episode
-        if self.locals["dones"].any():  # Check if episode is done
+        # Accumulate rewards for the current episode
+        rewards = self.locals["rewards"]
+        self.episode_rewards.extend(rewards)
+
+        # Check if the episode is done
+        if self.locals["dones"].any():
             actions = self.locals["actions"]  # Extract the last action(s)
             episode_num = self.n_calls
 
-            # Log the action to TensorBoard
+            # Calculate the total reward for the episode
+            total_reward = sum(self.episode_rewards)
+            self.episode_rewards = []  # Reset for the next episode
+
+            # Extract actor and critic losses if available
+            actor_loss = self.locals.get("actor_loss", None)
+            critic_loss = self.locals.get("critic_loss", None)
+
+            # Log data to TensorBoard
             with self.summary_writer.as_default():
+                # Log actions
                 for i, action in enumerate(actions):
-                    tf.summary.scalar(f"Action_{i}", sum(action), step=episode_num)
+                    tf.summary.scalar(f"action/Action", sum(action), step=episode_num)
+
+                # Log episode reward
+                tf.summary.scalar("action/Episode_Reward", total_reward, step=episode_num)
+
+                # Log actor loss (if available)
+                if actor_loss is not None:
+                    tf.summary.scalar("action/Actor_Loss", actor_loss, step=episode_num)
+
+                # Log critic loss (if available)
+                if critic_loss is not None:
+                    tf.summary.scalar("action/Critic_Loss", critic_loss, step=episode_num)
 
         return True
 
@@ -68,14 +93,14 @@ def analytical_solutions(args, data_params):
     return analytical_risky_action, analytical_utility
 
 
-def find_largest_td3_folder():
+def find_largest_td3_folder(args):
     largest_number = 0
     for folder_name in os.listdir("./logs"):
-        if folder_name.startswith("TD3_") and "_" in folder_name:
+        if folder_name[0].isdigit() and "_" in folder_name:  # if folder_name.startswith("TD3_") and "_" in folder_name:
             try:
-                largest_number = max(largest_number, int(folder_name.split('_')[1]))
+                largest_number = max(largest_number, int(folder_name.split('_')[0]))
             except ValueError:
                 pass
-    return f"./logs/TD3_actions_{largest_number+1}"  # f"./logs/TD3_{largest_number}"
+    return f"./logs/{largest_number+1}_ID_{args.model_ID}_window_{args.window_size}_timesteps_{args.total_timesteps}"  # f"./logs/TD3_{largest_number}"
 
 

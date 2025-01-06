@@ -98,7 +98,7 @@ def compare_actor(args, data_params, actor, env):
     print("Analytical Risky Action:", analytical_risky_action)
     print("Average Risky Action:", np.mean(average_risky_action))
 
-    fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+    fig, axs = plt.subplots(1, 4, figsize=(15, 5))
 
     axs[0].plot(trained_portfolio.T, color="blue", linewidth=0.3)
     axs[0].plot(range(args.window_size-1), trained_portfolio.mean(axis=0), color="red")
@@ -110,9 +110,33 @@ def compare_actor(args, data_params, actor, env):
     axs[1].set_title("Random Portfolio")
     axs[1].set_ylabel("Portfolio Value")
 
-    axs[2].boxplot([trained_cum_rewards, random_cum_rewards], labels=["Trained Actor", "Random Actor"],)
-    axs[2].set_title("Performance Comparison")
-    axs[2].set_ylabel("Cumulative Reward")
+    #axs[2].boxplot([trained_cum_rewards, random_cum_rewards], labels=["Trained Actor", "Random Actor"],)
+    #axs[2].set_title("Performance Comparison")
+    #axs[2].set_ylabel("Cumulative Reward")
+
+    from scipy.stats import gaussian_kde
+
+    power_utility = (random_portfolio ** (1 - args.p))  # Example transformation for power utility
+    axs[2].hist(power_utility.flatten(), bins=20, color="green", alpha=0.7)
+    kde_power = gaussian_kde(power_utility.flatten())
+    x_vals_power = np.linspace(min(power_utility.flatten()), max(power_utility.flatten()), 500)
+    axs[2].plot(x_vals_power, kde_power(x_vals_power) * len(power_utility.flatten()) * (
+                max(power_utility.flatten()) - min(power_utility.flatten())) / 20, color="orange", label="Density")
+    axs[2].set_title("Power Utility of Random Portfolio")
+    axs[2].set_ylabel("Frequency")
+    axs[2].set_xlabel("Utility")
+    axs[2].legend()
+
+    axs[3].hist(trained_cum_rewards, bins=20, color="blue", alpha=0.7, label="Trained Actor")
+    axs[3].axvline(random_cum_rewards[0], color="red", linestyle="--", linewidth=2, label="Perfect Actor")
+    kde_trained = gaussian_kde(trained_cum_rewards)
+    x_vals = np.linspace(min(trained_cum_rewards), max(trained_cum_rewards), 500)
+    axs[3].plot(x_vals, kde_trained(x_vals) * len(trained_cum_rewards) * (
+                max(trained_cum_rewards) - min(trained_cum_rewards)) / 20, color="orange", label="Density")
+    axs[3].set_title("Performance Comparison")
+    axs[3].set_ylabel("Frequency")
+    axs[3].set_xlabel("Deviation from Perfect Actor")
+    axs[3].legend()
 
     plt.tight_layout()
     plt.show()

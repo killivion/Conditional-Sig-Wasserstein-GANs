@@ -7,7 +7,7 @@ from track_learning import monitor_plot
 from help_fct import find_largest_td3_folder, ActionLoggingCallback, generate_random_params, pull_data
 
 
-def main(args, i=0):
+def main(args, i=0):  # tensorboard --logdir ./TD3/logs
     from train import get_dataset_configuration
     if args.dataset == 'correlated_Blackscholes':
         mu, sigma_cov = generate_random_params(args.num_paths)
@@ -37,7 +37,7 @@ def run(args, spec, data_params, returns, i=0):
     action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
 
     hardware = 'LRZ' if torch.cuda.is_available() else 'cpu'
-    model_save_path = f"./agent/{hardware}_td3_agent_{args.actor_dataset}_assets_{args.num_paths}_{args.model_ID}"
+    model_save_path = f"./agent/{args.model_ID}_{hardware}_td3_{args.actor_dataset}_assets_{args.num_paths}_window_{args.window_size}"
 
     # Load Model
     if os.path.exists(f"{model_save_path}.zip"):
@@ -47,13 +47,13 @@ def run(args, spec, data_params, returns, i=0):
         already_trained_timesteps = model.num_timesteps
     else:
         print("No saved model found; starting new training.")
-        model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=0, learning_starts=100, tensorboard_log="./logs", train_freq=(args.train_freq, "episode"))
+        model = TD3("MlpPolicy", vec_env, action_noise=action_noise, verbose=0, learning_starts=100, tensorboard_log="./logs/", train_freq=(args.train_freq, "episode"))
         already_trained_timesteps = 0
     model.verbose = 0 if hardware == 'cpu' else 0
 
     # Train, Test, Eval [Evaluate], Compare [with some benchmark]
     if args.mode == 'train':  # tensorboard --logdir ./TD3/logs
-        action_logging_callback = ActionLoggingCallback(log_dir=find_largest_td3_folder())
+        action_logging_callback = ActionLoggingCallback(log_dir=find_largest_td3_folder(args))
         model.learn(total_timesteps=args.total_timesteps, progress_bar=True, tb_log_name="TD3", callback=action_logging_callback)
         model.num_timesteps += already_trained_timesteps
         model.save(model_save_path)
@@ -79,18 +79,18 @@ if __name__ == '__main__':
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes'
     parser.add_argument('-actor_dataset', default='correlated_Blackscholes', type=str)  # An Actor ID to determine which actor will be loaded (if it exists), then trained or tested/evaluated on
     parser.add_argument('-risk_free_rate', default=0.04, type=float)
-    parser.add_argument('-grid_points', default=3, type=int)
-    parser.add_argument('-window_size', default=3, type=int)
+    parser.add_argument('-grid_points', default=50, type=int)
+    parser.add_argument('-window_size', default=50, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
 
     parser.add_argument('-train_freq', default=1, type=int)
     parser.add_argument('-total_timesteps', default=1000000, type=int)
     #parser.add_argument('-batch_size', default=256, type=int)
-    parser.add_argument('-num_episodes', default=100, type=int)
+    parser.add_argument('-num_episodes', default=3000, type=int)
 
     parser.add_argument('-model_ID', default=1, type=int)
     parser.add_argument('-laps', default=1, type=int)
-    parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare'
+    parser.add_argument('-mode', default='compare', type=str)  # 'train' 'test' 'eval' 'compare'
 
     args = parser.parse_args()
     if args.mode == 'train':
