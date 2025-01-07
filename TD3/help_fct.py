@@ -65,7 +65,7 @@ def pull_data(args, data_params):
 
 
 def generate_random_params(num_paths):
-    if num_paths!= 1:
+    if num_paths != 1:
         low_vol = 0.1 * 3 * (np.log(1000)) ** (0.8) / (np.log(num_paths) ** (1.8)) if num_paths != 1 else 0.2 # Adjustment of up and lower bound depending on num_paths size (number of correlations)
         up_vol = 0.25 * 3 * (np.log(1000)) ** (0.8) / (np.log(num_paths) ** (1.8)) if num_paths != 1 else 0.2 # amounts to slightly more than 20% vol
         low_mu, up_mu = 0.03, 0.13

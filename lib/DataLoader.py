@@ -252,164 +252,221 @@ class LoadData:
 
         return S, t
 
-
 if __name__ == "__main__": #Testing
-    import matplotlib.pyplot as plt
+    test = 0
+    if test == 1:
+        import matplotlib.pyplot as plt
 
-    GBM_parameter = {
-        #"mu": 0.05,
-        #"sigma": 0.2
-    }
-    Heston_parameter = {
-        #"mu": 0.05,
-        "v0_sqrt": 0.2,  # This is volatility,
-        "kappa": 1.5,
-        #"theta": 0.2**2,  # This is Variance, gbm_sigma indicates volatility
-        "xi": 0.3, #Feller-Condition: 2*kappa*theta > xi**2
-        "rho": -0.5
-    }
-    VarGamma_parameter = {
-        #"mu": 0.05,
-        #"sigma": 0.2,
-        "nu": 0.02,
-    }
-    Kou_parameter = {
-        #"mu": 0.12,
-        #"sigma": 0.2,
-        "kou_lambda": 2.0,
-        "p": 0.3,
-        "eta1": 50.,
-        "eta2": 25.
-    }
-    LevyIto_parameter = {
-        #"mu": 0.05,
-        #"sigma": 0.2,
-        "lambda_large": 2,
-        "lambda_small": 300,
-        "jump_mean_large": 0.03,
-        "jump_std_large": 0.05,
-        "jump_mean_small": 0.0005,
-        "jump_std_small": 0.0005
-    }
-    YFinance_parameter = {
-        "S0": 1.,
-        "plot": False,
-        "ticker": [
-    # Major Indices
-    "^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX",
-    ]
-    }
-    """# Large-Cap Tech Stocks (FAANG & Others)
-         "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA", "ORCL", "INTC", "CSCO", "IBM", "ADBE", "CRM", "TXN",
+        GBM_parameter = {
+            #"mu": 0.05,
+            #"sigma": 0.2
+        }
+        Heston_parameter = {
+            #"mu": 0.05,
+            "v0_sqrt": 0.2,  # This is volatility,
+            "kappa": 1.5,
+            #"theta": 0.2**2,  # This is Variance, gbm_sigma indicates volatility
+            "xi": 0.3, #Feller-Condition: 2*kappa*theta > xi**2
+            "rho": -0.5
+        }
+        VarGamma_parameter = {
+            #"mu": 0.05,
+            #"sigma": 0.2,
+            "nu": 0.02,
+        }
+        Kou_parameter = {
+            #"mu": 0.12,
+            #"sigma": 0.2,
+            "kou_lambda": 2.0,
+            "p": 0.3,
+            "eta1": 50.,
+            "eta2": 25.
+        }
+        LevyIto_parameter = {
+            #"mu": 0.05,
+            #"sigma": 0.2,
+            "lambda_large": 2,
+            "lambda_small": 300,
+            "jump_mean_large": 0.03,
+            "jump_std_large": 0.05,
+            "jump_mean_small": 0.0005,
+            "jump_std_small": 0.0005
+        }
+        YFinance_parameter = {
+            "S0": 1.,
+            "plot": False,
+            "ticker": [
+        # Major Indices
+        "^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX",
+        ]
+        }
+        """# Large-Cap Tech Stocks (FAANG & Others)
+             "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA", "ORCL", "INTC", "CSCO", "IBM", "ADBE", "CRM", "TXN",
+    
+             # Financial Sector
+             "JPM", "BAC", "GS", "C", "WFC", "MS", "SCHW", "BLK", "BK", "AXP", "COF", "USB", "TFC", "CME",
+    
+             # Consumer Goods & Retail
+             "WMT", "PG", "KO", "PEP", "COST", "MCD", "NKE", "TGT", "SBUX", "HD", "LOW", "DG", "TJX", "YUM",
+    
+             # Healthcare
+             "JNJ", "PFE", "UNH", "MRK", "CVS", "LLY", "ABT", "TMO", "BMY", "DHR", "ZTS", "MDT", "BSX",
+    
+             # Energy Sector
+             "XOM", "CVX", "SLB", "COP", "OXY", "PSX", "VLO", "HAL", "MPC", "BKR", "EOG", "FANG", "KMI",
+    
+             # Industrials
+             "BA", "CAT", "MMM", "GE", "HON", "UPS", "UNP", "LMT", "RTX", "FDX", "CSX", "NSC", "WM", "NOC",
+    
+             # Utilities
+             "NEE", "DUK", "SO", "D", "EXC", "AEP", "SRE", "PEG", "WEC", "ED", "XEL", "ES", "AWK", "DTE",
+    
+             # Telecommunications
+             "T", "VZ", "TMUS", "CCI", "AMT", "VOD", "S", "CHT", "TU", "NOK", "ORAN", "BTI", "KT", "PHI",
+    
+             # Real Estate
+             "PLD", "AMT", "CCI", "SPG", "PSA", "EQIX", "EQR", "ESS", "AVB", "O", "MAA", "UDR", "VTR", "HCP",
+    
+             # Consumer Discretionary
+             "DIS", "HD", "MCD", "SBUX", "NKE", "LVS", "GM", "F", "HMC", "TM", "TSLA", "YUM", "MAR", "CCL",
+    
+             # ETFs and Funds
+             "SPY", "QQQ", "DIA", "IWM", "GLD", "SLV", "TLT", "XLF", "XLK", "XLE", "XLU", "XLI", "XLY", "XLP",
+    
+             # Commodities
+             "CL=F", "GC=F", "SI=F", "NG=F", "HG=F", "ZC=F", "ZW=F", "ZS=F", "LE=F", "HE=F", "KC=F", "CC=F", "CT=F",
+    
+             # Forex and Cryptocurrency
+             "EURUSD=X", "GBPUSD=X", "JPY=X", "AUDUSD=X", "BTC-USD", "ETH-USD", "LTC-USD", "XRP-USD", "BCH-USD",
+             "DOT-USD","""
+        general_parameter = {
+            "mu": 0.08,  # 0.0618421411431207,  # This is the YFinance data mean;
+            "sigma": 0.2,  # 0.34787525475010267,  # This is the YFinance data Volatility;
+            "S0": 1,
+            "grid_points": 252,
+            "window_size": 252 * 1,
+            "num_paths": 1000
+        }
+        def generate_random_params(num_paths):
+            low_vol = 0.1 * 3*(np.log(1000))**(0.8)/(np.log(num_paths)**(1.8))  # Adjustment of up and lower bound depending on num_paths size (number of correlations)
+            up_vol = 0.25 * 3*(np.log(1000))**(0.8)/(np.log(num_paths)**(1.8))  # amounts to 22% vol
 
-         # Financial Sector
-         "JPM", "BAC", "GS", "C", "WFC", "MS", "SCHW", "BLK", "BK", "AXP", "COF", "USB", "TFC", "CME",
+            mu = np.random.uniform(0.03, 0.13, size=num_paths)
+            volatilities = np.random.uniform(low_vol, up_vol, size=num_paths)
+            correlation = np.random.uniform(-1, 1, size=(num_paths, num_paths))
+            np.fill_diagonal(correlation, 1)
+            correlation = (correlation + correlation.T) / 2
+            eigvals, eigvecs = np.linalg.eigh(correlation)
+            eigvals[eigvals < 0] = 1e-5
+            correlation = eigvecs @ np.diag(eigvals) @ eigvecs.T
 
-         # Consumer Goods & Retail
-         "WMT", "PG", "KO", "PEP", "COST", "MCD", "NKE", "TGT", "SBUX", "HD", "LOW", "DG", "TJX", "YUM",
+            sigma_cov = correlation * np.outer(volatilities, volatilities)
+            return mu, sigma_cov
+        num_paths = general_parameter['num_paths']
+        mu, sigma_cov = generate_random_params(num_paths)
+        T = general_parameter['window_size']/general_parameter['grid_points']
 
-         # Healthcare
-         "JNJ", "PFE", "UNH", "MRK", "CVS", "LLY", "ABT", "TMO", "BMY", "DHR", "ZTS", "MDT", "BSX",
+        plot = True
+        models = {
+            #"Blackscholes": {**GBM_parameter, **general_parameter},
+            #"Heston": {**Heston_parameter, **general_parameter},
+            #"VarianceGamma": {**VarGamma_parameter, **general_parameter},
+            #"Kou_Jump_Diffusion": {**Kou_parameter, **general_parameter},
+            #"Levy_Ito": {**LevyIto_parameter, **general_parameter},
+            #"YFinance": YFinance_parameter,
+            "correlated_Blackscholes": {"mu": mu, "sigma_cov": sigma_cov, "window_size": general_parameter['window_size'], "num_paths": num_paths},
+        }
 
-         # Energy Sector
-         "XOM", "CVX", "SLB", "COP", "OXY", "PSX", "VLO", "HAL", "MPC", "BKR", "EOG", "FANG", "KMI",
+        if plot:
+            # Set up the figure for multiple subplots
+            fig, axes = plt.subplots(1, len(models), figsize=(20, 9), sharey=True)
+            fig.suptitle('Comparison of Simulated Paths for Different Models')
 
-         # Industrials
-         "BA", "CAT", "MMM", "GE", "HON", "UPS", "UNP", "LMT", "RTX", "FDX", "CSX", "NSC", "WM", "NOC",
+            for i, (model_name, params) in enumerate(models.items()):
+                # Load model and create simulated price data
+                model = LoadData(dataset=model_name, data_params=params, isSigLib=False)
+                prices_df = model.create_dataset("DataFrame")
+                clear_output(wait=True)
 
-         # Utilities
-         "NEE", "DUK", "SO", "D", "EXC", "AEP", "SRE", "PEG", "WEC", "ED", "XEL", "ES", "AWK", "DTE",
+                print('%s %s %s' % (model_name, prices_df.iloc[:, -1].mean()**(1 / T) - 1, prices_df.iloc[:, -1].std()/np.sqrt(T)))
 
-         # Telecommunications
-         "T", "VZ", "TMUS", "CCI", "AMT", "VOD", "S", "CHT", "TU", "NOK", "ORAN", "BTI", "KT", "PHI",
+                ax = axes[i]
+                prices_df.T.plot(ax=ax, alpha=0.5, linewidth=0.3, legend=False)
+                ax.set_title(f"{model_name} Model")
+                ax.set_xlabel('Timeframe (years)')
+                ax.grid(True)
 
-         # Real Estate
-         "PLD", "AMT", "CCI", "SPG", "PSA", "EQIX", "EQR", "ESS", "AVB", "O", "MAA", "UDR", "VTR", "HCP",
+            axes[0].set_ylabel('Price')
 
-         # Consumer Discretionary
-         "DIS", "HD", "MCD", "SBUX", "NKE", "LVS", "GM", "F", "HMC", "TM", "TSLA", "YUM", "MAR", "CCL",
+            plt.tight_layout(rect=[0, 0, 1, 0.95])
+            plt.show()
 
-         # ETFs and Funds
-         "SPY", "QQQ", "DIA", "IWM", "GLD", "SLV", "TLT", "XLF", "XLK", "XLE", "XLU", "XLI", "XLY", "XLP",
+        else:
+            import time
+            for i, (model_name, params) in enumerate(models.items()):
+                start_time = time.time()
+                # Load model and create simulated price data
+                model = LoadData(dataset=model_name, data_params=params, isSigLib=False)
+                prices_df = model.create_dataset("DataFrame")
 
-         # Commodities
-         "CL=F", "GC=F", "SI=F", "NG=F", "HG=F", "ZC=F", "ZW=F", "ZS=F", "LE=F", "HE=F", "KC=F", "CC=F", "CT=F",
+                print('%s %s %s' % (model_name, (prices_df.iloc[:, -1].mean()) ** (1 / T) - 1, prices_df.iloc[:, -1].std() / np.sqrt(T)))
 
-         # Forex and Cryptocurrency
-         "EURUSD=X", "GBPUSD=X", "JPY=X", "AUDUSD=X", "BTC-USD", "ETH-USD", "LTC-USD", "XRP-USD", "BCH-USD",
-         "DOT-USD","""
-    general_parameter = {
-        "mu": 0.08,  # 0.0618421411431207,  # This is the YFinance data mean;
-        "sigma": 0.2,  # 0.34787525475010267,  # This is the YFinance data Volatility;
-        "S0": 1,
-        "grid_points": 252,
-        "window_size": 252 * 1,
-        "num_paths": 1000
-    }
-    def generate_random_params(num_paths):
-        low_vol = 0.1 * 3*(np.log(1000))**(0.8)/(np.log(num_paths)**(1.8))  # Adjustment of up and lower bound depending on num_paths size (number of correlations)
-        up_vol = 0.25 * 3*(np.log(1000))**(0.8)/(np.log(num_paths)**(1.8))  # amounts to 22% vol
+                elapsed = time.time() - start_time
+                print('Time Elapsed: %s' % elapsed)
 
-        mu = np.random.uniform(0.03, 0.13, size=num_paths)
-        volatilities = np.random.uniform(low_vol, up_vol, size=num_paths)
-        correlation = np.random.uniform(-1, 1, size=(num_paths, num_paths))
-        np.fill_diagonal(correlation, 1)
-        correlation = (correlation + correlation.T) / 2
-        eigvals, eigvecs = np.linalg.eigh(correlation)
-        eigvals[eigvals < 0] = 1e-5
-        correlation = eigvecs @ np.diag(eigvals) @ eigvecs.T
+    elif test == 0:
+        mu = [0.15]
+        sigma_cov = [[0.04]]
+        grid_points = 252
+        window_size = 252
+        num_paths = 1
 
-        sigma_cov = correlation * np.outer(volatilities, volatilities)
-        return mu, sigma_cov
-    num_paths = general_parameter['num_paths']
-    mu, sigma_cov = generate_random_params(num_paths)
-    T = general_parameter['window_size']/general_parameter['grid_points']
+        T = window_size / grid_points
+        dt = 1 / grid_points
+        t = np.linspace(0, T, window_size + 1)
+        cholesky = np.linalg.cholesky(sigma_cov)
 
-    plot = True
-    models = {
-        #"Blackscholes": {**GBM_parameter, **general_parameter},
-        #"Heston": {**Heston_parameter, **general_parameter},
-        #"VarianceGamma": {**VarGamma_parameter, **general_parameter},
-        #"Kou_Jump_Diffusion": {**Kou_parameter, **general_parameter},
-        #"Levy_Ito": {**LevyIto_parameter, **general_parameter},
-        #"YFinance": YFinance_parameter,
-        "correlated_Blackscholes": {"mu": mu, "sigma_cov": sigma_cov, "window_size": general_parameter['window_size'], "num_paths": num_paths},
-    }
+        def generate_gbm(mu, sigma, window_size, num_paths, grid_points=252, S0=1):
 
-    if plot:
-        # Set up the figure for multiple subplots
-        fig, axes = plt.subplots(1, len(models), figsize=(20, 9), sharey=True)
-        fig.suptitle('Comparison of Simulated Paths for Different Models')
+            # Wiener Processes
+            dW = np.random.normal(0, np.sqrt(dt), size=(num_paths, window_size))
+            W = np.cumsum(dW, axis=1)
+            W = np.hstack([np.zeros((num_paths, 1)), W])
 
-        for i, (model_name, params) in enumerate(models.items()):
-            # Load model and create simulated price data
-            model = LoadData(dataset=model_name, data_params=params, isSigLib=False)
-            prices_df = model.create_dataset("DataFrame")
-            clear_output(wait=True)
+            # Asset price process from closed form
+            S = S0 * np.exp((mu - 0.5 * sigma ** 2) * t + sigma * W)
 
-            print('%s %s %s' % (model_name, prices_df.iloc[:, -1].mean()**(1 / T) - 1, prices_df.iloc[:, -1].std()/np.sqrt(T)))
+            return S[0][window_size]
 
-            ax = axes[i]
-            prices_df.T.plot(ax=ax, alpha=0.5, linewidth=0.3, legend=False)
-            ax.set_title(f"{model_name} Model")
-            ax.set_xlabel('Timeframe (years)')
-            ax.grid(True)
+        def generate_correlated_BS(mu, sigma_cov, window_size, num_paths, grid_points=252, S0=1):
+            S = np.zeros((num_paths, window_size + 1))
+            S[:, 0] = S0
 
-        axes[0].set_ylabel('Price')
+            for i in range(1, window_size + 1):
+                Z = np.random.normal(size=num_paths)  # Independent standard normals
+                S[:, i] = S[:, i - 1] * np.exp((mu - 0.5 * np.sum(sigma_cov, axis=1)) * dt + cholesky @ Z * np.sqrt(dt))
 
-        plt.tight_layout(rect=[0, 0, 1, 0.95])
-        plt.show()
+            # prices_df = pd.DataFrame(S, columns=t)
+            # print('Mean and Std of correlated BS %s %s' % (prices_df.iloc[:, -1].mean()**(1 / T) - 1, prices_df.iloc[:, -1].std() / np.sqrt(T)))
 
-    else:
-        import time
-        for i, (model_name, params) in enumerate(models.items()):
-            start_time = time.time()
-            # Load model and create simulated price data
-            model = LoadData(dataset=model_name, data_params=params, isSigLib=False)
-            prices_df = model.create_dataset("DataFrame")
+            return S[0][window_size]
 
-            print('%s %s %s' % (model_name, (prices_df.iloc[:, -1].mean()) ** (1 / T) - 1, prices_df.iloc[:, -1].std() / np.sqrt(T)))
+        num_returns = 40000
+        prices_df = np.zeros(num_returns)
+        prices_df2 = np.zeros(num_returns)
 
-            elapsed = time.time() - start_time
-            print('Time Elapsed: %s' % elapsed)
+        for j in tqdm(range(num_returns)):
+            prices_df[j] = generate_correlated_BS(mu=mu, sigma_cov=sigma_cov, window_size=window_size, num_paths=num_paths, grid_points=grid_points, S0=1)
+            prices_df2[j] = generate_gbm(mu=mu[0], sigma=np.sqrt(sigma_cov[0][0]), window_size=window_size, num_paths=num_paths, grid_points=grid_points, S0=1)
+
+        prices_df = pd.DataFrame(prices_df)
+        print(f"Correlated_BS; Mean: {prices_df.iloc[:, -1].mean() ** (1 / T) - 1}, {prices_df.iloc[:, -1].std() / np.sqrt(T)}")
+        print(f"GBM; Mean: {prices_df2.iloc[:, -1].mean() ** (1 / T) - 1}, {prices_df2.iloc[:, -1].std() / np.sqrt(T)}")
+
+        observed_mu = np.log(prices_df).mean()[0]
+        observed_sigma = np.log(prices_df).std()[0]
+        observed_mu2 = np.log(prices_df2).mean()[0]
+        observed_sigma2 = np.log(prices_df2).std()[0]
+        print(f"Log; Mean: {observed_mu}, {observed_sigma}")
+        print(f"Log; Mean: {observed_mu2}, {observed_sigma2}")
 

@@ -36,7 +36,7 @@ def run(args, spec, data_params, returns, i=0):
     from stable_baselines3.common.vec_env import DummyVecEnv
     from stable_baselines3.common.monitor import Monitor
 
-    env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns), filename='log')
+    env = PortfolioEnv(args=args, data_params=data_params, stock_data=returns)  # Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns), filename='log')
     vec_env = DummyVecEnv([lambda: env])
 
     # Add action noise (exploration)
@@ -97,9 +97,9 @@ if __name__ == '__main__':
     parser.add_argument('-batch_size', default=256, type=int)
     parser.add_argument('-num_episodes', default=3000, type=int)
 
-    parser.add_argument('-model_ID', default=1, type=int)
+    parser.add_argument('-model_ID', default=2, type=int)
     parser.add_argument('-laps', default=1, type=int)
-    parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare'
+    parser.add_argument('-mode', default='compare', type=str)  # 'train' 'test' 'eval' 'compare'
 
     args = parser.parse_args()
     if args.mode == 'train':

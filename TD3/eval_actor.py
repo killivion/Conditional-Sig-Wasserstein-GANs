@@ -73,8 +73,8 @@ def compare_actor(args, data_params, actor, env):
 
                 obs, reward, done, _, info = env.step(action)
                 episode_reward += reward
-                if not done:
-                    portfolio_value.append(info)
+                #if not done:
+                portfolio_value.append(info)
 
             if random_actor:
                 random_cum_rewards.append(episode_reward)
@@ -88,12 +88,17 @@ def compare_actor(args, data_params, actor, env):
     trained_portfolio = np.array(trained_portfolio)
     random_portfolio = np.array(random_portfolio)
 
+    perfect_portfolio = random_portfolio
+    perfect_portfolio[perfect_portfolio < 0] = 0
+    power_utility = (perfect_portfolio[:, -1] ** (1 - args.p))  # Example transformation for power utility
+
     print(f"Trained Actor Average Portfolio: {np.mean(trained_portfolio[:,-1])}")
     print(f"Random Actor Average Portfolio: {np.mean(random_portfolio[:,-1])}")
     print("_____")
     print(f"Trained Actor Average Terminal Reward: {np.mean(trained_cum_rewards)}")
     print(f"Random Actor Average Terminal Reward: {np.mean(random_cum_rewards)}")
-    print("Analytical Expected Utility:", analytical_utility)
+    print("Analytical Perfect Utility:", analytical_utility)
+    print("Analytical - Simulated Perfect Utility:", analytical_utility - np.mean(power_utility))
     print("_____")
     print("Analytical Risky Action:", analytical_risky_action)
     print("Average Risky Action:", np.mean(average_risky_action))
@@ -101,12 +106,12 @@ def compare_actor(args, data_params, actor, env):
     fig, axs = plt.subplots(1, 4, figsize=(15, 5))
 
     axs[0].plot(trained_portfolio.T, color="blue", linewidth=0.3)
-    axs[0].plot(range(args.window_size-1), trained_portfolio.mean(axis=0), color="red")
+    axs[0].plot(range(trained_portfolio.shape[1]), trained_portfolio.mean(axis=0), color="red")
     axs[0].set_title("Trained Portfolio")
     axs[0].set_ylabel("Portfolio Value")
 
     axs[1].plot(random_portfolio.T, color="blue", linewidth=0.3)
-    axs[1].plot(range(args.window_size-1), random_portfolio.mean(axis=0), color="red")
+    axs[1].plot(range(random_portfolio.shape[1]), random_portfolio.mean(axis=0), color="red")
     axs[1].set_title("Random Portfolio")
     axs[1].set_ylabel("Portfolio Value")
 
@@ -116,23 +121,24 @@ def compare_actor(args, data_params, actor, env):
 
     from scipy.stats import gaussian_kde
 
-    power_utility = (random_portfolio ** (1 - args.p))  # Example transformation for power utility
-    axs[2].hist(power_utility.flatten(), bins=20, color="green", alpha=0.7)
+    axs[2].hist(power_utility.flatten(), bins=50, color="green", alpha=0.7)
+    axs[2].axvline(np.mean(power_utility), color="red", linestyle="--", linewidth=2, label="Perfect Actor")
     kde_power = gaussian_kde(power_utility.flatten())
     x_vals_power = np.linspace(min(power_utility.flatten()), max(power_utility.flatten()), 500)
     axs[2].plot(x_vals_power, kde_power(x_vals_power) * len(power_utility.flatten()) * (
-                max(power_utility.flatten()) - min(power_utility.flatten())) / 20, color="orange", label="Density")
+                max(power_utility.flatten()) - min(power_utility.flatten())) / 50, color="orange", label="Density")
     axs[2].set_title("Power Utility of Random Portfolio")
     axs[2].set_ylabel("Frequency")
     axs[2].set_xlabel("Utility")
     axs[2].legend()
 
-    axs[3].hist(trained_cum_rewards, bins=20, color="blue", alpha=0.7, label="Trained Actor")
+    axs[3].hist(trained_cum_rewards, bins=50, color="blue", alpha=0.7, label="Trained Actor")
     axs[3].axvline(random_cum_rewards[0], color="red", linestyle="--", linewidth=2, label="Perfect Actor")
+    axs[3].axvline(np.mean(trained_cum_rewards), color="green", linestyle="--", linewidth=2, label="Mean Trained Actor")
     kde_trained = gaussian_kde(trained_cum_rewards)
     x_vals = np.linspace(min(trained_cum_rewards), max(trained_cum_rewards), 500)
     axs[3].plot(x_vals, kde_trained(x_vals) * len(trained_cum_rewards) * (
-                max(trained_cum_rewards) - min(trained_cum_rewards)) / 20, color="orange", label="Density")
+                max(trained_cum_rewards) - min(trained_cum_rewards)) / 50, color="orange", label="Density")
     axs[3].set_title("Performance Comparison")
     axs[3].set_ylabel("Frequency")
     axs[3].set_xlabel("Deviation from Perfect Actor")

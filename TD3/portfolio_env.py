@@ -44,7 +44,7 @@ class PortfolioEnv(gym.Env):
 
         obs = self._get_feature_map()
         truncated = False
-        info = self.portfolio_value if not done and self.args.mode in ['eval', 'compare'] else {}
+        info = self.portfolio_value if self.args.mode in ['eval', 'compare'] else {}  #and not done
         return obs, reward, done, truncated, info
 
     def reset(self, seed=None, test=False, random_actor=False, **kwargs):
@@ -79,7 +79,7 @@ class PortfolioEnv(gym.Env):
 
     def _calc_reward(self, done):
         if done:  # Terminal utility -> Central Reward-fct.
-            reward = (self.portfolio_value ** (1 - self.args.p)) if not self.portfolio_value <= 0 else -1000 * abs(self.portfolio_value)  # / (1 - self.args.p) leave out the constant divisor since it only scales the expectation
+            reward = (self.portfolio_value ** (1 - self.args.p)) if not self.portfolio_value <= 0 else 0 * abs(self.portfolio_value)  # / (1 - self.args.p) leave out the constant divisor since it only scales the expectation
             optimal_utility = (self.optimal_portfolio ** (1 - self.args.p)) if not self.optimal_portfolio <= 0 else 0
             reward = reward - optimal_utility
             self.reward_window.append(reward)
