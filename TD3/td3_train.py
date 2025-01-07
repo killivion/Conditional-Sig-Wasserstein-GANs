@@ -63,15 +63,17 @@ def run(args, spec, data_params, returns, i=0):
         tensorboard_path, number = find_largest_td3_folder(args)
         action_logging_callback = ActionLoggingCallback(log_dir=tensorboard_path)
         model.learn(total_timesteps=args.total_timesteps, progress_bar=True, tb_log_name="TD3", callback=action_logging_callback)
+        #model.action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
+        #model.learn(total_timesteps=args.total_timesteps, progress_bar=True, tb_log_name="TD3",callback=action_logging_callback)
         fuse_folders(number, args)
         model.num_timesteps += already_trained_timesteps
         model.save(model_save_path)
         print(f"Model saved at: {model_save_path} with {model.num_timesteps} timesteps trained of which {already_trained_timesteps} were trained before")
         #if i == args.laps - 1:
         #    monitor_plot(args)
-    #if args.mode in ['test', 'train']:
+    if args.mode in ['test']:
     #    print("Params:", data_params)
-    #    eval_actor.test_actor(args, data_params, model, vec_env)
+        eval_actor.test_actor(args, data_params, model, vec_env)
     elif args.mode == 'eval':
         eval_actor.evaluate_actor(args, data_params, model, env)
     elif args.mode == 'compare':

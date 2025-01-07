@@ -97,9 +97,9 @@ def analytical_solutions(args, data_params):
 def find_largest_td3_folder(args):
     largest_number = 0
     for folder_name in os.listdir("./logs"):
-        if folder_name.startswith("TD3_") and "_" in folder_name:
+        if folder_name[0].isdigit() and "_" in folder_name:
             try:
-                largest_number = max(largest_number, int(folder_name.split('_')[1]))
+                largest_number = max(largest_number, int(folder_name.split('_')[0]))
             except ValueError:
                 pass
     return f"./logs/TD3_{largest_number+1}_actions", largest_number+1  # f"./logs/TD3_{largest_number}"
