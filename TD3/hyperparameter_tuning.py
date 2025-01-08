@@ -19,7 +19,7 @@ def optimize_td3(trial, args, data_params, returns):
     #net_arch_options = {1: [128, 128, 128], 2: [256, 256], 3: [400, 300]}
     #net_arch = net_arch_options[net_arch]
     action_noise_std = trial.suggest_float("action_noise_std", 0.05, 0.5)
-    buffer_size = trial.suggest_categorical("buffer_size", [1000000, 2000000, 5000000, 10000000])
+    #buffer_size = trial.suggest_categorical("buffer_size", [1000000, 2000000, 5000000, 10000000])
 
     train_freq = trial.suggest_int("train_freq", 1, 100)
     args.window_size = trial.suggest_int("window_size", 1, 252, log=True)
@@ -31,7 +31,7 @@ def optimize_td3(trial, args, data_params, returns):
     action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=action_noise_std * np.ones(n_actions))
 
     model = TD3("MlpPolicy", vec_env,
-                learning_starts=10000, learning_rate=0.001, batch_size=batch_size, buffer_size=buffer_size,
+                learning_starts=10000, learning_rate=0.001, batch_size=batch_size, buffer_size=1000000,
                 gamma=1, tau=tau, action_noise=action_noise, verbose=0, train_freq=(train_freq, "episode"))
     eval_callback = EvalCallback(vec_env, best_model_save_path="./evalLogs/",
                                  log_path="./evalLogs/", eval_freq=10000,
