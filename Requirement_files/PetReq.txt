@@ -6,6 +6,7 @@ yfinance
 #rich
 ipywidgets
 tensorboard
+optuna
 
 # Extracted from pip section in requirements.yml
 joblib

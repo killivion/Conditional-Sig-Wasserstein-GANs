@@ -1,10 +1,19 @@
 from stable_baselines3 import TD3
+from stable_baselines3.common.noise import NormalActionNoise
+from stable_baselines3.common.vec_env import DummyVecEnv
+from stable_baselines3.common.monitor import Monitor
+
 import numpy as np
 import os
 import torch
+import optuna
+from functools import partial
+
 import eval_actor
 from track_learning import monitor_plot
 from help_fct import find_largest_td3_folder, ActionLoggingCallback, generate_random_params, pull_data, fuse_folders
+from portfolio_env import PortfolioEnv
+from hyperparameter_tuning import optimize_td3
 
 """
 tensorboard --logdir ./TD3/logs
@@ -23,18 +32,21 @@ def main(args, i=0):
     else:
         generator = get_dataset_configuration(args.dataset, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.grid_points)
         for s, d in generator:
-            spec, data_params = s, d  # odd way to do it, works in 1-d
+            spec, data_params = s, d  # odd way to do it - easiest at the time, works in 1-d
 
     returns = pull_data(args, data_params)
-    run(args, spec, data_params, returns, i)
+    if args.mode == 'tuning':
+        custom_args = {"args": args, "data_params": data_params, "returns": returns}
+        optimize_func = partial(optimize_td3, **custom_args)
+        study = optuna.create_study(direction="maximize")
+        study.optimize(optimize_func, n_trials=50, show_progress_bar=True)
+        print("Best hyperparameters:", study.best_params)
+    else:
+        run(args, spec, data_params, returns, i)
 
 
 def run(args, spec, data_params, returns, i=0):
     print('Executing TD3 on %s, %s' % (args.dataset, spec))
-    from portfolio_env import PortfolioEnv
-    from stable_baselines3.common.noise import NormalActionNoise
-    from stable_baselines3.common.vec_env import DummyVecEnv
-    from stable_baselines3.common.monitor import Monitor
 
     env = PortfolioEnv(args=args, data_params=data_params, stock_data=returns)  # Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns), filename='log')
     vec_env = DummyVecEnv([lambda: env])
@@ -42,6 +54,7 @@ def run(args, spec, data_params, returns, i=0):
     # Add action noise (exploration)
     n_actions = env.action_space.shape[0]
     action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
+
 
     hardware = 'LRZ' if torch.cuda.is_available() else 'cpu'
     model_save_path = f"./agent/{args.model_ID}_{hardware}_td3_{args.actor_dataset}_assets_{args.num_paths}_window_{args.window_size}"
@@ -54,7 +67,7 @@ def run(args, spec, data_params, returns, i=0):
         already_trained_timesteps = model.num_timesteps
     else:
         print("No saved model found; starting new training.")
-        model = TD3("MlpPolicy", vec_env, action_noise=action_noise, batch_size=args.batch_size, verbose=0, learning_starts=1000, tensorboard_log="./logs/", train_freq=(args.train_freq, "episode"))
+        model = TD3("MlpPolicy", vec_env, action_noise=action_noise, batch_size=args.batch_size, verbose=0, learning_starts=10000, tensorboard_log="./logs/", train_freq=(args.train_freq, "episode"))
         already_trained_timesteps = 0
     #model.verbose = 0 if hardware == 'cpu' else 0
 
@@ -101,7 +114,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-model_ID', default=2, type=int)
     parser.add_argument('-laps', default=1, type=int)
-    parser.add_argument('-mode', default='compare', type=str)  # 'train' 'test' 'eval' 'compare'
+    parser.add_argument('-mode', default='tuning', type=str)  # 'train' 'test' 'eval' 'compare' 'tuning
 
     args = parser.parse_args()
     if args.mode == 'train':

@@ -88,7 +88,7 @@ class PortfolioEnv(gym.Env):
                 self.std_reward = np.std(self.reward_window) if self.reward_window else 1.0
             if len(self.reward_window) == 1000:
                 self.fixed = True
-            normalized_reward = (reward - self.mean_reward) / (np.sqrt(self.std_reward) if self.std_reward > 0 else 1.0) if self.args.mode not in ['compare', 'eval'] else reward
+            normalized_reward = (reward - self.mean_reward) / (np.sqrt(self.std_reward) if self.std_reward > 0 else 1.0) if self.fixed or self.args.mode not in ['compare', 'eval', 'tuning'] else reward
             #normalized_reward = 2 * (1.2 * (reward) - 0.9) if self.args.mode not in ['compare', 'eval'] else reward
             if self.args.mode == 'test':
                 print('Terminal Utility is: %s' % ((self.portfolio_value) ** (1 - self.args.p)))
