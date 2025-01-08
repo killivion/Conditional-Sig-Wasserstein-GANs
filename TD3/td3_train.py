@@ -13,7 +13,7 @@ import eval_actor
 from track_learning import monitor_plot
 from help_fct import find_largest_td3_folder, ActionLoggingCallback, generate_random_params, pull_data, fuse_folders
 from portfolio_env import PortfolioEnv
-from hyperparameter_tuning import optimize_td3
+from hyperparameter_tuning import optimize_td3, test_optimized_td3
 
 """
 tensorboard --logdir ./TD3/logs
@@ -39,8 +39,10 @@ def main(args, i=0):
         custom_args = {"args": args, "data_params": data_params, "returns": returns}
         optimize_func = partial(optimize_td3, **custom_args)
         study = optuna.create_study(direction="maximize")
-        study.optimize(optimize_func, n_trials=50, show_progress_bar=True)
+        study.optimize(optimize_func, n_trials=args.n_trials, show_progress_bar=True)
         print("Best hyperparameters:", study.best_params)
+    elif args.mode == 'test_tuning':
+        test_optimized_td3(args, data_params, returns)
     else:
         run(args, spec, data_params, returns, i)
 
@@ -67,7 +69,7 @@ def run(args, spec, data_params, returns, i=0):
         already_trained_timesteps = model.num_timesteps
     else:
         print("No saved model found; starting new training.")
-        model = TD3("MlpPolicy", vec_env, action_noise=action_noise, batch_size=args.batch_size, verbose=0, learning_starts=10000, tensorboard_log="./logs/", train_freq=(args.train_freq, "episode"))
+        model = TD3("MlpPolicy", vec_env, gamma=1, action_noise=action_noise, batch_size=args.batch_size, verbose=0, learning_starts=10000, tensorboard_log="./logs/", train_freq=(args.train_freq, "episode"))
         already_trained_timesteps = 0
     #model.verbose = 0 if hardware == 'cpu' else 0
 
@@ -111,10 +113,11 @@ if __name__ == '__main__':
     parser.add_argument('-total_timesteps', default=1000000, type=int)
     parser.add_argument('-batch_size', default=256, type=int)
     parser.add_argument('-num_episodes', default=3000, type=int)
+    parser.add_argument('-n_trials', default=50, type=int)
 
     parser.add_argument('-model_ID', default=2, type=int)
     parser.add_argument('-laps', default=1, type=int)
-    parser.add_argument('-mode', default='tuning', type=str)  # 'train' 'test' 'eval' 'compare' 'tuning
+    parser.add_argument('-mode', default='test_tuning', type=str)  # 'train' 'test' 'eval' 'compare' 'tuning' 'test_tuning'
 
     args = parser.parse_args()
     if args.mode == 'train':

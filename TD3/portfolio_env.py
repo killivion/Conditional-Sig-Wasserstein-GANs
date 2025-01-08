@@ -34,7 +34,7 @@ class PortfolioEnv(gym.Env):
             print(f"{self.i_steps*10}% done")
             self.i_steps += 2
 
-        done = self.current_step >= len(self.stock_data) #- 1
+        done = self.current_step >= len(self.stock_data)  #- 1
 
         action = action/sum(action) if self.num_stocks > 2 else [1 - action[0], action[0]]  # action -= np.mean(action)
         portfolio_return = np.dot(action, self.stock_data[self.current_step-1])  #+1 # adjust by 1 to compensate if sum(action)=0, so portfolio return 1 stays baseline
