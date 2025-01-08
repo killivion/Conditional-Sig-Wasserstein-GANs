@@ -19,7 +19,7 @@ def optimize_td3(trial, args, data_params, returns):
     #net_arch_options = {1: [128, 128, 128], 2: [256, 256], 3: [400, 300]}
     #net_arch = net_arch_options[net_arch]
     action_noise_std = trial.suggest_float("action_noise_std", 0.05, 0.5)
-    buffer_size = trial.suggest_categorical("buffer_size", 1000000, 2000000, 5000000, 10000000)
+    buffer_size = trial.suggest_categorical("buffer_size", [1000000, 2000000, 5000000, 10000000])
 
     train_freq = trial.suggest_int("train_freq", 1, 100)
     args.window_size = trial.suggest_int("window_size", 1, 252, log=True)

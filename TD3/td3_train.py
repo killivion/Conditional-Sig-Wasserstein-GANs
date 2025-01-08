@@ -117,7 +117,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-model_ID', default=2, type=int)
     parser.add_argument('-laps', default=1, type=int)
-    parser.add_argument('-mode', default='test_tuning', type=str)  # 'train' 'test' 'eval' 'compare' 'tuning' 'test_tuning'
+    parser.add_argument('-mode', default='tuning', type=str)  # 'train' 'test' 'eval' 'compare' 'tuning' 'test_tuning'
 
     args = parser.parse_args()
     if args.mode == 'train':
