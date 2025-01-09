@@ -31,7 +31,7 @@ def optimize_td3(trial, args, data_params, returns):
     action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=action_noise_std * np.ones(n_actions))
 
     model = TD3("MlpPolicy", vec_env,
-                learning_starts=10000, learning_rate=0.001, batch_size=batch_size, buffer_size=1000000,
+                learning_starts=args.learning_starts, learning_rate=0.001, batch_size=batch_size, buffer_size=1000000,
                 gamma=1, tau=tau, action_noise=action_noise, verbose=0, train_freq=(train_freq, "episode"))
     eval_callback = EvalCallback(vec_env, best_model_save_path="./evalLogs/",
                                  log_path="./evalLogs/", eval_freq=10000,

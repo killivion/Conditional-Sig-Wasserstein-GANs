@@ -69,7 +69,7 @@ def run(args, spec, data_params, returns, i=0):
         already_trained_timesteps = model.num_timesteps
     else:
         print("No saved model found; starting new training.")
-        model = TD3("MlpPolicy", vec_env, buffer_size=args.buffer_size, gamma=1, action_noise=action_noise, batch_size=args.batch_size, verbose=0, learning_starts=20000, tensorboard_log="./logs/", train_freq=(args.train_freq, "episode"))
+        model = TD3("MlpPolicy", vec_env, buffer_size=args.buffer_size, gamma=1, action_noise=action_noise, batch_size=args.batch_size, verbose=0, learning_starts=args.learning_starts, tensorboard_log="./logs/", train_freq=(args.train_freq, "episode"))
         already_trained_timesteps = 0
     #model.verbose = 0 if hardware == 'cpu' else 0
 
@@ -101,6 +101,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-utility_function', default="power", type=str)
     parser.add_argument('-episode_reset', default=10000000, type=int)  #currently off
+    parser.add_argument('-learning_starts', default=10000, type=int)
     parser.add_argument('-p', default=0.8, type=float)
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes'
     parser.add_argument('-actor_dataset', default='correlated_Blackscholes', type=str)  # An Actor ID to determine which actor will be loaded (if it exists), then trained or tested/evaluated on
@@ -118,7 +119,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-model_ID', default=2, type=int)
     parser.add_argument('-laps', default=1, type=int)
-    parser.add_argument('-mode', default='tuning', type=str)  # 'train' 'test' 'eval' 'compare' 'tuning' 'test_tuning'
+    parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare' 'tuning' 'test_tuning'
 
     args = parser.parse_args()
     if args.mode == 'train':

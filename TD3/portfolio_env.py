@@ -23,9 +23,11 @@ class PortfolioEnv(gym.Env):
         self.current_step, self.portfolio_value = 0, 1
         self.first_episode, self.episode_cycle = True, 0
         self.max_intermediary_reward, self.max_terminal_reward = 0, 0
+        self.reward_normalization_window = args.learning_starts / 2
         self.analytical_risky_action, self.analytical_utility = analytical_solutions(self.args, self.data_params)
         self.reward_window, self.fixed = [], False  # deque(maxlen=1000)
         self.step_count, self.i_steps = 0, 2
+
 
     def step(self, action):
         self.current_step += 1
@@ -86,9 +88,12 @@ class PortfolioEnv(gym.Env):
             if not self.fixed:
                 self.mean_reward = np.mean(self.reward_window) if self.reward_window else 0.0
                 self.std_reward = np.std(self.reward_window) if self.reward_window else 1.0
-            if len(self.reward_window) == 1000:
+            #if len(self.reward_window) >= 1000:
                 self.fixed = True
-            normalized_reward = (reward - self.mean_reward) / (np.sqrt(self.std_reward) if self.std_reward > 0 else 1.0) if self.fixed or self.args.mode not in ['compare', 'eval', 'tuning'] else reward
+            normalized_reward = reward
+            #    normalized_reward = (reward - self.mean_reward) / (np.sqrt(self.std_reward) if self.std_reward > 0 else 1.0) if self.args.mode not in ['compare', 'eval', 'tuning'] else reward
+            #else:
+            #    normalized_reward = 0
             #normalized_reward = 2 * (1.2 * (reward) - 0.9) if self.args.mode not in ['compare', 'eval'] else reward
             if self.args.mode == 'test':
                 print('Terminal Utility is: %s' % ((self.portfolio_value) ** (1 - self.args.p)))
