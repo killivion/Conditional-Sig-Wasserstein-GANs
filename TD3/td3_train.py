@@ -59,7 +59,7 @@ def run(args, spec, data_params, returns, i=0):
 
 
     hardware = 'LRZ' if torch.cuda.is_available() else 'cpu'
-    model_save_path = f"./agent/{args.model_ID}_{hardware}_td3_{args.actor_dataset}_assets_{args.num_paths}_window_{args.window_size}"
+    model_save_path = f"./agent/{args.model_ID}_{hardware}_td3_{args.actor_dataset}_assets_{args.num_paths}_window_{args.window_size}_timesteps_{args.total_timesteps}"
 
     # Load Model
     if os.path.exists(f"{model_save_path}.zip"):
@@ -78,14 +78,13 @@ def run(args, spec, data_params, returns, i=0):
         tensorboard_path, number = find_largest_td3_folder(args)
         action_logging_callback = ActionLoggingCallback(log_dir=tensorboard_path)
         model.learn(total_timesteps=args.total_timesteps, progress_bar=True, tb_log_name="TD3", callback=action_logging_callback)
-        #model.action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
-        #model.learn(total_timesteps=args.total_timesteps, progress_bar=True, tb_log_name="TD3",callback=action_logging_callback)
         fuse_folders(number, args)
         model.num_timesteps += already_trained_timesteps
         model.save(model_save_path)
         print(f"Model saved at: {model_save_path} with {model.num_timesteps} timesteps trained of which {already_trained_timesteps} were trained before")
         #if i == args.laps - 1:
         #    monitor_plot(args)
+
     if args.mode in ['test']:
     #    print("Params:", data_params)
         eval_actor.test_actor(args, data_params, model, vec_env)
@@ -102,7 +101,7 @@ if __name__ == '__main__':
     parser.add_argument('-utility_function', default="power", type=str)
     parser.add_argument('-episode_reset', default=10000000, type=int)  #currently off
     parser.add_argument('-learning_starts', default=10000, type=int)
-    parser.add_argument('-action_noise_sigma', default=0.3, type=float)
+    parser.add_argument('-action_noise_sigma', default=0.1, type=float)
     parser.add_argument('-p', default=0.8, type=float)
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes'
     parser.add_argument('-actor_dataset', default='correlated_Blackscholes', type=str)  # An Actor ID to determine which actor will be loaded (if it exists), then trained or tested/evaluated on
@@ -113,8 +112,8 @@ if __name__ == '__main__':
 
     parser.add_argument('-train_freq', default=20, type=int)
     parser.add_argument('-total_timesteps', default=1000000, type=int)
-    parser.add_argument('-batch_size', default=1048, type=int)
-    parser.add_argument('-buffer_size', default=5000000, type=int)
+    parser.add_argument('-batch_size', default=256, type=int)
+    parser.add_argument('-buffer_size', default=1000000, type=int)
     parser.add_argument('-num_episodes', default=3000, type=int)
     parser.add_argument('-n_trials', default=50, type=int)
 
