@@ -451,7 +451,7 @@ if __name__ == "__main__": #Testing
 
             return S[0][window_size]
 
-        num_returns = 40000
+        num_returns = 50000
         prices_df = np.zeros(num_returns)
         prices_df2 = np.zeros(num_returns)
 
@@ -460,6 +460,7 @@ if __name__ == "__main__": #Testing
             prices_df2[j] = generate_gbm(mu=mu[0], sigma=np.sqrt(sigma_cov[0][0]), window_size=window_size, num_paths=num_paths, grid_points=grid_points, S0=1)
 
         prices_df = pd.DataFrame(prices_df)
+        prices_df2 = pd.DataFrame(prices_df2)
         print(f"Correlated_BS; Mean: {prices_df.iloc[:, -1].mean() ** (1 / T) - 1}, {prices_df.iloc[:, -1].std() / np.sqrt(T)}")
         print(f"GBM; Mean: {prices_df2.iloc[:, -1].mean() ** (1 / T) - 1}, {prices_df2.iloc[:, -1].std() / np.sqrt(T)}")
 

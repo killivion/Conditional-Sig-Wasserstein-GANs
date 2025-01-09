@@ -77,7 +77,7 @@ def run(args, spec, data_params, returns, i=0):
     if args.mode == 'train':  # tensorboard --logdir ./TD3/logs
         tensorboard_path, number = find_largest_td3_folder(args)
         action_logging_callback = ActionLoggingCallback(log_dir=tensorboard_path)
-        model.learn(total_timesteps=args.total_timesteps, progress_bar=True, tb_log_name="TD3", callback=action_logging_callback)
+        model.learn(total_timesteps=args.total_timesteps, progress_bar=True, tb_log_name=f"TD3_{number}", callback=action_logging_callback)
         fuse_folders(number, args)
         model.num_timesteps += already_trained_timesteps
         model.save(model_save_path)
