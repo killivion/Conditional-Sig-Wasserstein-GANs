@@ -55,7 +55,7 @@ def run(args, spec, data_params, returns, i=0):
 
     # Add action noise (exploration)
     n_actions = env.action_space.shape[0]
-    action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
+    action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=args.action_noise_sigma * np.ones(n_actions))
 
 
     hardware = 'LRZ' if torch.cuda.is_available() else 'cpu'
@@ -102,6 +102,7 @@ if __name__ == '__main__':
     parser.add_argument('-utility_function', default="power", type=str)
     parser.add_argument('-episode_reset', default=10000000, type=int)  #currently off
     parser.add_argument('-learning_starts', default=10000, type=int)
+    parser.add_argument('-action_noise_sigma', default=0.3, type=float)
     parser.add_argument('-p', default=0.8, type=float)
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes'
     parser.add_argument('-actor_dataset', default='correlated_Blackscholes', type=str)  # An Actor ID to determine which actor will be loaded (if it exists), then trained or tested/evaluated on
