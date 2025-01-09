@@ -50,7 +50,7 @@ def main(args, i=0):
 def run(args, spec, data_params, returns, i=0):
     print('Executing TD3 on %s, %s' % (args.dataset, spec))
 
-    env = PortfolioEnv(args=args, data_params=data_params, stock_data=returns)  # Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns), filename='log')
+    env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns))  # Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns), filename='log')
     vec_env = DummyVecEnv([lambda: env])
 
     # Add action noise (exploration)
