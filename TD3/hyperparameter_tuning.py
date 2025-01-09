@@ -7,9 +7,11 @@ import numpy as np
 from portfolio_env import PortfolioEnv
 from stable_baselines3.common.callbacks import EvalCallback
 import matplotlib.pyplot as plt
+import time
 
 
 def optimize_td3(trial, args, data_params, returns):
+    start_time = time.time()
 
     #learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-3, log=True)
     batch_size = trial.suggest_categorical("batch_size", [256, 512, 1024, 2048])
@@ -22,7 +24,7 @@ def optimize_td3(trial, args, data_params, returns):
     #buffer_size = trial.suggest_categorical("buffer_size", [1000000, 2000000, 5000000, 10000000])
 
     train_freq = trial.suggest_int("train_freq", 1, 100)
-    args.window_size = trial.suggest_int("window_size", 1, 252, log=True)
+    args.window_size = trial.suggest_int("window_size", 1, 50, log=True)
     args.grid_points = args.window_size
 
     env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns))
@@ -36,10 +38,14 @@ def optimize_td3(trial, args, data_params, returns):
     eval_callback = EvalCallback(vec_env, best_model_save_path="./evalLogs/",
                                  log_path="./evalLogs/", eval_freq=10000,
                                  deterministic=True, render=False)
-    model.learn(total_timesteps=100000, callback=eval_callback)
+    model.learn(total_timesteps=30000*args.window_size, callback=eval_callback)
 
+    print(f"Training time: {time.time() - start_time}")
+    start_time = time.time()
     mean_reward, std = evaluate_policy(model, vec_env, n_eval_episodes=1000)
+    print(f"Evaluation time: {time.time() - start_time}")
     print(f"Mean reward: {mean_reward}, Std reward: {std}, Window_size: {args.window_size}")
+
     #print(f"Mean reward: {mean_reward}, Std reward: {std}")
     return mean_reward
 
