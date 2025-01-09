@@ -14,14 +14,15 @@ def optimize_td3(trial, args, data_params, returns):
     start_time = time.time()
 
     #learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-3, log=True)
-    batch_size = trial.suggest_categorical("batch_size", [256, 512, 1024, 2048])
     #gamma = trial.suggest_float("gamma", 0.95, 0.99)
-    tau = trial.suggest_float("tau", 0.001, 0.01)
-    #net_arch = trial.suggest_categorical("net_arch", [1, 2, 3])
-    #net_arch_options = {1: [128, 128, 128], 2: [256, 256], 3: [400, 300]}
-    #net_arch = net_arch_options[net_arch]
-    action_noise_std = trial.suggest_float("action_noise_std", 0.05, 0.5)
+    # net_arch = trial.suggest_categorical("net_arch", [1, 2, 3])
+    # net_arch_options = {1: [128, 128, 128], 2: [256, 256], 3: [400, 300]}
+    # net_arch = net_arch_options[net_arch]
     #buffer_size = trial.suggest_categorical("buffer_size", [1000000, 2000000, 5000000, 10000000])
+
+    batch_size = trial.suggest_categorical("batch_size", [256, 512, 1024, 2048])
+    tau = trial.suggest_float("tau", 0.001, 0.01)
+    action_noise_std = trial.suggest_float("action_noise_std", 0.01, 0.2)
 
     train_freq = trial.suggest_int("train_freq", 1, 100)
     args.window_size = trial.suggest_int("window_size", 1, 50, log=True)
@@ -38,7 +39,7 @@ def optimize_td3(trial, args, data_params, returns):
     eval_callback = EvalCallback(vec_env, best_model_save_path="./evalLogs/",
                                  log_path="./evalLogs/", eval_freq=10000,
                                  deterministic=True, render=False)
-    model.learn(total_timesteps=30000*args.window_size, callback=eval_callback)
+    model.learn(total_timesteps=20000*args.window_size, callback=eval_callback)
 
     print(f"Training time: {time.time() - start_time}")
     start_time = time.time()
