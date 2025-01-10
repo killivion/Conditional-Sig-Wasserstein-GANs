@@ -38,7 +38,7 @@ class ActionLoggingCallback(BaseCallback):
                     tf.summary.scalar(f"action/Action", sum(action), step=episode_num)
 
                 # Log episode reward
-                tf.summary.scalar("action/Episode_Reward", total_reward, step=episode_num)
+                tf.summary.scalar("action/Episode_Reward", total_reward/2 - 0.1, step=episode_num)
 
                 # Log actor loss (if available)
                 if actor_loss is not None:
