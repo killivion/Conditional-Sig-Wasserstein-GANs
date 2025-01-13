@@ -59,7 +59,7 @@ def run(args, spec, data_params, returns, i=0):
 
 
     hardware = 'LRZ' if torch.cuda.is_available() else 'cpu'
-    model_save_path = f"./agent/{args.model_ID}_{hardware}_td3_{args.actor_dataset}_assets_{args.num_paths}_window_{args.window_size}_timesteps_{args.total_timesteps}"
+    model_save_path = f"./agent/{args.model_ID}_{hardware}_td3_{args.actor_dataset}_assets_{args.num_paths}_window_{args.window_size}"
 
     # Load Model
     if os.path.exists(f"{model_save_path}.zip"):
