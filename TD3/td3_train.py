@@ -50,7 +50,10 @@ def main(args, i=0):
 def run(args, spec, data_params, returns, i=0):
     print('Executing TD3 on %s, %s' % (args.dataset, spec))
 
-    env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns))  # Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns), filename='log')
+    if args.mode == 'train':
+        env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns))  # Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns), filename='log')
+    else:
+        env = PortfolioEnv(args=args, data_params=data_params, stock_data=returns)
     vec_env = DummyVecEnv([lambda: env])
 
     # Add action noise (exploration)
@@ -102,7 +105,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-utility_function', default="power", type=str)
     parser.add_argument('-episode_reset', default=10000000, type=int)  #currently off
-    parser.add_argument('-learning_starts', default=100000, type=int)
+    #parser.add_argument('-learning_starts', default=100000, type=int)
     parser.add_argument('-action_noise_sigma', default=0.1, type=float)
     parser.add_argument('-p', default=0.8, type=float)
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes'
@@ -116,10 +119,10 @@ if __name__ == '__main__':
     parser.add_argument('-total_timesteps', default=1000000, type=int)
     parser.add_argument('-batch_size', default=256, type=int)
     parser.add_argument('-buffer_size', default=1000000, type=int)
-    parser.add_argument('-num_episodes', default=3000, type=int)
-    parser.add_argument('-n_trials', default=5, type=int)
+    parser.add_argument('-num_episodes', default=300, type=int)
+    parser.add_argument('-n_trials', default=30, type=int)
 
-    parser.add_argument('-model_ID', default=1, type=int)
+    parser.add_argument('-model_ID', default=2, type=int)
     parser.add_argument('-laps', default=1, type=int)
     parser.add_argument('-mode', default='tuning', type=str)  # 'train' 'test' 'eval' 'compare' 'tuning' 'test_tuning'
 

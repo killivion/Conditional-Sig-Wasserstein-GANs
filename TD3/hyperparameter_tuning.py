@@ -27,18 +27,19 @@ def optimize_td3(trial, args, data_params, returns):
     tau = trial.suggest_float("tau", 0.001, 0.01)
     action_noise_std = trial.suggest_float("action_noise_std", 0.01, 0.2)
     train_freq = trial.suggest_int("train_freq", 1, 100)
-    args.window_size = trial.suggest_int("window_size", 1, 50, log=True)
+    learning_starts_factor = trial.suggest_categorical("learning_starts_factor", [2, 4, 5, 20, 1000])
+    #args.window_size = trial.suggest_int("window_size", 1, 50, log=True)
 
     args.grid_points = args.window_size
-    total_timesteps = 100 * args.window_size
-    learning_starts = total_timesteps / 2
+    total_timesteps = 80000 * args.window_size
+    learning_starts = int(total_timesteps / learning_starts_factor)
 
     env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns))
     vec_env = DummyVecEnv([lambda: env])
     n_actions = env.action_space.shape[0]
     action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=action_noise_std * np.ones(n_actions))
 
-    model = TD3("MlpPolicy", vec_env, learning_starts=learning_starts, learning_rate=0.001,buffer_size=1000000, gamma=1, verbose=0,
+    model = TD3("MlpPolicy", vec_env, learning_starts=learning_starts, learning_rate=0.001, buffer_size=1000000, gamma=1, verbose=0,
         batch_size=batch_size,
         tau=tau,
         action_noise=action_noise,
@@ -46,7 +47,7 @@ def optimize_td3(trial, args, data_params, returns):
     )
 
     trial_name = f"trial_bs{batch_size}_tau{tau}_noise{action_noise_std}"
-    eval_callback = CustomEvalCallback(eval_env=vec_env, eval_freq=total_timesteps/20,
+    eval_callback = CustomEvalCallback(eval_env=vec_env, eval_freq=total_timesteps/10,
                                        log_path="./evalLogs/", verbose=0)
     model.learn(total_timesteps=total_timesteps, callback=eval_callback)
 
@@ -60,7 +61,8 @@ def optimize_td3(trial, args, data_params, returns):
 
 
 class CustomEvalCallback(BaseCallback):
-    def __init__(self, eval_env, eval_freq=10000, log_path="./evalLogs/", verbose=1):
+    global_best_mean_reward = -np.inf
+    def __init__(self, eval_env, eval_freq, log_path="./evalLogs/", verbose=1):
         super().__init__(verbose)
         self.eval_env = eval_env
         self.eval_freq = eval_freq
@@ -76,20 +78,21 @@ class CustomEvalCallback(BaseCallback):
 
     def _on_step(self) -> bool:
         if self.n_calls % self.eval_freq == 0:
-            mean_reward, std_reward = evaluate_policy(self.model, self.eval_env, n_eval_episodes=10)
+            mean_reward, std_reward = evaluate_policy(self.model, self.eval_env, n_eval_episodes=500)
 
             # Save results
             self.results.append([mean_reward, std_reward])
             self.timesteps.append(self.n_calls)
 
-            if self.verbose > 0:
+            if self.verbose == 0:
                 print(f"Evaluation at step {self.n_calls}: mean_reward={mean_reward:.2f}, std_reward={std_reward:.2f}")
 
-            if mean_reward > self.best_mean_reward:
-                self.best_mean_reward = mean_reward
-                self.model.save(self.best_model_path)
-                if self.verbose == 0:
-                    print(f"New best model with mean reward {mean_reward:.2f} saved to {self.best_model_path}")
+            if self.n_calls == self.eval_freq*10:
+                if mean_reward > CustomEvalCallback.global_best_mean_reward:
+                    CustomEvalCallback.global_best_mean_reward = mean_reward
+                    self.model.save(self.best_model_path)
+                    if self.verbose == 0:
+                        print(f"New best model with mean reward {mean_reward:.2f} saved")
 
         return True
 

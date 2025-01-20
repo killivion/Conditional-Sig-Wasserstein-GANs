@@ -415,10 +415,10 @@ if __name__ == "__main__": #Testing
                 print('Time Elapsed: %s' % elapsed)
 
     elif test == 0:
-        mu = [0.15]
+        mu = [0.13]
         sigma_cov = [[0.04]]
-        grid_points = 252
-        window_size = 252
+        grid_points = 1
+        window_size = 1
         num_paths = 1
 
         T = window_size / grid_points
@@ -471,3 +471,14 @@ if __name__ == "__main__": #Testing
         print(f"Log; Mean: {observed_mu}, {observed_sigma}")
         print(f"Log; Mean: {observed_mu2}, {observed_sigma2}")
 
+
+        risk_free_rate = 0.04
+        p = 0.8
+
+        risky_lambda = mu[0] - risk_free_rate
+        analytical_risky_action = 1 / p * risky_lambda * ((cholesky * cholesky.T) ** (-1))
+        analytical_utility = np.exp(
+            (1 - p) * (risk_free_rate + 1 / 2 * analytical_risky_action * risky_lambda))
+
+        # optimal_portfolio *= np.dot([1 - analytical_risky_action[0], analytical_risky_action[0]], stock_data[current_step - 1])
+        print(risky_lambda, analytical_risky_action, analytical_utility)

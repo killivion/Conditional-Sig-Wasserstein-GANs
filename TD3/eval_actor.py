@@ -90,7 +90,7 @@ def compare_actor(args, data_params, actor, env):
 
     perfect_portfolio = random_portfolio
     perfect_portfolio[perfect_portfolio < 0] = 0
-    power_utility = (perfect_portfolio[:, -1] ** (1 - args.p))  # Example transformation for power utility
+    power_utility = (perfect_portfolio[:, -1] ** (1 - args.p))
 
     print(f"Trained Actor Average Portfolio: {np.mean(trained_portfolio[:,-1])}")
     print(f"Random Actor Average Portfolio: {np.mean(random_portfolio[:,-1])}")
@@ -98,7 +98,7 @@ def compare_actor(args, data_params, actor, env):
     print(f"Trained Actor Average Terminal Reward: {np.mean(trained_cum_rewards)}")
     print(f"Random Actor Average Terminal Reward: {np.mean(random_cum_rewards)}")
     print("Analytical Perfect Utility:", analytical_utility)
-    print("Analytical - Simulated Perfect Utility:", analytical_utility - np.mean(power_utility))
+    print("Analytical minus Simulated Perfect Utility:", analytical_utility - np.mean(power_utility))
     print("_____")
     print("Analytical Risky Action:", analytical_risky_action)
     print("Average Risky Action:", np.mean(average_risky_action))
@@ -127,7 +127,7 @@ def compare_actor(args, data_params, actor, env):
     x_vals_power = np.linspace(min(power_utility.flatten()), max(power_utility.flatten()), 500)
     axs[2].plot(x_vals_power, kde_power(x_vals_power) * len(power_utility.flatten()) * (
                 max(power_utility.flatten()) - min(power_utility.flatten())) / 50, color="orange", label="Density")
-    axs[2].set_title("Power Utility of Random Portfolio")
+    axs[2].set_title("Power Utility of Perfect Portfolio")
     axs[2].set_ylabel("Frequency")
     axs[2].set_xlabel("Utility")
     axs[2].legend()

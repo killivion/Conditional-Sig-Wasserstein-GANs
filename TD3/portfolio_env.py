@@ -23,7 +23,7 @@ class PortfolioEnv(gym.Env):
         self.current_step, self.portfolio_value = 0, 1
         self.first_episode, self.episode_cycle = True, 0
         self.max_intermediary_reward, self.max_terminal_reward = 0, 0
-        self.reward_normalization_window = args.learning_starts / 2
+        #self.reward_normalization_window = args.learning_starts / 2
         self.analytical_risky_action, self.analytical_utility = analytical_solutions(self.args, self.data_params)
         self.reward_window, self.fixed = [], False  # deque(maxlen=1000)
         self.step_count, self.i_steps = 0, 2
@@ -31,10 +31,11 @@ class PortfolioEnv(gym.Env):
 
     def step(self, action):
         self.current_step += 1
-        self.step_count += 1
-        if self.step_count >= self.args.total_timesteps/10 * self.i_steps and self.args.mode == 'train':
-            print(f"{self.i_steps*10}% done")
-            self.i_steps += 2
+
+        #self.step_count += 1
+        #if self.step_count >= self.args.total_timesteps/10 * self.i_steps and self.args.mode == 'train':
+        #    print(f"{self.i_steps*10}% done")
+        #    self.i_steps += 2
 
         done = self.current_step >= len(self.stock_data)  #- 1
 
