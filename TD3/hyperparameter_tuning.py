@@ -143,7 +143,7 @@ def test_optimized_td3(args, data_params, returns):
         mean_rewards = data["mean_reward"]
         std_rewards = data["std_reward"]
 
-        plt.plot(scale, mean_rewards, label=f"{trial_name}", lw=1.5)
+        plt.plot(scale, mean_rewards, lw=1.5) #label=f"{trial_name}",
         plt.fill_between(
             scale,
             mean_rewards - std_rewards,
