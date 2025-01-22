@@ -20,7 +20,7 @@ tensorboard --logdir ./TD3/logs
 
 Terminal: 
 $env:PYTHONPATH="."
-python TD3/td3_train.py -mode train -model_ID 2 -total_timesteps 100000
+python TD3/td3_train.py -mode train -model_ID 3 -total_timesteps 50000 -allow_lending False
 tensorboard --logdir ./logs
 """
 
@@ -105,7 +105,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-utility_function', default="power", type=str)
-    parser.add_argument('-allow_lending', default=False, type=bool)
+    parser.add_argument('-allow_lending', action='store_true', help="Enable lending")
     parser.add_argument('-episode_reset', default=10000000, type=int)  #currently off
     #parser.add_argument('-learning_starts', default=100000, type=int)
     parser.add_argument('-action_noise_sigma', default=0.05, type=float)
@@ -126,7 +126,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-model_ID', default=3, type=int)
     parser.add_argument('-laps', default=1, type=int)
-    parser.add_argument('-mode', default='test_tuning', type=str)  # 'train' 'test' 'eval' 'compare' 'tuning' 'test_tuning'
+    parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare' 'tuning' 'test_tuning'
 
     args = parser.parse_args()
     if args.mode == 'train':

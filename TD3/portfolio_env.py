@@ -2,6 +2,7 @@ import gymnasium as gym
 import numpy as np
 from help_fct import pull_data, analytical_solutions
 from collections import deque
+from scipy.stats import norm
 
 class PortfolioEnv(gym.Env):
     def __init__(self, args, data_params, stock_data):
@@ -31,6 +32,7 @@ class PortfolioEnv(gym.Env):
         self.analytical_risky_action, self.analytical_utility = analytical_solutions(self.args, self.data_params)
         self.reward_window, self.fixed = [], False  # deque(maxlen=1000)
         self.step_count, self.i_steps = 0, 2
+        self.action = 0
 
 
     def step(self, action):
@@ -43,8 +45,8 @@ class PortfolioEnv(gym.Env):
 
         done = self.current_step >= len(self.stock_data)  #- 1
 
-        action = action/sum(action) if self.num_stocks > 2 else [1 - action[0], action[0]]  # action -= np.mean(action)
-        portfolio_return = np.dot(action, self.stock_data[self.current_step-1])  # Tipp: adjust by 1 to compensate if sum(action)=0, so portfolio return 1 stays baseline
+        self.action = action/sum(action) if self.num_stocks > 2 else [1 - action[0], action[0]]  # action -= np.mean(action)
+        portfolio_return = np.dot(self.action, self.stock_data[self.current_step-1])  # Tipp: adjust by 1 to compensate if sum(action)=0, so portfolio return 1 stays baseline
         self.portfolio_value *= portfolio_return
         self.optimal_portfolio *= np.dot([1 - self.analytical_risky_action[0], self.analytical_risky_action[0]], self.stock_data[self.current_step-1])
         reward = self._calc_reward(done)
@@ -87,7 +89,7 @@ class PortfolioEnv(gym.Env):
     def _calc_reward(self, done):
         if done:  # Terminal utility -> Central Reward-fct.
             if self.portfolio_value <= 0:
-                print("Careful: negative portfolio value")
+                print(f"Careful: negative portfolio value: {self.portfolio_value, self.stock_data[self.current_step-1], self.action}")
             reward = (self.portfolio_value ** (1 - self.args.p)) if not self.portfolio_value <= 0 else 0 * abs(self.portfolio_value)  # / (1 - self.args.p) leave out the constant divisor since it only scales the expectation
             optimal_utility = (self.optimal_portfolio ** (1 - self.args.p)) if not self.optimal_portfolio <= 0 else 0
             reward = reward - optimal_utility
@@ -101,7 +103,8 @@ class PortfolioEnv(gym.Env):
                 normalized_reward = 2 * (reward + 0.1) if self.args.mode not in ['compare', 'eval'] else reward
             else:
                 # normalized_reward = 10 * (reward + 0.1)
-                interval95 = (self.mu[1] - (self.sigma_cov[1,1]**2)/2 + [-1.96*self.sigma_cov[1,1], +1.96*self.sigma_cov[1,1]])
+                z_value = norm.ppf(1 - (1 - 0.95) / 2)
+                interval95 = (self.mu[1] - (self.sigma_cov[1,1]**2)/2 + [-z_value*self.sigma_cov[1,1], +z_value*self.sigma_cov[1,1]])
                 cf95_low, cf95_high = np.exp((1-self.args.p) * interval95)
                 cf95_low2, cf95_high2 = (self.analytical_risky_action*np.exp(interval95) + (1-self.analytical_risky_action)*np.exp(self.mu[0])) ** (1-self.args.p)
                 lower, upper = cf95_low - cf95_low2, cf95_high - cf95_high2

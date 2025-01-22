@@ -24,11 +24,11 @@ import matplotlib.cm as cm
 def optimize_td3(trial, args, data_params, returns):
     start_time = time.time()
 
-    batch_size = trial.suggest_categorical("batch_size", [256, 512, 1024, 2048])
+    batch_size = trial.suggest_categorical("batch_size", [64, 256, 512, 1024, 2048])
     tau = trial.suggest_float("tau", 0.001, 0.01)
     action_noise_std = trial.suggest_float("action_noise_std", 0.01, 0.2)
     train_freq = trial.suggest_int("train_freq", 1, 100)
-    learning_starts_factor = trial.suggest_categorical("learning_starts_factor", [2, 4, 5, 20, 1000])
+    learning_starts_factor = trial.suggest_categorical("learning_starts_factor", [2, 4, 1000])
     #args.window_size = trial.suggest_int("window_size", 1, 50, log=True)
 
     args.grid_points = args.window_size
@@ -47,7 +47,7 @@ def optimize_td3(trial, args, data_params, returns):
         train_freq=(train_freq, "episode")
     )
 
-    trial_name = f"trial_bs{batch_size}_tau{tau}_noise{action_noise_std}"
+    trial_name = f"trial_bs{batch_size}_tau{round(tau, 4)}_noise{round(action_noise_std, 3)}_trainfreq{train_freq}_learnfac{learning_starts_factor}"
     eval_callback = CustomEvalCallback(eval_env=vec_env, eval_freq=total_timesteps/10,
                                        log_path="./evalLogs/", verbose=0)
     model.learn(total_timesteps=total_timesteps, callback=eval_callback)
