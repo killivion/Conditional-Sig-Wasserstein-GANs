@@ -126,7 +126,7 @@ def test_optimized_td3(args, data_params, returns):
     env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns))
     vec_env = DummyVecEnv([lambda: env])
     mean_reward, std_reward = evaluate_policy(best_model, vec_env, n_eval_episodes=1000, render=False)
-    print(best_model.batch_size, best_model.tau , best_model.action_noise_std, best_model.train_freq, best_model.learning_starts_factor)
+    print(best_model.batch_size, best_model.tau, best_model.train_freq)
     print(f"Mean reward: {mean_reward}, Std reward: {std_reward}")
 
     import glob
