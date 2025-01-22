@@ -31,7 +31,7 @@ def optimize_td3(trial, args, data_params, returns):
     #args.window_size = trial.suggest_int("window_size", 1, 50, log=True)
 
     args.grid_points = args.window_size
-    total_timesteps = 80000 * args.window_size
+    total_timesteps = 20000 * args.window_size
     learning_starts = int(total_timesteps / learning_starts_factor)
 
     env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns))
@@ -126,6 +126,7 @@ def test_optimized_td3(args, data_params, returns):
     env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns))
     vec_env = DummyVecEnv([lambda: env])
     mean_reward, std_reward = evaluate_policy(best_model, vec_env, n_eval_episodes=1000, render=False)
+    print(best_model.batch_size, best_model.tau , best_model.action_noise_std, best_model.train_freq, best_model.learning_starts_factor)
     print(f"Mean reward: {mean_reward}, Std reward: {std_reward}")
 
     import glob
@@ -144,12 +145,12 @@ def test_optimized_td3(args, data_params, returns):
         std_rewards = data["std_reward"]
 
         plt.plot(scale, mean_rewards, lw=1.5) #label=f"{trial_name}",
-        plt.fill_between(
+        """plt.fill_between(
             scale,
             mean_rewards - std_rewards,
             mean_rewards + std_rewards,
             alpha=0.2
-        )
+        )"""
 
     plt.xlabel("Timesteps")
     plt.ylabel("Mean Reward")
