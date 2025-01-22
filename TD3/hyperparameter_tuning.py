@@ -18,6 +18,7 @@ import numpy as np
 from stable_baselines3.common.callbacks import BaseCallback
 import matplotlib.pyplot as plt
 import time
+import matplotlib.cm as cm
 
 
 def optimize_td3(trial, args, data_params, returns):
@@ -132,10 +133,17 @@ def test_optimized_td3(args, data_params, returns):
     import glob
     result_files = glob.glob("./evalLogs/*_results.csv")
 
+    bs_colors = {}
+    color_map = cm.get_cmap("tab10")
+
     plt.figure(figsize=(10, 6))
     for file in result_files:
 
         trial_name = file.split("/")[-1].replace("_results.csv", "")
+        bs_value = int(trial_name.split("_")[1].replace("bs", ""))
+        if bs_value not in bs_colors:
+            bs_colors[bs_value] = color_map(len(bs_colors) / 10)
+
         data = pd.read_csv(file)
 
         scale = range(len(data["timesteps"]))
@@ -144,13 +152,19 @@ def test_optimized_td3(args, data_params, returns):
         mean_rewards = data["mean_reward"]
         std_rewards = data["std_reward"]
 
-        plt.plot(scale, mean_rewards, lw=1.5) #label=f"{trial_name}",
+        plt.plot(scale, mean_rewards, lw=1.5, color=bs_colors[bs_value]) #label=f"{trial_name}",
         """plt.fill_between(
             scale,
             mean_rewards - std_rewards,
             mean_rewards + std_rewards,
             alpha=0.2
         )"""
+
+    legend_handles = [
+        plt.Line2D([0], [0], color=color, lw=2, label=f"bs={bs}")
+        for bs, color in bs_colors.items()
+    ]
+    plt.legend(handles=legend_handles, title="Batch Size (bs)")
 
     plt.xlabel("Timesteps")
     plt.ylabel("Mean Reward")

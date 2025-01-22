@@ -101,9 +101,11 @@ class PortfolioEnv(gym.Env):
                 normalized_reward = 2 * (reward + 0.1) if self.args.mode not in ['compare', 'eval'] else reward
             else:
                 # normalized_reward = 10 * (reward + 0.1)
-                cf95_low, cf95_high = np.exp((1-self.args.p) * np.log(self.mu[1] - (self.sigma_cov[1,1]**2)/2 + [-1.96*self.sigma_cov[1,1], +1.96*self.sigma_cov[1,1]]))
-                cf95_low2, cf95_high2 = np.exp((1-self.args.p) *(np.log(self.analytical_risky_action) + np.log(self.mu[1] - (self.sigma_cov[1,1]**2)/2 + self.mu[0]*(1-self.analytical_risky_action)/self.analytical_risky_action + [-1.96*self.sigma_cov[1,1], +1.96*self.sigma_cov[1,1]])))
-                normalized_reward = (reward - (cf95_low - cf95_low2)) / (cf95_high - cf95_high2) * 2 - 1
+                interval95 = (self.mu[1] - (self.sigma_cov[1,1]**2)/2 + [-1.96*self.sigma_cov[1,1], +1.96*self.sigma_cov[1,1]])
+                cf95_low, cf95_high = np.exp((1-self.args.p) * interval95)
+                cf95_low2, cf95_high2 = (self.analytical_risky_action*np.exp(interval95) + (1-self.analytical_risky_action)*np.exp(self.mu[0])) ** (1-self.args.p)
+                lower, upper = cf95_low - cf95_low2, cf95_high - cf95_high2
+                normalized_reward = (reward - lower) / upper * 2 - 1  #normalizes to [-1, 1]
                 # exp((1-p)ln[(μ-σ^2/2)-1.96σ])
 
             #    normalized_reward = (reward - self.mean_reward) / (np.sqrt(self.std_reward) if self.std_reward > 0 else 1.0) if self.args.mode not in ['compare', 'eval', 'tuning'] else reward
