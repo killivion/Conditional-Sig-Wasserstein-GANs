@@ -123,7 +123,7 @@ def test_optimized_td3(args, data_params, returns):
         os.remove("./evalLogs/trial_None_results.csv")
 
     best_model = TD3.load("./evalLogs/best_model.zip")
-    env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns))  # Replace with your environment
+    env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns))
     vec_env = DummyVecEnv([lambda: env])
     mean_reward, std_reward = evaluate_policy(best_model, vec_env, n_eval_episodes=1000, render=False)
     print(f"Mean reward: {mean_reward}, Std reward: {std_reward}")
@@ -154,6 +154,6 @@ def test_optimized_td3(args, data_params, returns):
     plt.xlabel("Timesteps")
     plt.ylabel("Mean Reward")
     plt.title("Evaluation of TD3 Performance Across Trials")
-    plt.legend()
+    #plt.legend()
     plt.grid()
     plt.show()
