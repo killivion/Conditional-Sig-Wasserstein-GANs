@@ -58,7 +58,7 @@ def pull_data(args, data_params):
         data = yf.download(ticker, start="2020-01-01", end="2024-01-01")['Adj Close']
     else:
         data = get_data(args.dataset, p=1, q=0, isSigLib=False, **data_params).T
-    returns = data.pct_change().dropna().values + 1  # Compute daily change ratio [not daily returns]
+    returns = data.pct_change().dropna().values + 1  # Compute dt change ratio [not dt returns]
     daily_risk_free_rate = (1 + args.risk_free_rate) ** (1 / args.grid_points)
     risk_free_column = np.full((returns.shape[0], 1), daily_risk_free_rate)
     return np.hstack((risk_free_column, returns))
@@ -70,7 +70,7 @@ def generate_random_params(num_paths):
         up_vol = 0.25 * 3 * (np.log(1000)) ** (0.8) / (np.log(num_paths) ** (1.8)) if num_paths != 1 else 0.2 # amounts to slightly more than 20% vol
         low_mu, up_mu = 0.03, 0.13
     else:
-        low_vol, up_vol, low_mu, up_mu = 0.2, 0.2, 0.15, 0.15
+        low_vol, up_vol, low_mu, up_mu = 0.2, 0.2, 0.06, 0.06 # 0.2, 0.2, 0.15, 0.15
     mu = np.random.uniform(low_mu, up_mu, size=num_paths)
     volatilities = np.random.uniform(low_vol, up_vol, size=num_paths)
     correlation = np.random.uniform(-1, 1, size=(num_paths, num_paths))
@@ -88,8 +88,7 @@ def analytical_solutions(args, data_params):
     cholesky = np.linalg.cholesky(data_params['data_params']['sigma_cov'])
     risky_lambda = data_params['data_params']['mu'] - args.risk_free_rate
     analytical_risky_action = 1 / args.p * risky_lambda @ ((cholesky @ cholesky.T) ** (-1))
-    analytical_utility = np.exp(
-        (1 - args.p) * (args.risk_free_rate + 1 / 2 * analytical_risky_action @ risky_lambda))
+    analytical_utility = np.exp((1 - args.p) * (args.risk_free_rate + 1 / 2 * analytical_risky_action @ risky_lambda))
 
     return analytical_risky_action, analytical_utility
 

@@ -253,8 +253,8 @@ class LoadData:
         return S, t
 
 if __name__ == "__main__": #Testing
-    test = 0
-    if test == 1:
+    test = 2
+    if test == 0:
         import matplotlib.pyplot as plt
 
         GBM_parameter = {
@@ -414,7 +414,7 @@ if __name__ == "__main__": #Testing
                 elapsed = time.time() - start_time
                 print('Time Elapsed: %s' % elapsed)
 
-    elif test == 0:
+    elif test == 1:
         mu = [0.13]
         sigma_cov = [[0.04]]
         grid_points = 1
@@ -451,7 +451,7 @@ if __name__ == "__main__": #Testing
 
             return S[0][window_size]
 
-        num_returns = 50000
+        num_returns = 10
         prices_df = np.zeros(num_returns)
         prices_df2 = np.zeros(num_returns)
 
@@ -471,14 +471,16 @@ if __name__ == "__main__": #Testing
         print(f"Log; Mean: {observed_mu}, {observed_sigma}")
         print(f"Log; Mean: {observed_mu2}, {observed_sigma2}")
 
-
+    elif test == 2:
         risk_free_rate = 0.04
         p = 0.8
+        mu = [0.06]
+        sigma_cov = [[0.04]]
+        cholesky = np.linalg.cholesky(sigma_cov)
 
         risky_lambda = mu[0] - risk_free_rate
         analytical_risky_action = 1 / p * risky_lambda * ((cholesky * cholesky.T) ** (-1))
-        analytical_utility = np.exp(
-            (1 - p) * (risk_free_rate + 1 / 2 * analytical_risky_action * risky_lambda))
+        analytical_utility = np.exp((1 - p) * (risk_free_rate + 1 / 2 * analytical_risky_action * risky_lambda))
 
         # optimal_portfolio *= np.dot([1 - analytical_risky_action[0], analytical_risky_action[0]], stock_data[current_step - 1])
         print(risky_lambda, analytical_risky_action, analytical_utility)

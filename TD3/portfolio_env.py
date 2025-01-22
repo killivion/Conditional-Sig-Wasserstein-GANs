@@ -16,7 +16,11 @@ class PortfolioEnv(gym.Env):
 
         # Define action and observation space
         feature_size = len(self.mu) + len(self.sigma_cov.flatten())  #self.num_stocks + len(self.mu) + len(self.sigma_cov.flatten())
-        self.action_space = gym.spaces.Box(low=0, high=1, shape=(self.num_stocks,), dtype=np.float32) if self.num_stocks > 2 else gym.spaces.Box(low=-8, high=8, shape=(1,), dtype=np.float32)
+        if args.allow_lending:
+            self.action_space = gym.spaces.Box(low=0, high=1, shape=(self.num_stocks,), dtype=np.float32) if self.num_stocks > 2 else gym.spaces.Box(low=-8, high=8, shape=(1,), dtype=np.float32)
+        else:
+            self.action_space = gym.spaces.Box(low=0, high=1, shape=(self.num_stocks,), dtype=np.float32) if self.num_stocks > 2 else gym.spaces.Box(low=0, high=1, shape=(1,), dtype=np.float32)
+
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(feature_size,), dtype=np.float32,)
 
         # Initialize state
@@ -40,7 +44,7 @@ class PortfolioEnv(gym.Env):
         done = self.current_step >= len(self.stock_data)  #- 1
 
         action = action/sum(action) if self.num_stocks > 2 else [1 - action[0], action[0]]  # action -= np.mean(action)
-        portfolio_return = np.dot(action, self.stock_data[self.current_step-1])  #+1 # adjust by 1 to compensate if sum(action)=0, so portfolio return 1 stays baseline
+        portfolio_return = np.dot(action, self.stock_data[self.current_step-1])  # Tipp: adjust by 1 to compensate if sum(action)=0, so portfolio return 1 stays baseline
         self.portfolio_value *= portfolio_return
         self.optimal_portfolio *= np.dot([1 - self.analytical_risky_action[0], self.analytical_risky_action[0]], self.stock_data[self.current_step-1])
         reward = self._calc_reward(done)
@@ -61,8 +65,8 @@ class PortfolioEnv(gym.Env):
             self.args.mode = 'test'
         if self.first_episode or random_actor:  # in the random_actor case ensures that in compare random_actor and the trained actor use the same dataset
             self.first_episode = False
-        else:  # if it's not the first episode, new data is pulled
-            if self.args.mode in ['eval', 'compare'] or self.episode_cycle == self.args.episode_reset:  # pulls new rdm parameters
+        else:  # if not the first episode, new data is pulled
+            if self.args.mode in ['eval', 'compare'] or self.episode_cycle == self.args.episode_reset:  # every episode_reset episodes, pulls new rdm parameters
                 self.episode_cycle = 0
                 from td3_train import generate_random_params
                 mu, sigma_cov = generate_random_params(self.num_stocks-1)
@@ -82,20 +86,27 @@ class PortfolioEnv(gym.Env):
 
     def _calc_reward(self, done):
         if done:  # Terminal utility -> Central Reward-fct.
+            if self.portfolio_value <= 0:
+                print("Careful: negative portfolio value")
             reward = (self.portfolio_value ** (1 - self.args.p)) if not self.portfolio_value <= 0 else 0 * abs(self.portfolio_value)  # / (1 - self.args.p) leave out the constant divisor since it only scales the expectation
             optimal_utility = (self.optimal_portfolio ** (1 - self.args.p)) if not self.optimal_portfolio <= 0 else 0
             reward = reward - optimal_utility
             self.reward_window.append(reward)
-            if not self.fixed:
-                self.mean_reward = np.mean(self.reward_window) if self.reward_window else 0.0
-                self.std_reward = np.std(self.reward_window) if self.reward_window else 1.0
+            #if not self.fixed:
+            #    self.mean_reward = np.mean(self.reward_window) if self.reward_window else 0.0
+            #    self.std_reward = np.std(self.reward_window) if self.reward_window else 1.0
             #if len(self.reward_window) >= 1000:
-                self.fixed = True
-            normalized_reward = 2 * (reward + 0.1) if self.args.mode not in ['compare', 'eval'] else reward
+            #    self.fixed = True
+            if self.args.allow_lending:
+                normalized_reward = 2 * (reward + 0.1) if self.args.mode not in ['compare', 'eval'] else reward
+            else:
+                # normalized_reward = 10 * (reward + 0.1)
+                cf95_low, cf95_high = np.exp((1-self.args.p) * np.log(self.mu[1] - (self.sigma_cov[1,1]**2)/2 + [-1.96*self.sigma_cov[1,1], +1.96*self.sigma_cov[1,1]]))
+                cf95_low2, cf95_high2 = np.exp((1-self.args.p) *(np.log(self.analytical_risky_action) + np.log(self.mu[1] - (self.sigma_cov[1,1]**2)/2 + self.mu[0]*(1-self.analytical_risky_action)/self.analytical_risky_action + [-1.96*self.sigma_cov[1,1], +1.96*self.sigma_cov[1,1]])))
+                normalized_reward = (reward - (cf95_low - cf95_low2)) / (cf95_high - cf95_high2) * 2 - 1
+                # exp((1-p)ln[(μ-σ^2/2)-1.96σ])
+
             #    normalized_reward = (reward - self.mean_reward) / (np.sqrt(self.std_reward) if self.std_reward > 0 else 1.0) if self.args.mode not in ['compare', 'eval', 'tuning'] else reward
-            #else:
-            #    normalized_reward = 0
-            #normalized_reward = 2 * (1.2 * (reward) - 0.9) if self.args.mode not in ['compare', 'eval'] else reward
             if self.args.mode == 'test':
                 print('Terminal Utility is: %s' % ((self.portfolio_value) ** (1 - self.args.p)))
             """

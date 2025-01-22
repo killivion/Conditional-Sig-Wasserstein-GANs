@@ -17,10 +17,11 @@ from hyperparameter_tuning import optimize_td3, test_optimized_td3
 
 """
 tensorboard --logdir ./TD3/logs
-tensorboard --logdir ./logs
 
+Terminal: 
 $env:PYTHONPATH="."
 python TD3/td3_train.py -mode train -model_ID 2 -total_timesteps 100000
+tensorboard --logdir ./logs
 """
 
 def main(args, i=0):
@@ -104,9 +105,10 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-utility_function', default="power", type=str)
+    parser.add_argument('-allow_lending', default=False, type=bool)
     parser.add_argument('-episode_reset', default=10000000, type=int)  #currently off
     #parser.add_argument('-learning_starts', default=100000, type=int)
-    parser.add_argument('-action_noise_sigma', default=0.1, type=float)
+    parser.add_argument('-action_noise_sigma', default=0.05, type=float)
     parser.add_argument('-p', default=0.8, type=float)
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes'
     parser.add_argument('-actor_dataset', default='correlated_Blackscholes', type=str)  # An Actor ID to determine which actor will be loaded (if it exists), then trained or tested/evaluated on
@@ -115,16 +117,16 @@ if __name__ == '__main__':
     parser.add_argument('-window_size', default=1, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
 
-    parser.add_argument('-train_freq', default=20, type=int)
-    parser.add_argument('-total_timesteps', default=1000000, type=int)
+    parser.add_argument('-train_freq', default=1, type=int)
+    parser.add_argument('-total_timesteps', default=50000, type=int)
     parser.add_argument('-batch_size', default=256, type=int)
     parser.add_argument('-buffer_size', default=1000000, type=int)
     parser.add_argument('-num_episodes', default=300, type=int)
-    parser.add_argument('-n_trials', default=30, type=int)
+    parser.add_argument('-n_trials', default=50, type=int)
 
-    parser.add_argument('-model_ID', default=2, type=int)
+    parser.add_argument('-model_ID', default=3, type=int)
     parser.add_argument('-laps', default=1, type=int)
-    parser.add_argument('-mode', default='tuning', type=str)  # 'train' 'test' 'eval' 'compare' 'tuning' 'test_tuning'
+    parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare' 'tuning' 'test_tuning'
 
     args = parser.parse_args()
     if args.mode == 'train':
