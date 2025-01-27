@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from help_fct import analytical_solutions, analytical_entry_wealth_offset
 
 
 def test_actor(args, data_params, model, env):
@@ -55,6 +56,7 @@ def evaluate_actor(args, data_params, model, env):
 def compare_actor(args, data_params, actor, env):
     trained_cum_rewards, random_cum_rewards, trained_portfolio, random_portfolio = [], [], [], []
     average_risky_action = []
+    first = True
     analytical_risky_action, analytical_utility = analytical_solutions(args, data_params)
     for episode in tqdm(range(args.num_episodes), desc="Episodes", leave=False):
         for random_actor in [False, True]:
@@ -70,6 +72,9 @@ def compare_actor(args, data_params, actor, env):
                 else:
                     action, _ = actor.predict(obs, deterministic=True)
                     average_risky_action.append(action[0])
+                    if first:
+                        entry_wealth_offset = analytical_entry_wealth_offset(action, args, data_params)
+                        first = False
 
                 obs, reward, done, _, info = env.step(action)
                 episode_reward += reward
@@ -92,6 +97,8 @@ def compare_actor(args, data_params, actor, env):
     perfect_portfolio[perfect_portfolio < 0] = 0
     power_utility = (perfect_portfolio[:, -1] ** (1 - args.p))
 
+    analytical_entry_wealth_offset(action, args, data_params)
+
     print(f"Trained Actor Average Portfolio: {np.mean(trained_portfolio[:,-1])}")
     print(f"Random Actor Average Portfolio: {np.mean(random_portfolio[:,-1])}")
     print("_____")
@@ -99,6 +106,9 @@ def compare_actor(args, data_params, actor, env):
     print(f"Random Actor Average Terminal Reward: {np.mean(random_cum_rewards)}")
     print("Analytical Perfect Utility:", analytical_utility)
     print("Analytical minus Simulated Perfect Utility:", analytical_utility - np.mean(power_utility))
+    print("_____")
+    print("Additional Entry-Wealth to offset Error:", analytical_utility/np.mean(trained_cum_rewards))
+    print("Analytically: Additional Entry-Wealth to offset Error:", entry_wealth_offset)
     print("_____")
     print("Analytical Risky Action:", analytical_risky_action)
     print("Average Risky Action:", np.mean(average_risky_action))
@@ -147,10 +157,3 @@ def compare_actor(args, data_params, actor, env):
     plt.tight_layout()
     plt.show()
 
-def analytical_solutions(args, data_params):
-    cholesky = np.linalg.cholesky(data_params['data_params']['sigma_cov'])
-    risky_lambda = data_params['data_params']['mu'] - args.risk_free_rate
-    analytical_risky_action = 1 / args.p * risky_lambda @ ((cholesky @ cholesky.T) ** (-1))
-    analytical_utility = np.exp((1 - args.p) * (args.risk_free_rate + 1 / 2 * analytical_risky_action @ risky_lambda))
-
-    return analytical_risky_action, analytical_utility
