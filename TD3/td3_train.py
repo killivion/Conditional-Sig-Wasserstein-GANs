@@ -27,9 +27,9 @@ tensorboard --logdir ./logs
 def main(args, i=0):
     from train import get_dataset_configuration
     if args.dataset == 'correlated_Blackscholes':
-        mu, sigma_cov = generate_random_params(args.num_paths)
+        mu, vola_matrix = generate_random_params(args.num_paths, args.num_bm)
         spec = 'args.num_paths={}_window_size={}'.format(args.num_paths, args.window_size)
-        data_params = dict(data_params=dict(mu=mu, sigma_cov=sigma_cov, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.grid_points))
+        data_params = dict(data_params=dict(mu=mu, vola_matrix=vola_matrix, window_size=args.window_size, num_paths=args.num_paths, num_bm=args.num_bm, grid_points=args.grid_points))
     else:
         generator = get_dataset_configuration(args.dataset, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.grid_points)
         for s, d in generator:
@@ -68,6 +68,13 @@ def run(args, spec, data_params, returns, i=0):
     # Load Model
     if os.path.exists(f"{model_save_path}.zip"):
         model = TD3.load(model_save_path)
+        model.load_replay_buffer(f"{model_save_path}_buffer.pkl") if os.path.exists(f"{model_save_path}_buffer.pkl") else print("No replay buffer found; training from an empty buffer.")
+        if os.path.exists(f"{model_save_path}_optimizer.pth"):
+            optim_state = torch.load(f"{model_save_path}_optimizer.pth")
+            model.actor.optimizer.load_state_dict(optim_state['actor_optimizer'])
+            model.critic.optimizer.load_state_dict(optim_state['critic_optimizer'])
+        else:
+            print("No optimizer found; training from a new optimizer.")
         model.set_env(vec_env)
         print(f"Uses {model_save_path} trained on {model.num_timesteps}")
         already_trained_timesteps = model.num_timesteps
@@ -87,6 +94,8 @@ def run(args, spec, data_params, returns, i=0):
         fuse_folders(number, args)
         model.num_timesteps += already_trained_timesteps
         model.save(model_save_path)
+        model.save_replay_buffer(f"{model_save_path}_buffer.pkl")
+        torch.save({'actor_optimizer': model.actor.optimizer.state_dict(), 'critic_optimizer': model.critic.optimizer.state_dict()}, f"{model_save_path}_optimizer.pth")
         print(f"Model saved at: {model_save_path} with {model.num_timesteps} timesteps trained of which {already_trained_timesteps} were trained before")
         #if i == args.laps - 1:
         #    monitor_plot(args)
@@ -115,16 +124,17 @@ if __name__ == '__main__':
     parser.add_argument('-risk_free_rate', default=0.04, type=float)
     parser.add_argument('-grid_points', default=1, type=int)
     parser.add_argument('-window_size', default=1, type=int)
-    parser.add_argument('-num_paths', default=1, type=int)
+    parser.add_argument('-num_paths', default=2, type=int)
+    parser.add_argument('-num_bm', default=2, type=int)  # Number of random sources N
 
     parser.add_argument('-train_freq', default=1, type=int)
-    parser.add_argument('-total_timesteps', default=50000, type=int)
+    parser.add_argument('-total_timesteps', default=500, type=int)
     parser.add_argument('-batch_size', default=256, type=int)
     parser.add_argument('-buffer_size', default=1000000, type=int)
-    parser.add_argument('-num_episodes', default=300, type=int)
+    parser.add_argument('-num_episodes', default=1000, type=int)
     parser.add_argument('-n_trials', default=50, type=int)
 
-    parser.add_argument('-model_ID', default=3, type=int)
+    parser.add_argument('-model_ID', default=5, type=int)
     parser.add_argument('-laps', default=1, type=int)
     parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare' 'tuning' 'test_tuning'
 

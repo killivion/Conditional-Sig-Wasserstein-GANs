@@ -4,6 +4,11 @@ from stable_baselines3.common.callbacks import BaseCallback
 import yfinance as yf
 import numpy as np
 import shutil
+from scipy.stats import norm
+
+
+def action_normalizer(action):
+    return action / sum(action) if not sum(action) == 0 else np.insert(action[1:], 0, 1)
 
 
 def pull_data(args, data_params):
@@ -19,41 +24,77 @@ def pull_data(args, data_params):
     return np.hstack((risk_free_column, returns))
 
 
-def generate_random_params(num_paths):
-    if num_paths != 1:
-        low_vol = 0.1 * 3 * (np.log(1000)) ** (0.8) / (np.log(num_paths) ** (1.8)) if num_paths != 1 else 0.2 # Adjustment of up and lower bound depending on num_paths size (number of correlations)
-        up_vol = 0.25 * 3 * (np.log(1000)) ** (0.8) / (np.log(num_paths) ** (1.8)) if num_paths != 1 else 0.2 # amounts to slightly more than 20% vol
+def generate_random_params(num_paths, num_bm):  # vola_matrix corresponds to
+    if num_paths == 2 and num_bm == 2:
+        total_vola = np.array([[0.2, 0.25]])
+        weights = np.array([[0.7, 0.3], [0.2, 0.8]])  # rows sum to one
+        mu = np.array([0.05, 0.07])
+    elif num_paths == 1 and num_bm == 1:  # 1 path, 1 brownian motion
+        total_vola = np.array([[0.2]])
+        weights = np.array([[1]])
+        mu = np.array([0.06])
+    else:  # Adjustment of up and lower bound depending on num_paths size (number of correlations), amounts to slightly more than 20% vol
+        low_vol = 0.1 * 3 * (np.log(1000)) ** (0.8) / (np.log(num_paths) ** (1.8))
+        up_vol = 2.5 * low_vol
         low_mu, up_mu = 0.03, 0.13
-    else:
-        low_vol, up_vol, low_mu, up_mu = 0.2, 0.2, 0.06, 0.06 # 0.2, 0.2, 0.15, 0.15
-    mu = np.random.uniform(low_mu, up_mu, size=num_paths)
-    volatilities = np.random.uniform(low_vol, up_vol, size=num_paths)
-    correlation = np.random.uniform(-1, 1, size=(num_paths, num_paths))
-    np.fill_diagonal(correlation, 1)
-    correlation = (correlation + correlation.T) / 2
-    eigvals, eigvecs = np.linalg.eigh(correlation)
-    eigvals[eigvals < 0] = 1e-5
-    correlation = eigvecs @ np.diag(eigvals) @ eigvecs.T
 
-    sigma_cov = correlation * np.outer(volatilities, volatilities)
-    return mu, sigma_cov
+        mu = np.random.uniform(low_mu, up_mu, size=num_paths)
+        total_vola = np.random.uniform(low_vol, up_vol, size=num_paths)
+        weights = np.random.rand(num_paths, num_bm)
+        weights = weights / weights.sum(axis=1, keepdims=True)
+
+        """
+        correlation = np.random.uniform(-1, 1, size=(num_paths, num_bm))
+        np.fill_diagonal(correlation, 1)
+        correlation = (correlation + correlation.T) / 2
+        eigvals, eigvecs = np.linalg.eigh(correlation)
+        eigvals[eigvals < 0] = 1e-5
+        correlation = eigvecs @ np.diag(eigvals) @ eigvecs.T  # correlation matrix with p_ij entries
+        """
+
+    vola_matrix = np.sqrt(total_vola * weights)  # [sigma] = vola_matrix
+
+    return mu, vola_matrix  # mu is drift, vola_matrix
 
 
 def analytical_solutions(args, data_params):
-    cholesky = np.linalg.cholesky(data_params['data_params']['sigma_cov'])
+    big_sigma = data_params['data_params']['vola_matrix'] @ data_params['data_params']['vola_matrix'].T
     risky_lambda = data_params['data_params']['mu'] - args.risk_free_rate
-    analytical_risky_action = 1 / args.p * risky_lambda @ ((cholesky @ cholesky.T) ** (-1))  # cholesky @ cholesky.T = sigma_cov
-    analytical_utility = np.exp((1 - args.p) * (args.risk_free_rate + 1 / 2 * analytical_risky_action @ risky_lambda))
+    analytical_risky_action = 1 / args.p * risky_lambda.T @ (np.linalg.inv(big_sigma))
+    analytical_utility = np.exp((1 - args.p) * (args.risk_free_rate + 1/2 * analytical_risky_action.T @ risky_lambda))
 
     return analytical_risky_action, analytical_utility
 
 
+def analytical_of_current_policy(action, args, data_params):
+    risky_lambda = data_params['data_params']['mu'] - args.risk_free_rate
+    analy_policy_utility = np.exp((1 - args.p) * (args.risk_free_rate + 1 / 2 * action[1:].T @ risky_lambda))
+    return analy_policy_utility
+
+
 def analytical_entry_wealth_offset(action, args, data_params):
+    big_sigma = data_params['data_params']['vola_matrix'] @ data_params['data_params']['vola_matrix'].T
     analytical_risky_action, _ = analytical_solutions(args, data_params)
     risky_lambda = data_params['data_params']['mu'] - args.risk_free_rate
-    entry_wealth_offset = np.exp((1-args.p) * ((action[1]-analytical_risky_action)*risky_lambda - args.p/2 * (action[1] * data_params['data_params']['sigma_cov'] * action[1] - analytical_risky_action * data_params['data_params']['sigma_cov'] * analytical_risky_action)))
+    entry_wealth_offset = np.exp((analytical_risky_action - action[1:]) @ risky_lambda
+            - args.p/2 * (analytical_risky_action.T @ big_sigma @ analytical_risky_action - action[1:].T @ big_sigma @ action[1:]))
+
+    analytical_utility = np.exp((1 - args.p) * (args.risk_free_rate + 1/2 * analytical_risky_action.T @ risky_lambda))
+    other_calculation = np.exp(analytical_risky_action @ risky_lambda - args.p/2 * (analytical_risky_action.T @ big_sigma @ analytical_risky_action))
 
     return entry_wealth_offset
+
+
+def find_confidence_intervals(analytical_risky_action, data_params, args):  # One could upgrade to joint confidence regions: with elliptical regions using the Mahalanobis distance
+    confidence = 0.95
+    big_sigma = data_params['data_params']['vola_matrix'] @ data_params['data_params']['vola_matrix'].T
+    z_c = norm.ppf((1 + confidence) / 2)
+    mu_adj = data_params['data_params']['mu'][0] - np.diag(big_sigma)[0]
+    interval = mu_adj + np.array([-1, 1]) * z_c * np.sqrt(np.diag(big_sigma)[0])  # exp((1-p)[(μ-σ^2/2)T (+/-) 1.96σ*sqrt(T)])
+    cf_low, cf_high = np.exp((1 - args.p) * interval)  # Extreme case x0=1 is invested in asset 1
+    cf_low2, cf_high2 = sum(analytical_risky_action) * np.exp((1-args.p)*interval) + (1 - sum(analytical_risky_action)) * np.exp((1 - args.p) * args.risk_free_rate)  # simplified that all risky action is in asset 1
+
+    return cf_low - cf_low2, cf_high - cf_high2
 
 
 def find_largest_td3_folder(args):
@@ -123,10 +164,10 @@ class ActionLoggingCallback(BaseCallback):
             with self.summary_writer.as_default():
                 # Log actions
                 for i, action in enumerate(actions):
-                    tf.summary.scalar(f"action/Action", sum(action), step=episode_num)
+                    tf.summary.scalar(f"action/Action", sum(action_normalizer(action)[1:]), step=episode_num)
 
                 # Log episode reward
-                tf.summary.scalar("action/Episode_Reward", total_reward/2 - 0.1, step=episode_num)
+                tf.summary.scalar("action/Episode_Reward", total_reward, step=episode_num)
 
                 # Log actor loss (if available)
                 if actor_loss is not None:

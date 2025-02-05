@@ -61,20 +61,20 @@ class LoadData:
 
         return S, t
 
-    def generate_correlated_BS(self, mu, sigma_cov, window_size, num_paths, grid_points=252, S0=1):
+    def generate_correlated_BS(self, mu, vola_matrix, window_size, num_paths, num_bm, grid_points=252, S0=1):
+        """Generates num_paths of correlated Black-Scholes, from num_bm Brownian Motions
+        mu: Drift, vola_matrix: Volatility [corrospondence of asset to Brownian Motion]"""
 
         T = window_size / grid_points
         dt = 1 / grid_points
         t = np.linspace(0, T, window_size + 1)
 
-        cholesky = np.linalg.cholesky(sigma_cov)
-        S = np.zeros((num_paths, window_size+1))
+        S = np.zeros((num_paths, window_size + 1))
         S[:, 0] = S0
 
-        #for i in tqdm(range(1, window_size + 1), desc="Correlated_BS", leave=False):
         for i in range(1, window_size+1):
-            Z = np.random.normal(size=num_paths)  # Independent standard normals
-            S[:, i] = S[:, i - 1] * np.exp((mu - 0.5 * np.sum(sigma_cov, axis=1)) * dt + cholesky @ Z * np.sqrt(dt))
+            W = np.random.normal(size=num_bm)
+            S[:, i] = S[:, i - 1] * np.exp(mu - 0.5 * np.diag(vola_matrix @ vola_matrix.T) * dt + vola_matrix @ W * np.sqrt(dt))
 
         #prices_df = pd.DataFrame(S, columns=t)
         #print('Mean and Std of correlated BS %s %s' % (prices_df.iloc[:, -1].mean()**(1 / T) - 1, prices_df.iloc[:, -1].std() / np.sqrt(T)))
@@ -253,7 +253,7 @@ class LoadData:
         return S, t
 
 if __name__ == "__main__": #Testing
-    test = 2
+    test = 1
     if test == 0:
         import matplotlib.pyplot as plt
 
@@ -360,10 +360,10 @@ if __name__ == "__main__": #Testing
             eigvals[eigvals < 0] = 1e-5
             correlation = eigvecs @ np.diag(eigvals) @ eigvecs.T
 
-            sigma_cov = correlation * np.outer(volatilities, volatilities)
-            return mu, sigma_cov
+            vola_matrix = correlation * np.outer(volatilities, volatilities)
+            return mu, vola_matrix
         num_paths = general_parameter['num_paths']
-        mu, sigma_cov = generate_random_params(num_paths)
+        mu, vola_matrix = generate_random_params(num_paths)
         T = general_parameter['window_size']/general_parameter['grid_points']
 
         plot = True
@@ -374,7 +374,7 @@ if __name__ == "__main__": #Testing
             #"Kou_Jump_Diffusion": {**Kou_parameter, **general_parameter},
             #"Levy_Ito": {**LevyIto_parameter, **general_parameter},
             #"YFinance": YFinance_parameter,
-            "correlated_Blackscholes": {"mu": mu, "sigma_cov": sigma_cov, "window_size": general_parameter['window_size'], "num_paths": num_paths},
+            "correlated_Blackscholes": {"mu": mu, "vola_matrix": vola_matrix, "window_size": general_parameter['window_size'], "num_paths": num_paths},
         }
 
         if plot:
@@ -415,16 +415,29 @@ if __name__ == "__main__": #Testing
                 print('Time Elapsed: %s' % elapsed)
 
     elif test == 1:
-        mu = [0.13]
-        sigma_cov = [[0.04]]
+        p = 0.8
+        risk_free_rate = 0.04
+        total_vola = np.array([[0.2, 0.25]])
+        weights = np.array([[0.7, 0.3], [0.2, 0.8]])  # rows sum to one
+        mu = np.array([0.05, 0.07])
+        vola_matrix = total_vola * np.sqrt(weights)  # [sigma]
+
         grid_points = 1
         window_size = 1
-        num_paths = 1
+        num_paths = 2
+        num_bm = 2
 
         T = window_size / grid_points
         dt = 1 / grid_points
         t = np.linspace(0, T, window_size + 1)
-        cholesky = np.linalg.cholesky(sigma_cov)
+        cholesky = np.linalg.cholesky(vola_matrix)
+
+        risky_lambda = mu - risk_free_rate
+        analytical_risky_action = 1 / p * risky_lambda.T @ np.linalg.inv(cholesky @ cholesky.T)
+        analytical_utility = np.exp((1 - p) * (risk_free_rate + 1 / (2 * p) * risky_lambda.T @ np.linalg.inv(cholesky @ cholesky.T) @ risky_lambda))
+
+        print(f"Drift: {mu - vola_matrix / 2}")
+        print(risky_lambda, analytical_risky_action, sum(analytical_risky_action), analytical_utility)
 
         def generate_gbm(mu, sigma, window_size, num_paths, grid_points=252, S0=1):
 
@@ -438,49 +451,56 @@ if __name__ == "__main__": #Testing
 
             return S[0][window_size]
 
-        def generate_correlated_BS(mu, sigma_cov, window_size, num_paths, grid_points=252, S0=1):
+        def generate_correlated_BS(mu, vola_matrix, window_size, num_paths, num_bm, grid_points=252, S0=1):
             S = np.zeros((num_paths, window_size + 1))
             S[:, 0] = S0
 
             for i in range(1, window_size + 1):
                 Z = np.random.normal(size=num_paths)  # Independent standard normals
-                S[:, i] = S[:, i - 1] * np.exp((mu - 0.5 * np.sum(sigma_cov, axis=1)) * dt + cholesky @ Z * np.sqrt(dt))
+                S[:, i] = S[:, i - 1] * np.exp((mu - 0.5 * np.sum(vola_matrix, axis=1)) * dt + cholesky @ Z * np.sqrt(dt))
 
             # prices_df = pd.DataFrame(S, columns=t)
             # print('Mean and Std of correlated BS %s %s' % (prices_df.iloc[:, -1].mean()**(1 / T) - 1, prices_df.iloc[:, -1].std() / np.sqrt(T)))
 
             return S[0][window_size]
 
-        num_returns = 10
+        num_returns = 100000
         prices_df = np.zeros(num_returns)
         prices_df2 = np.zeros(num_returns)
 
         for j in tqdm(range(num_returns)):
-            prices_df[j] = generate_correlated_BS(mu=mu, sigma_cov=sigma_cov, window_size=window_size, num_paths=num_paths, grid_points=grid_points, S0=1)
-            prices_df2[j] = generate_gbm(mu=mu[0], sigma=np.sqrt(sigma_cov[0][0]), window_size=window_size, num_paths=num_paths, grid_points=grid_points, S0=1)
+            prices_df[j] = generate_correlated_BS(mu=mu, vola_matrix=vola_matrix, window_size=window_size, num_paths=num_paths,  num_bm=num_bm, grid_points=grid_points, S0=1)
+            #prices_df2[j] = generate_gbm(mu=mu[0], sigma=np.sqrt(vola_matrix[0][0]), window_size=window_size, num_paths=num_paths, grid_points=grid_points, S0=1)
 
         prices_df = pd.DataFrame(prices_df)
-        prices_df2 = pd.DataFrame(prices_df2)
+        #prices_df2 = pd.DataFrame(prices_df2)
         print(f"Correlated_BS; Mean: {prices_df.iloc[:, -1].mean() ** (1 / T) - 1}, {prices_df.iloc[:, -1].std() / np.sqrt(T)}")
-        print(f"GBM; Mean: {prices_df2.iloc[:, -1].mean() ** (1 / T) - 1}, {prices_df2.iloc[:, -1].std() / np.sqrt(T)}")
+        #print(f"GBM; Mean: {prices_df2.iloc[:, -1].mean() ** (1 / T) - 1}, {prices_df2.iloc[:, -1].std() / np.sqrt(T)}")
 
         observed_mu = np.log(prices_df).mean()[0]
         observed_sigma = np.log(prices_df).std()[0]
-        observed_mu2 = np.log(prices_df2).mean()[0]
-        observed_sigma2 = np.log(prices_df2).std()[0]
+        #observed_mu2 = np.log(prices_df2).mean()[0]
+        #observed_sigma2 = np.log(prices_df2).std()[0]
         print(f"Log; Mean: {observed_mu}, {observed_sigma}")
-        print(f"Log; Mean: {observed_mu2}, {observed_sigma2}")
+        #print(f"Log; Mean: {observed_mu2}, {observed_sigma2}")
 
     elif test == 2:
         risk_free_rate = 0.04
         p = 0.8
-        mu = [0.06]
-        sigma_cov = [[0.04]]
-        cholesky = np.linalg.cholesky(sigma_cov)
+        #vola_matrix = np.array([[0.04]])
+        #mu = np.array([0.06])
 
-        risky_lambda = mu[0] - risk_free_rate
-        analytical_risky_action = 1 / p * risky_lambda * ((cholesky * cholesky.T) ** (-1))
-        analytical_utility = np.exp((1 - p) * (risk_free_rate + 1 / 2 * analytical_risky_action * risky_lambda))
+        sigma = np.array([0.2, 0.25])
+        correlation = np.array([[1, 0.3], [0.3, 1]])
+        vola_matrix = np.outer(sigma, sigma) * correlation
+        mu = np.array([0.05, 0.07])
+
+        cholesky = np.linalg.cholesky(vola_matrix)
+
+        risky_lambda = mu - risk_free_rate
+        analytical_risky_action = 1 / p * risky_lambda.T @ np.linalg.inv(cholesky @ cholesky.T)
+        analytical_utility = np.exp((1 - p) * (risk_free_rate + 1/(2 * p) * risky_lambda.T @ np.linalg.inv(cholesky @ cholesky.T) @ risky_lambda))
 
         # optimal_portfolio *= np.dot([1 - analytical_risky_action[0], analytical_risky_action[0]], stock_data[current_step - 1])
-        print(risky_lambda, analytical_risky_action, analytical_utility)
+        print(risky_lambda, analytical_risky_action, sum(analytical_risky_action), analytical_utility)
+

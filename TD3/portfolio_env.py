@@ -1,8 +1,7 @@
 import gymnasium as gym
 import numpy as np
-from help_fct import pull_data, analytical_solutions
+from help_fct import pull_data, analytical_solutions, find_confidence_intervals, action_normalizer
 from collections import deque
-from scipy.stats import norm
 
 class PortfolioEnv(gym.Env):
     def __init__(self, args, data_params, stock_data):
@@ -16,23 +15,24 @@ class PortfolioEnv(gym.Env):
         self._normalize_parameter()
 
         # Define action and observation space
-        feature_size = len(self.mu) + len(self.sigma_cov.flatten())  #self.num_stocks + len(self.mu) + len(self.sigma_cov.flatten())
+        feature_size = len(self.mu) + len(self.vola_matrix.flatten())  #self.num_stocks + len(self.mu) + len(self.vola_matrix.flatten())
         if args.allow_lending:
-            self.action_space = gym.spaces.Box(low=0, high=1, shape=(self.num_stocks,), dtype=np.float32) if self.num_stocks > 2 else gym.spaces.Box(low=-8, high=8, shape=(1,), dtype=np.float32)
+            self.action_space = gym.spaces.Box(low=-8, high=8, shape=(self.num_stocks,), dtype=np.float32)
         else:
-            self.action_space = gym.spaces.Box(low=0, high=1, shape=(self.num_stocks,), dtype=np.float32) if self.num_stocks > 2 else gym.spaces.Box(low=0, high=1, shape=(1,), dtype=np.float32)
+            self.action_space = gym.spaces.Box(low=0, high=1, shape=(self.num_stocks,), dtype=np.float32)
 
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(feature_size,), dtype=np.float32,)
 
         # Initialize state
         self.current_step, self.portfolio_value = 0, 1
         self.first_episode, self.episode_cycle = True, 0
-        self.max_intermediary_reward, self.max_terminal_reward = 0, 0
+        #self.max_intermediary_reward, self.max_terminal_reward = 0, 0
         #self.reward_normalization_window = args.learning_starts / 2
+        #self.reward_window, self.fixed = [], False  # deque(maxlen=1000)
         self.analytical_risky_action, self.analytical_utility = analytical_solutions(self.args, self.data_params)
-        self.reward_window, self.fixed = [], False  # deque(maxlen=1000)
+        self.lower_CI, self.upper_CI = find_confidence_intervals(self.analytical_risky_action, self.data_params, self.args)
         self.step_count, self.i_steps = 0, 2
-        self.action = 0
+        self.action = np.zeros(self.num_stocks)
 
 
     def step(self, action):
@@ -43,12 +43,11 @@ class PortfolioEnv(gym.Env):
         #    print(f"{self.i_steps*10}% done")
         #    self.i_steps += 2
 
-        done = self.current_step >= len(self.stock_data)  #- 1
+        done = self.current_step >= len(self.stock_data)
 
-        self.action = action/sum(action) if self.num_stocks > 2 else [1 - action[0], action[0]]  # action -= np.mean(action)
-        portfolio_return = np.dot(self.action, self.stock_data[self.current_step-1])  # Tipp: adjust by 1 to compensate if sum(action)=0, so portfolio return 1 stays baseline
-        self.portfolio_value *= portfolio_return
-        self.optimal_portfolio *= np.dot([1 - self.analytical_risky_action[0], self.analytical_risky_action[0]], self.stock_data[self.current_step-1])
+        self.action = action_normalizer(action)  # normalizes to 1  # if self.num_stocks > 1 else [1 - action, action]
+        self.portfolio_value *= self.action @ self.stock_data[self.current_step-1]  # Tipp: adjust by 1 to compensate if sum(action)=0, so portfolio return 1 stays baseline
+        self.optimal_portfolio *= np.insert(self.analytical_risky_action, 0, 1 - sum(self.analytical_risky_action)) @ self.stock_data[self.current_step-1]
         reward = self._calc_reward(done)
 
         obs = self._get_feature_map()
@@ -71,8 +70,8 @@ class PortfolioEnv(gym.Env):
             if self.args.mode in ['eval', 'compare'] or self.episode_cycle == self.args.episode_reset:  # every episode_reset episodes, pulls new rdm parameters
                 self.episode_cycle = 0
                 from td3_train import generate_random_params
-                mu, sigma_cov = generate_random_params(self.num_stocks-1)
-                self.data_params = dict(data_params=dict(mu=mu, sigma_cov=sigma_cov, window_size=self.args.window_size, num_paths=self.args.num_paths,grid_points=self.args.window_size))
+                mu, vola_matrix = generate_random_params(self.num_stocks-1, self.args.num_bm)
+                self.data_params = dict(data_params=dict(mu=mu, vola_matrix=vola_matrix, window_size=self.args.window_size, num_paths=self.args.num_paths, num_bm=self.args.num_bm, grid_points=self.args.window_size))
                 self.analytical_risky_action, self.analytical_utility = analytical_solutions(self.args, self.data_params)
                 self._normalize_parameter()
             self.stock_data = pull_data(self.args, self.data_params)
@@ -83,7 +82,7 @@ class PortfolioEnv(gym.Env):
 
     def _get_feature_map(self):
         # normalized_returns = self.normalized_stock_data[self.current_step-1]
-        feature_map = np.concatenate([self.mu, self.sigma_cov.flatten()])  #np.concatenate([normalized_returns, self.mu, self.sigma_cov.flatten()])
+        feature_map = np.concatenate([self.mu, self.vola_matrix.flatten()])  #np.concatenate([normalized_returns, self.mu, self.vola_matrix.flatten()])
         return feature_map
 
     def _calc_reward(self, done):
@@ -93,24 +92,19 @@ class PortfolioEnv(gym.Env):
             reward = (self.portfolio_value ** (1 - self.args.p)) if not self.portfolio_value <= 0 else 0 * abs(self.portfolio_value)  # / (1 - self.args.p) leave out the constant divisor since it only scales the expectation
             optimal_utility = (self.optimal_portfolio ** (1 - self.args.p)) if not self.optimal_portfolio <= 0 else 0
             reward = reward - optimal_utility
-            self.reward_window.append(reward)
+            #self.reward_window.append(reward)
             #if not self.fixed:
             #    self.mean_reward = np.mean(self.reward_window) if self.reward_window else 0.0
             #    self.std_reward = np.std(self.reward_window) if self.reward_window else 1.0
             #if len(self.reward_window) >= 1000:
             #    self.fixed = True
-            if self.args.allow_lending:
-                normalized_reward = 2 * (reward + 0.1) if self.args.mode not in ['compare', 'eval'] else reward
+            if self.args.mode not in ['compare', 'eval', 'test']:
+                if self.args.allow_lending:
+                    normalized_reward = 2 * (reward + 0.1) if self.args.mode not in ['compare', 'eval'] else reward
+                else:  # Normalizes via Confidence-Intervals of the extrema: Investing all in stock [in multi-dimensional: uses exemplary CI of the first stock and assumes that all is invested in this one]
+                    normalized_reward = (reward - self.lower_CI) / self.upper_CI * 3 - 2  # normalizes that most values lie in [-1, 1]
             else:
-                # normalized_reward = 10 * (reward + 0.1)
-                z_value = norm.ppf(1 - (1 - 0.95) / 2)
-                interval95 = (self.mu[1] - (self.sigma_cov[1,1]**2)/2 + [-z_value*self.sigma_cov[1,1], +z_value*self.sigma_cov[1,1]])
-                cf95_low, cf95_high = np.exp((1-self.args.p) * interval95)
-                cf95_low2, cf95_high2 = (self.analytical_risky_action*np.exp(interval95) + (1-self.analytical_risky_action)*np.exp(self.mu[0])) ** (1-self.args.p)
-                lower, upper = cf95_low - cf95_low2, cf95_high - cf95_high2
-                normalized_reward = (reward - lower) / upper * 3 - 2  #normalizes to [-1, 1]
-                # exp((1-p)ln[(μ-σ^2/2)-1.96σ])
-
+                normalized_reward = reward
             #    normalized_reward = (reward - self.mean_reward) / (np.sqrt(self.std_reward) if self.std_reward > 0 else 1.0) if self.args.mode not in ['compare', 'eval', 'tuning'] else reward
             if self.args.mode == 'test':
                 print('Terminal Utility is: %s' % ((self.portfolio_value) ** (1 - self.args.p)))
@@ -127,14 +121,14 @@ class PortfolioEnv(gym.Env):
             normalized_reward = 0
         return normalized_reward
 
-    def _normalize_parameter(self):
+    def _normalize_parameter(self):  # adds the risk_free parameters and normalizes
         self.mu = np.insert(self.data_params['data_params']['mu'], 0, self.args.risk_free_rate)
-        self.sigma_cov = np.zeros((self.num_stocks, self.num_stocks))
-        self.sigma_cov[1:, 1:] = np.sign(self.data_params['data_params']['sigma_cov']) * np.sqrt(np.abs(self.data_params['data_params']['sigma_cov']))
+        #self.vola_matrix = np.zeros((self.num_stocks, self.num_stocks))
+        self.vola_matrix = np.sign(self.data_params['data_params']['vola_matrix']) * np.sqrt(np.abs(self.data_params['data_params']['vola_matrix']))
 
         # Normalization:
-        if self.num_stocks != 2:
-            self.mu = (self.mu - np.mean(self.mu)) / np.std(self.mu)
-            self.sigma_cov = self.sigma_cov / np.max(self.sigma_cov)
+        #if self.num_stocks != 2:
+        #    self.mu = (self.mu - np.mean(self.mu)) / np.std(self.mu)
+        #   self.vola_matrix = self.vola_matrix / np.max(self.vola_matrix)
 
 
