@@ -11,7 +11,7 @@ from functools import partial
 
 import eval_actor
 from track_learning import monitor_plot
-from help_fct import find_largest_td3_folder, ActionLoggingCallback, generate_random_params, pull_data, fuse_folders
+from help_fct import find_largest_td3_folder, ActionLoggingCallback, generate_random_params, pull_data, fuse_folders, analytical_solutions, action_normalizer, expected_utility, analytical_entry_wealth_offset
 from portfolio_env import PortfolioEnv
 from hyperparameter_tuning import optimize_td3, test_optimized_td3
 
@@ -100,7 +100,7 @@ def run(args, spec, data_params, returns, i=0):
         #if i == args.laps - 1:
         #    monitor_plot(args)
 
-    if args.mode in ['test']:
+    if args.mode == 'test':
     #    print("Params:", data_params)
         eval_actor.test_actor(args, data_params, model, vec_env)
     elif args.mode == 'eval':
@@ -108,6 +108,19 @@ def run(args, spec, data_params, returns, i=0):
     elif args.mode == 'compare':
         eval_actor.compare_actor(args, data_params, model, env)
         # trained_rewards, random_rewards, trained_portfolio_values, random_portfolio_values
+
+    elif args.mode == 'test_solution':
+        analytical_risky_action, analytical_utility = analytical_solutions(args, data_params)
+        print(f"Analytical Actions: {1-sum(analytical_risky_action), analytical_risky_action}, Analytical Utility: {analytical_utility}")
+        print(f"Risky Fraciton is {sum(analytical_risky_action)}")
+        if already_trained_timesteps > 0:
+            obs, info = env.reset()
+            action, _ = model.predict(obs, deterministic=True)
+            norm_action = action_normalizer(action)
+            print(f"Current action: {norm_action}, Current Expected Utility: {expected_utility(norm_action[1:], args, data_params)}")
+            print(f"Risky Fraciton is {sum(norm_action[1:])}")
+
+            print(f"{analytical_entry_wealth_offset(action, args, data_params)}")
 
 if __name__ == '__main__':
     import argparse
@@ -136,7 +149,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-model_ID', default=5, type=int)
     parser.add_argument('-laps', default=1, type=int)
-    parser.add_argument('-mode', default='train', type=str)  # 'train' 'test' 'eval' 'compare' 'tuning' 'test_tuning'
+    parser.add_argument('-mode', default='test_solution', type=str)  # 'train' 'test' 'eval' 'compare' 'tuning' 'test_tuning'
 
     args = parser.parse_args()
     if args.mode == 'train':

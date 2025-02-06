@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-from help_fct import analytical_solutions, analytical_entry_wealth_offset, action_normalizer, analytical_of_current_policy
+from help_fct import analytical_solutions, analytical_entry_wealth_offset, action_normalizer, expected_utility
 
 
 def test_actor(args, data_params, model, env):
@@ -74,7 +74,7 @@ def compare_actor(args, data_params, actor, env):
                     average_risky_action.append(action_normalizer(action))
                     if first:
                         entry_wealth_offset = analytical_entry_wealth_offset(action_normalizer(action), args, data_params)
-                        analy_policy_utility = analytical_of_current_policy(action, args, data_params)
+                        analy_policy_utility = expected_utility(action_normalizer(action)[1:], args, data_params)
                         first = False
 
                 obs, reward, done, _, info = env.step(action)

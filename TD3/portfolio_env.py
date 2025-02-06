@@ -55,7 +55,7 @@ class PortfolioEnv(gym.Env):
         info = self.portfolio_value if self.args.mode in ['eval', 'compare'] else {}  #and not done
         return obs, reward, done, truncated, info
 
-    def reset(self, seed=None, test=False, random_actor=False, **kwargs):
+    def reset(self, seed=None, test=False, optimal_actor=False, **kwargs):
         super().reset(seed=seed)
         self.episode_cycle += 1
         self.current_step = 0
@@ -64,7 +64,7 @@ class PortfolioEnv(gym.Env):
             np.random.seed(seed)
         if test:
             self.args.mode = 'test'
-        if self.first_episode or random_actor:  # in the random_actor case ensures that in compare random_actor and the trained actor use the same dataset
+        if self.first_episode or optimal_actor:  # in the random_actor case ensures that in compare random_actor and the trained actor use the same dataset
             self.first_episode = False
         else:  # if not the first episode, new data is pulled
             if self.args.mode in ['eval', 'compare'] or self.episode_cycle == self.args.episode_reset:  # every episode_reset episodes, pulls new rdm parameters

@@ -24,15 +24,16 @@ def pull_data(args, data_params):
     return np.hstack((risk_free_column, returns))
 
 
-def generate_random_params(num_paths, num_bm):  # vola_matrix corresponds to
+def generate_random_params(num_paths, num_bm):
     if num_paths == 2 and num_bm == 2:
-        total_vola = np.array([[0.2, 0.25]])
-        weights = np.array([[0.7, 0.3], [0.2, 0.8]])  # rows sum to one
-        mu = np.array([0.05, 0.07])
+        total_vola = np.array([[0.1, 0.3]])
+        weights = np.array([[1, 0], [0, 1]])  # rows sum to one
+        mu = np.array([0.07, 0.08])
     elif num_paths == 1 and num_bm == 1:  # 1 path, 1 brownian motion
         total_vola = np.array([[0.2]])
         weights = np.array([[1]])
         mu = np.array([0.06])
+
     else:  # Adjustment of up and lower bound depending on num_paths size (number of correlations), amounts to slightly more than 20% vol
         low_vol = 0.1 * 3 * (np.log(1000)) ** (0.8) / (np.log(num_paths) ** (1.8))
         up_vol = 2.5 * low_vol
@@ -66,21 +67,23 @@ def analytical_solutions(args, data_params):
     return analytical_risky_action, analytical_utility
 
 
-def analytical_of_current_policy(action, args, data_params):
+def expected_utility(action, args, data_params):
     risky_lambda = data_params['data_params']['mu'] - args.risk_free_rate
-    analy_policy_utility = np.exp((1 - args.p) * (args.risk_free_rate + 1 / 2 * action[1:].T @ risky_lambda))
-    return analy_policy_utility
+    big_sigma = data_params['data_params']['vola_matrix'] @ data_params['data_params']['vola_matrix'].T
+    expected_utility = np.exp((1 - args.p) * (args.risk_free_rate + action.T @ risky_lambda - args.p / 2 * (action.T @ big_sigma @ action)))
+
+    return expected_utility
 
 
 def analytical_entry_wealth_offset(action, args, data_params):
     big_sigma = data_params['data_params']['vola_matrix'] @ data_params['data_params']['vola_matrix'].T
     analytical_risky_action, _ = analytical_solutions(args, data_params)
     risky_lambda = data_params['data_params']['mu'] - args.risk_free_rate
-    entry_wealth_offset = np.exp((analytical_risky_action - action[1:]) @ risky_lambda
-            - args.p/2 * (analytical_risky_action.T @ big_sigma @ analytical_risky_action - action[1:].T @ big_sigma @ action[1:]))
+    action_expected_utility = expected_utility(action[1:], args, data_params)
+    analy_expected_utility = expected_utility(analytical_risky_action, args, data_params)
 
-    analytical_utility = np.exp((1 - args.p) * (args.risk_free_rate + 1/2 * analytical_risky_action.T @ risky_lambda))
-    other_calculation = np.exp(analytical_risky_action @ risky_lambda - args.p/2 * (analytical_risky_action.T @ big_sigma @ analytical_risky_action))
+    entry_wealth_offset = (analy_expected_utility/action_expected_utility) ** (1/(1-args.p))
+    #other logic - gives same result: entry_wealth_offset = np.exp((analytical_risky_action - action[1:]) @ risky_lambda - args.p/2 * (analytical_risky_action.T @ big_sigma @ analytical_risky_action - action[1:].T @ big_sigma @ action[1:]))  # (1-p) and (1/(1-p)) cancel, r-r cancels
 
     return entry_wealth_offset
 
