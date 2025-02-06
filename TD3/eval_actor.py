@@ -74,7 +74,7 @@ def compare_actor(args, data_params, actor, env):
                     average_risky_action.append(action_normalizer(action))
                     if first:
                         entry_wealth_offset = analytical_entry_wealth_offset(action_normalizer(action), args, data_params)
-                        analy_policy_utility = expected_utility(action_normalizer(action)[1:], args, data_params)
+                        policy_expected_utility = expected_utility(action_normalizer(action)[1:], args, data_params)
                         first = False
 
                 obs, reward, done, _, info = env.step(action)
@@ -98,6 +98,7 @@ def compare_actor(args, data_params, actor, env):
     optimal_portfolio[optimal_portfolio < 0] = 0
     optimal_power_utility = (optimal_portfolio[:, -1] ** (1 - args.p))
     trained_power_utility = (trained_portfolio[:, -1] ** (1 - args.p))
+    numerical_entry_wealth_offset = (np.mean(optimal_power_utility)/np.mean(trained_power_utility)) ** (1/(1-args.p))
 
     print("Analytical Action:", np.insert(analytical_risky_action, 0, 1-sum(analytical_risky_action)))
     print("Average Trained Action:", np.mean(average_risky_action, axis=0))
@@ -105,18 +106,22 @@ def compare_actor(args, data_params, actor, env):
     print("Wellness of Policy:")
     print(f"Trained Actor Average Portfolio: {np.mean(trained_portfolio[:, -1])}")
     print(f"Optimal Actor Average Portfolio: {np.mean(optimal_portfolio[:, -1])}")
+    print(f"Trained Actor Average Utility: {np.mean(trained_power_utility)}")
+    print(f"Optimal Actor Average Utility: {np.mean(optimal_power_utility)}")
     print(f"Measure of wellness of the policy [negative, better closer to 0]: Trained Actor Average Terminal Reward: {np.mean(trained_cum_rewards)}")
     print("_____")
-    print("Numerical: Entry-Wealth-factor to offset non-optimal policy: E[U(X_opt)]/E[U(X_policy)] [small, close to 1 is good]:", np.mean(optimal_power_utility)/np.mean(trained_power_utility))
+    print("Numerical: Entry-Wealth-factor to offset non-optimal policy: E[U(X_opt)]/E[U(X_policy)] [small, close to 1 is good]:", numerical_entry_wealth_offset)
+    print(f"Portfolio with x0=1 in the bank has Entry-Wealth-Offset: {analytical_entry_wealth_offset(np.zeros(len(action)), args, data_params)}")
+    print(f"Portfolio with x0=1 in the first asset has Entry-Wealth-Offset: {analytical_entry_wealth_offset(np.insert(np.zeros(len(action)), 1, 1), args, data_params)}")
     print("Analytical: Entry-Wealth-factor to offset non-optimal policy:", entry_wealth_offset)
-    print("Difference:", np.mean(optimal_power_utility)/np.mean(trained_power_utility) - entry_wealth_offset)
+    print("Difference Analytical/Numerical:", numerical_entry_wealth_offset - entry_wealth_offset)
     print("_____")
     print("Wellness of Sampling:")
     print(f"Measure of wellness of Analytical Utility [needs to be 0]: Optimal Actor Average Terminal Reward: {np.mean(optimal_cum_rewards)}")
-    print("Analytical optimal Utility:", analytical_utility)
-    print("Measure of wellness of the Sampling[0 good]: Analytical minus Simulated optimal Utility:", analytical_utility - np.mean(optimal_power_utility))
-    print("Analytical current action Utility:", analy_policy_utility)
-    print("Measure of wellness of the Sampling[0 good]: Analytical minus Simulated Current Action Utility:", analy_policy_utility - np.mean(trained_power_utility))
+    #print("Analytical optimal Utility:", analytical_utility)
+    print("Measure of wellness of the Sampling[0 good]: Optimal Utility - Analytical minus Simulated:", analytical_utility - np.mean(optimal_power_utility))
+    #print("Analytical current action Utility:", policy_expected_utility)
+    print("Measure of wellness of the Sampling[0 good]: Expected Policy Utility - Analytical minus Simulated :", policy_expected_utility - np.mean(trained_power_utility))
 
 
     fig, axs = plt.subplots(1, 4, figsize=(15, 5))
@@ -138,7 +143,7 @@ def compare_actor(args, data_params, actor, env):
     from scipy.stats import gaussian_kde
 
     axs[2].hist(optimal_power_utility.flatten(), bins=50, color="green", alpha=0.7)
-    axs[2].axvline(np.mean(optimal_power_utility), color="red", linestyle="--", linewidth=2, label="optimal Actor")
+    axs[2].axvline(np.mean(optimal_power_utility), color="red", linestyle="--", linewidth=2, label="Mean")
     kde_power = gaussian_kde(optimal_power_utility.flatten())
     x_vals_power = np.linspace(min(optimal_power_utility.flatten()), max(optimal_power_utility.flatten()), 500)
     axs[2].plot(x_vals_power, kde_power(x_vals_power) * len(optimal_power_utility.flatten()) * (

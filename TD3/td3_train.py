@@ -117,10 +117,10 @@ def run(args, spec, data_params, returns, i=0):
             obs, info = env.reset()
             action, _ = model.predict(obs, deterministic=True)
             norm_action = action_normalizer(action)
-            print(f"Current action: {norm_action}, Current Expected Utility: {expected_utility(norm_action[1:], args, data_params)}")
+            print(f"Current action: {norm_action}, Expected Utility: {expected_utility(norm_action[1:], args, data_params)}")
             print(f"Risky Fraciton is {sum(norm_action[1:])}")
 
-            print(f"{analytical_entry_wealth_offset(action, args, data_params)}")
+            print(f"Entry_Wealth_Offset: {analytical_entry_wealth_offset(action, args, data_params)}")
 
 if __name__ == '__main__':
     import argparse
@@ -144,12 +144,12 @@ if __name__ == '__main__':
     parser.add_argument('-total_timesteps', default=500, type=int)
     parser.add_argument('-batch_size', default=256, type=int)
     parser.add_argument('-buffer_size', default=1000000, type=int)
-    parser.add_argument('-num_episodes', default=1000, type=int)
+    parser.add_argument('-num_episodes', default=10000, type=int)
     parser.add_argument('-n_trials', default=50, type=int)
 
     parser.add_argument('-model_ID', default=5, type=int)
     parser.add_argument('-laps', default=1, type=int)
-    parser.add_argument('-mode', default='test_solution', type=str)  # 'train' 'test' 'eval' 'compare' 'tuning' 'test_tuning'
+    parser.add_argument('-mode', default='compare', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
 
     args = parser.parse_args()
     if args.mode == 'train':

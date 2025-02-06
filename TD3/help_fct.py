@@ -62,7 +62,8 @@ def analytical_solutions(args, data_params):
     big_sigma = data_params['data_params']['vola_matrix'] @ data_params['data_params']['vola_matrix'].T
     risky_lambda = data_params['data_params']['mu'] - args.risk_free_rate
     analytical_risky_action = 1 / args.p * risky_lambda.T @ (np.linalg.inv(big_sigma))
-    analytical_utility = np.exp((1 - args.p) * (args.risk_free_rate + 1/2 * analytical_risky_action.T @ risky_lambda))
+    analytical_utility = expected_utility(analytical_risky_action, args, data_params)
+    #other logic - gives same result: analytical_utility = np.exp((1 - args.p) * (args.risk_free_rate + 1/2 * analytical_risky_action.T @ risky_lambda))
 
     return analytical_risky_action, analytical_utility
 
@@ -76,13 +77,10 @@ def expected_utility(action, args, data_params):
 
 
 def analytical_entry_wealth_offset(action, args, data_params):
-    big_sigma = data_params['data_params']['vola_matrix'] @ data_params['data_params']['vola_matrix'].T
     analytical_risky_action, _ = analytical_solutions(args, data_params)
-    risky_lambda = data_params['data_params']['mu'] - args.risk_free_rate
-    action_expected_utility = expected_utility(action[1:], args, data_params)
+    policy_expected_utility = expected_utility(action[1:], args, data_params)
     analy_expected_utility = expected_utility(analytical_risky_action, args, data_params)
-
-    entry_wealth_offset = (analy_expected_utility/action_expected_utility) ** (1/(1-args.p))
+    entry_wealth_offset = (analy_expected_utility/policy_expected_utility) ** (1/(1-args.p))
     #other logic - gives same result: entry_wealth_offset = np.exp((analytical_risky_action - action[1:]) @ risky_lambda - args.p/2 * (analytical_risky_action.T @ big_sigma @ analytical_risky_action - action[1:].T @ big_sigma @ action[1:]))  # (1-p) and (1/(1-p)) cancel, r-r cancels
 
     return entry_wealth_offset
