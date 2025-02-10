@@ -75,6 +75,7 @@ def compare_actor(args, data_params, actor, env):
                     if first:
                         entry_wealth_offset = analytical_entry_wealth_offset(action_normalizer(action), args, data_params)
                         policy_expected_utility = expected_utility(action_normalizer(action)[1:], args, data_params)
+                        non_normalized_action = action
                         first = False
 
                 obs, reward, done, _, info = env.step(action)
@@ -102,6 +103,7 @@ def compare_actor(args, data_params, actor, env):
 
     print("Analytical Action:", np.insert(analytical_risky_action, 0, 1-sum(analytical_risky_action)))
     print("Average Trained Action:", np.mean(average_risky_action, axis=0))
+    print("Non-normalized Action:", non_normalized_action)
     print("_____")
     print("Wellness of Policy:")
     print(f"Trained Actor Average Portfolio: {np.mean(trained_portfolio[:, -1])}")
@@ -110,7 +112,7 @@ def compare_actor(args, data_params, actor, env):
     print(f"Optimal Actor Average Utility: {np.mean(optimal_power_utility)}")
     print(f"Measure of wellness of the policy [negative, better closer to 0]: Trained Actor Average Terminal Reward: {np.mean(trained_cum_rewards)}")
     print("_____")
-    print("Numerical: Entry-Wealth-factor to offset non-optimal policy: E[U(X_opt)]/E[U(X_policy)] [small, close to 1 is good]:", numerical_entry_wealth_offset)
+    print("Numerical: Entry-Wealth-factor to offset non-optimal policy: E[U(X_opt)]/E[U(X_policy)] ^(1/(1-p)) [small, close to 1 is good]:", numerical_entry_wealth_offset)
     print(f"Portfolio with x0=1 in the bank has Entry-Wealth-Offset: {analytical_entry_wealth_offset(np.zeros(len(action)), args, data_params)}")
     print(f"Portfolio with x0=1 in the first asset has Entry-Wealth-Offset: {analytical_entry_wealth_offset(np.insert(np.zeros(len(action)-1), 1, 1), args, data_params)}")
     print("Analytical: Entry-Wealth-factor to offset non-optimal policy:", entry_wealth_offset)

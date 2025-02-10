@@ -126,24 +126,27 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-utility_function', default="power", type=str)
-    parser.add_argument('-allow_lending', action='store_true', help="Enable lending")
-    parser.add_argument('-episode_reset', default=10000000, type=int)  #currently off
-    #parser.add_argument('-learning_starts', default=100000, type=int)
-    parser.add_argument('-action_noise_sigma', default=0.05, type=float)
-    parser.add_argument('-p', default=0.8, type=float)
+
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes'
     parser.add_argument('-actor_dataset', default='correlated_Blackscholes', type=str)  # An Actor ID to determine which actor will be loaded (if it exists), then trained or tested/evaluated on
+    parser.add_argument('-utility_function', default="power", type=str)
+    parser.add_argument('-allow_lending', action='store_true', help="Enable lending")
+
+    parser.add_argument('-episode_reset', default=10000000, type=int)  #currently off
+    #parser.add_argument('-learning_starts', default=100000, type=int)
+    parser.add_argument('-p', default=0.8, type=float)
     parser.add_argument('-risk_free_rate', default=0.04, type=float)
     parser.add_argument('-grid_points', default=1, type=int)
     parser.add_argument('-window_size', default=1, type=int)
     parser.add_argument('-num_paths', default=2, type=int)
     parser.add_argument('-num_bm', default=2, type=int)  # Number of random sources N
 
+    parser.add_argument('-action_noise_sigma', default=0.05, type=float)
     parser.add_argument('-train_freq', default=1, type=int)
-    parser.add_argument('-total_timesteps', default=500, type=int)
     parser.add_argument('-batch_size', default=256, type=int)
     parser.add_argument('-buffer_size', default=1000000, type=int)
+
+    parser.add_argument('-total_timesteps', default=500, type=int)
     parser.add_argument('-num_episodes', default=10000, type=int)
     parser.add_argument('-n_trials', default=50, type=int)
 
