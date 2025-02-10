@@ -21,7 +21,7 @@ def pull_data(args, data_params):
     returns = data.pct_change().dropna().values + 1  # Compute dt change ratio [not dt returns]
     daily_risk_free_rate = (1 + args.risk_free_rate) ** (1 / args.grid_points)
     risk_free_column = np.full((returns.shape[0], 1), daily_risk_free_rate)
-    return np.hstack((risk_free_column, returns))
+    return np.hstack((risk_free_column, returns)), np.array(data)
 
 
 def generate_random_params(num_paths, num_bm):
@@ -111,19 +111,19 @@ def find_largest_td3_folder(args):
                 largest_number = max(largest_number, int(folder_name.split('_')[1]))
             except ValueError:
                 pass
-    return f"./logs/TD3_{largest_number+1}_actions", largest_number+1  # f"./logs/TD3_{largest_number}"
+    return f"./logs/TD3_{largest_number+1}_actions_{args.patch}", largest_number+1  # f"./logs/TD3_{largest_number}"
 
 
 def fuse_folders(number, args):
-    folder_actions = f"./logs/TD3_{number}_actions"
+    folder_actions = f"./logs/TD3_{number}_actions_{args.patch}"
     folder_tensorboard = f"./logs/TD3_{number}_1"
-    new_folder = f"./logs/{number}_ID_{args.model_ID}_window_{args.window_size}_batchsize_{args.batch_size}_trainfreq_{args.train_freq}"
-    os.makedirs(new_folder)
+    final_folder = f"./logs/{number}_ID_{args.model_ID}_assets_{args.num_paths}_window_{args.window_size}_batchsize_{args.batch_size}_{args.patch}"
+    os.makedirs(final_folder)
 
     for folder in [folder_actions, folder_tensorboard]:
         for item in os.listdir(folder):
             item_path = os.path.join(folder, item)
-            new_item_path = os.path.join(new_folder, item)
+            new_item_path = os.path.join(final_folder, item)
             # Move each item (file or folder)
             if os.path.isdir(item_path):
                 shutil.move(item_path, new_item_path)
@@ -132,8 +132,6 @@ def fuse_folders(number, args):
 
     shutil.rmtree(folder_actions)
     shutil.rmtree(folder_tensorboard)
-
-
 
 
 class ActionLoggingCallback(BaseCallback):
@@ -165,7 +163,10 @@ class ActionLoggingCallback(BaseCallback):
             with self.summary_writer.as_default():
                 # Log actions
                 for i, action in enumerate(actions):
-                    tf.summary.scalar(f"action/Action", sum(action_normalizer(action)[1:]), step=episode_num)
+                    #tf.summary.scalar(f"action/Action_1", sum(action_normalizer(action)[1:]), step=episode_num)
+                    normalized_actions = action_normalizer(action)
+                    for j in range(len(action)-1):
+                        tf.summary.scalar(f"action/Action_{j+1}", normalized_actions[j+1], step=episode_num)
 
                 # Log episode reward
                 tf.summary.scalar("action/Episode_Reward", total_reward, step=episode_num)

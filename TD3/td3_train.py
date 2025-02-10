@@ -35,35 +35,34 @@ def main(args, i=0):
         for s, d in generator:
             spec, data_params = s, d  # odd way to do it - easiest at the time, works in 1-d
 
-    returns = pull_data(args, data_params)
+    returns, stock_data = pull_data(args, data_params)
     if args.mode == 'tuning':
-        custom_args = {"args": args, "data_params": data_params, "returns": returns}
+        custom_args = {"args": args, "data_params": data_params, "returns": returns, "stock_data": stock_data}
         optimize_func = partial(optimize_td3, **custom_args)
         study = optuna.create_study(direction="maximize")
         study.optimize(optimize_func, n_trials=args.n_trials, show_progress_bar=True)
         print("Best hyperparameters:", study.best_params)
     elif args.mode == 'test_tuning':
-        test_optimized_td3(args, data_params, returns)
+        test_optimized_td3(args, data_params, returns, stock_data)
     else:
-        run(args, spec, data_params, returns, i)
+        run(args, spec, data_params, returns, stock_data, i)
 
 
-def run(args, spec, data_params, returns, i=0):
+def run(args, spec, data_params, returns, stock_data, i=0):
     print('Executing TD3 on %s, %s' % (args.dataset, spec))
 
     if args.mode == 'train':
-        env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns))  # Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns), filename='log')
+        env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_returns=returns, stock_data=stock_data))  # Monitor(PortfolioEnv(args=args, data_params=data_params, stock_returns=returns), filename='log')
     else:
-        env = PortfolioEnv(args=args, data_params=data_params, stock_data=returns)
+        env = PortfolioEnv(args=args, data_params=data_params, stock_returns=returns, stock_data=stock_data)
     vec_env = DummyVecEnv([lambda: env])
 
     # Add action noise (exploration)
     n_actions = env.action_space.shape[0]
     action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=args.action_noise_sigma * np.ones(n_actions))
 
-
-    hardware = 'LRZ' if torch.cuda.is_available() else 'cpu'
-    model_save_path = f"./agent/{args.model_ID}_{hardware}_td3_{args.actor_dataset}_assets_{args.num_paths}_window_{args.window_size}"
+    dataset = 'corrBS' if args.actor_dataset == 'correlated_Blackscholes' else args.actor_dataset
+    model_save_path = f"./agent/{args.model_ID}_{dataset}_assets_{args.num_paths}_window_{args.window_size}"
 
     # Load Model
     if os.path.exists(f"{model_save_path}.zip"):
@@ -84,7 +83,6 @@ def run(args, spec, data_params, returns, i=0):
         model = TD3("MlpPolicy", vec_env, buffer_size=args.buffer_size, gamma=1, action_noise=action_noise, batch_size=args.batch_size, verbose=0, tensorboard_log="./logs/", train_freq=(args.train_freq, "episode"))
         model.learning_starts = args.total_timesteps / 5
         already_trained_timesteps = 0
-    #model.verbose = 0 if hardware == 'cpu' else 0
 
     # Train, Test, Eval [Evaluate], Compare [with some benchmark]
     if args.mode == 'train':  # tensorboard --logdir ./TD3/logs
@@ -146,13 +144,14 @@ if __name__ == '__main__':
     parser.add_argument('-batch_size', default=256, type=int)
     parser.add_argument('-buffer_size', default=1000000, type=int)
 
-    parser.add_argument('-total_timesteps', default=500, type=int)
+    parser.add_argument('-total_timesteps', default=10000, type=int)
     parser.add_argument('-num_episodes', default=10000, type=int)
     parser.add_argument('-n_trials', default=50, type=int)
 
-    parser.add_argument('-model_ID', default=5, type=int)
+    parser.add_argument('-model_ID', default=7, type=int)
     parser.add_argument('-laps', default=1, type=int)
-    parser.add_argument('-mode', default='compare', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
+    parser.add_argument('-patch', default='IntroStocks', type=str)
+    parser.add_argument('-mode', default='train', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
 
     args = parser.parse_args()
     if args.mode == 'train':
