@@ -81,7 +81,7 @@ def run(args, spec, data_params, returns, i=0):
         model.learning_starts = 0
     else:
         print("No saved model found; starting new training.")
-        model = TD3("MlpPolicy", vec_env, buffer_size=args.buffer_size, gamma=1, action_noise=action_noise, batch_size=args.batch_size, verbose=0, tensorboard_log="./logs/", train_freq=(args.train_freq, "episode"))
+        model = TD3("MlpPolicy", vec_env, buffer_size=args.buffer_size, gamma=1, learning_rate=args.learning_rate, action_noise=action_noise, batch_size=args.batch_size, verbose=0, tensorboard_log="./logs/", train_freq=(args.train_freq, "episode"))
         model.learning_starts = args.total_timesteps / 5
         already_trained_timesteps = 0
     #model.verbose = 0 if hardware == 'cpu' else 0
@@ -145,6 +145,8 @@ if __name__ == '__main__':
     parser.add_argument('-train_freq', default=1, type=int)
     parser.add_argument('-batch_size', default=256, type=int)
     parser.add_argument('-buffer_size', default=1000000, type=int)
+    parser.add_argument('-learning_rate', default=0.001, type=float)
+
 
     parser.add_argument('-total_timesteps', default=500, type=int)
     parser.add_argument('-num_episodes', default=10000, type=int)
