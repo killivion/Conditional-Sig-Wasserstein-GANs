@@ -150,7 +150,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-model_ID', default=7, type=int)
     parser.add_argument('-laps', default=1, type=int)
-    parser.add_argument('-patch', default='IntroStocks', type=str)
+    parser.add_argument('-statement', default='IntroStocks', type=str)
     parser.add_argument('-mode', default='train', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
 
     args = parser.parse_args()
