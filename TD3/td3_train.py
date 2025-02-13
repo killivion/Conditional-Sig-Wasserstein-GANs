@@ -152,6 +152,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-model_ID', default=5, type=int)
     parser.add_argument('-laps', default=1, type=int)
+    parser.add_argument('-statement', default='actionLogger', type=str)
     parser.add_argument('-mode', default='compare', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
 
     args = parser.parse_args()
