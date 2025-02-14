@@ -156,14 +156,17 @@ if __name__ == '__main__':
     parser.add_argument('-statement', default='actionLogger', type=str)
     parser.add_argument('-mode', default='compare', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
 
+    parser.add_argument('-learning_rates', default=[0.00005, 0.0001, 0.0005, 0.001, 0.005], type=list)
+    parser.add_argument('-batch_sizes', default=[64, 256, 1024], type=list)
+
     args = parser.parse_args()
 
-    learning_rates = [0.00005, 0.0001, 0.0005, 0.001, 0.005, 0.01]
     start_id = args.model_ID
     if args.mode == 'train':
         for i in range(args.laps):
             args.model_ID = start_id + i
-            args.learning_rate = learning_rates[i]
+            args.learning_rate = args.learning_rates[i % len(args.learning_rates)]
+            args.batch_size = args.batch_sizes[i // len(args.learning_rates)]
             print(f"This is lap {i+1} of {args.laps}")
             main(args, i)
     else:
