@@ -161,7 +161,9 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    args.laps = len(args.learning_rates) * len(args.batch_size)
     start_id = args.model_ID
+
     if args.mode == 'train':
         for i in range(args.laps):
             args.model_ID = start_id + i
@@ -173,6 +175,6 @@ if __name__ == '__main__':
         main(args)
 
     """
-    Actor-Loss [small neg]: Large -> Instability, Close to 0: Yields high/good Q Values
+    Actor-Loss [small neg]: Large -> Instability, Should decrease over time -> Learning/Improvment
     Critic-Loss: High -> Instability, Very low<0.02 -> Convergence / Overfitting
     """
