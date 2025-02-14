@@ -117,7 +117,7 @@ def find_largest_td3_folder(args):
 def fuse_folders(number, args):
     folder_actions = f"./logs/TD3_{number}_actions_{args.statement}"
     folder_tensorboard = f"./logs/TD3_{number}_1"
-    final_folder = f"./logs/{number}_ID_{args.model_ID}_assets_{args.num_paths}_window_{args.window_size}_batchsize_{args.batch_size}_{args.statement}"
+    final_folder = f"./logs/{number}_ID{args.model_ID}_assets{args.num_paths}_window{args.window_size}_batchsize{args.batch_size}_learning_rate{args.learning_rate}_{args.statement}"
     os.makedirs(final_folder)
 
     for folder in [folder_actions, folder_tensorboard]:
