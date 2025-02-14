@@ -147,7 +147,6 @@ if __name__ == '__main__':
     parser.add_argument('-buffer_size', default=1000000, type=int)
     parser.add_argument('-learning_rate', default=0.001, type=float)
 
-
     parser.add_argument('-total_timesteps', default=500, type=int)
     parser.add_argument('-num_episodes', default=10000, type=int)
     parser.add_argument('-n_trials', default=50, type=int)
@@ -158,10 +157,14 @@ if __name__ == '__main__':
     parser.add_argument('-mode', default='compare', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
 
     args = parser.parse_args()
+
+    learning_rates = [0.00005, 0.0001, 0.0005, 0.001, 0.005, 0.01]
+    start_id = args.model_ID
     if args.mode == 'train':
         for i in range(args.laps):
-            #args.model_ID = 6 + i
-            #print(f"This is lap {i+1} of {args.laps}")
+            args.model_ID = start_id + i
+            args.learning_rate = learning_rates[i]
+            print(f"This is lap {i+1} of {args.laps}")
             main(args, i)
     else:
         main(args)
