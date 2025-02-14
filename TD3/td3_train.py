@@ -110,7 +110,7 @@ def run(args, spec, data_params, returns, i=0):
         # trained_rewards, random_rewards, trained_portfolio_values, random_portfolio_values
 
     elif args.mode == 'test_solution':
-        print(model.batch_size, model.learning_rate,)  # print(args)
+        print(f"Batch_size: {model.batch_size}, Learning_rate: {model.learning_rate}")  # print(args)
         print('_____')
         analytical_risky_action, analytical_utility = analytical_solutions(args, data_params)
         print(f"Analytical Actions: {1-sum(analytical_risky_action), analytical_risky_action}, Analytical Utility: {analytical_utility}")
@@ -158,8 +158,8 @@ if __name__ == '__main__':
     parser.add_argument('-statement', default='actionLogger', type=str)
     parser.add_argument('-mode', default='test_solution', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
 
-    parser.add_argument('-learning_rates', default=[0.00005, 0.0001, 0.0005, 0.001, 0.005], type=list)
-    parser.add_argument('-batch_sizes', default=[64, 256, 1024], type=list)
+    parser.add_argument('--learning_rates', default=[0.00005, 0.0001, 0.0005, 0.001, 0.005], type=float, nargs="+")
+    parser.add_argument('--batch_sizes', default=[64, 256, 1024], type=int, nargs="+")
 
     args = parser.parse_args()
 
