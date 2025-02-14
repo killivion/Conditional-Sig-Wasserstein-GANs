@@ -143,7 +143,7 @@ if __name__ == '__main__':
     parser.add_argument('-num_paths', default=2, type=int)
     parser.add_argument('-num_bm', default=2, type=int)  # Number of random sources N
 
-    parser.add_argument('-action_noise_sigma', default=0.05, type=float)
+    parser.add_argument('-action_noise_sigma', default=0.02, type=float)
     parser.add_argument('-train_freq', default=1, type=int)
     parser.add_argument('-batch_size', default=256, type=int)
     parser.add_argument('-buffer_size', default=1000000, type=int)
@@ -164,7 +164,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.mode == 'train':
-        args.laps = len(args.learning_rates) * len(args.batch_size)
+        args.laps = len(args.learning_rates) * len(args.batch_sizes)
         start_id = args.model_ID
         for i in range(args.laps):
             args.model_ID = start_id + i
