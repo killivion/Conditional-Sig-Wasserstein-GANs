@@ -110,6 +110,8 @@ def run(args, spec, data_params, returns, i=0):
         # trained_rewards, random_rewards, trained_portfolio_values, random_portfolio_values
 
     elif args.mode == 'test_solution':
+        print(model.batch_size, model.learning_rate,)  # print(args)
+        print('_____')
         analytical_risky_action, analytical_utility = analytical_solutions(args, data_params)
         print(f"Analytical Actions: {1-sum(analytical_risky_action), analytical_risky_action}, Analytical Utility: {analytical_utility}")
         print(f"Risky Fraciton is {sum(analytical_risky_action)}")
@@ -129,7 +131,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes'
     parser.add_argument('-actor_dataset', default='correlated_Blackscholes', type=str)  # An Actor ID to determine which actor will be loaded (if it exists), then trained or tested/evaluated on
-    parser.add_argument('-utility_function', default="power", type=str)
+    #parser.add_argument('-utility_function', default="power", type=str)
     parser.add_argument('-allow_lending', action='store_true', help="Enable lending")
 
     parser.add_argument('-episode_reset', default=10000000, type=int)  #currently off
@@ -154,17 +156,16 @@ if __name__ == '__main__':
     parser.add_argument('-model_ID', default=5, type=int)
     parser.add_argument('-laps', default=1, type=int)
     parser.add_argument('-statement', default='actionLogger', type=str)
-    parser.add_argument('-mode', default='compare', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
+    parser.add_argument('-mode', default='test_solution', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
 
     parser.add_argument('-learning_rates', default=[0.00005, 0.0001, 0.0005, 0.001, 0.005], type=list)
     parser.add_argument('-batch_sizes', default=[64, 256, 1024], type=list)
 
     args = parser.parse_args()
 
-    args.laps = len(args.learning_rates) * len(args.batch_size)
-    start_id = args.model_ID
-
     if args.mode == 'train':
+        args.laps = len(args.learning_rates) * len(args.batch_size)
+        start_id = args.model_ID
         for i in range(args.laps):
             args.model_ID = start_id + i
             args.learning_rate = args.learning_rates[i % len(args.learning_rates)]
