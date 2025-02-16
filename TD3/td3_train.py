@@ -8,6 +8,7 @@ import os
 import torch
 import optuna
 from functools import partial
+import warnings
 
 import eval_actor
 from track_learning import monitor_plot
@@ -70,7 +71,9 @@ def run(args, spec, data_params, returns, i=0):
         model = TD3.load(model_save_path)
         model.load_replay_buffer(f"{model_save_path}_buffer.pkl") if os.path.exists(f"{model_save_path}_buffer.pkl") else print("No replay buffer found; training from an empty buffer.")
         if os.path.exists(f"{model_save_path}_optimizer.pth"):
-            optim_state = torch.load(f"{model_save_path}_optimizer.pth")
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=FutureWarning)
+                optim_state = torch.load(f"{model_save_path}_optimizer.pth")
             model.actor.optimizer.load_state_dict(optim_state['actor_optimizer'])
             model.critic.optimizer.load_state_dict(optim_state['critic_optimizer'])
         else:
@@ -100,6 +103,7 @@ def run(args, spec, data_params, returns, i=0):
         #if i == args.laps - 1:
         #    monitor_plot(args)
 
+
     if args.mode == 'test':
     #    print("Params:", data_params)
         eval_actor.test_actor(args, data_params, model, vec_env)
@@ -113,7 +117,7 @@ def run(args, spec, data_params, returns, i=0):
         print(f"Batch_size: {model.batch_size}, Learning_rate: {model.learning_rate}")  # print(args)
         print('_____')
         analytical_risky_action, analytical_utility = analytical_solutions(args, data_params)
-        print(f"Analytical Actions: {1-sum(analytical_risky_action), analytical_risky_action}, Analytical Utility: {analytical_utility}")
+        print(f"Analytical Actions: {1 - sum(analytical_risky_action), analytical_risky_action}, Analytical Utility: {analytical_utility}")
         print(f"Risky Fraciton is {sum(analytical_risky_action)}")
         if already_trained_timesteps > 0:
             obs, info = env.reset()
@@ -145,12 +149,12 @@ if __name__ == '__main__':
 
     parser.add_argument('-action_noise_sigma', default=0.02, type=float)
     parser.add_argument('-train_freq', default=1, type=int)
-    parser.add_argument('-batch_size', default=256, type=int)
+    #parser.add_argument('-batch_size', default=256, type=int)
     parser.add_argument('-buffer_size', default=1000000, type=int)
-    parser.add_argument('-learning_rate', default=0.001, type=float)
+    #parser.add_argument('-learning_rate', default=0.001, type=float)
 
-    parser.add_argument('-total_timesteps', default=500, type=int)
-    parser.add_argument('-num_episodes', default=10000, type=int)
+    parser.add_argument('-total_timesteps', default=100, type=int)
+    parser.add_argument('-num_episodes', default=100, type=int)
     parser.add_argument('-n_trials', default=50, type=int)
 
     parser.add_argument('-model_ID', default=5, type=int)
@@ -158,12 +162,16 @@ if __name__ == '__main__':
     parser.add_argument('-statement', default='actionLogger', type=str)
     parser.add_argument('-mode', default='test_solution', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
 
-    parser.add_argument('--learning_rates', default=[0.00005, 0.0001, 0.0005, 0.001, 0.005], type=float, nargs="+")
-    parser.add_argument('--batch_sizes', default=[64, 256, 1024], type=int, nargs="+")
+    parser.add_argument('--learning_rates', default=[0.001, 0.01], type=float, nargs="+")
+    parser.add_argument('--batch_sizes', default=[256], type=int, nargs="+")
 
     args = parser.parse_args()
 
-    if args.mode == 'train':
+    args.batch_size = args.batch_sizes[0]
+    args.learning_rate = args.learning_rates[0]
+
+
+    if args.mode in ['train', 'compare', 'test_solution']:
         args.laps = len(args.learning_rates) * len(args.batch_sizes)
         start_id = args.model_ID
         for i in range(args.laps):
@@ -176,6 +184,6 @@ if __name__ == '__main__':
         main(args)
 
     """
-    Actor-Loss [small neg]: Large -> Instability, Should decrease over time -> Learning/Improvment
-    Critic-Loss: High -> Instability, Very low<0.02 -> Convergence / Overfitting
+    Actor-Loss [Negative Expected Mean Reward]: Large -> Instability, Should decrease over time -> Learning/Improvement
+    Critic-Loss: High -> Instability, Very low<0.02 -> Convergence / Over-fitting
     """
