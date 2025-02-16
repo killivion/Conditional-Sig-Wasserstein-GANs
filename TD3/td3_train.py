@@ -125,6 +125,7 @@ def run(args, spec, data_params, returns, i=0):
             action, _ = model.predict(obs, deterministic=True)
             norm_action = action_normalizer(action)
             print(f"Current action: {norm_action}, Risky Fraciton is {sum(norm_action[1:])}, Expected Utility: {expected_utility(norm_action[1:], args, data_params)}, Entry_Wealth_Offset: {analytical_entry_wealth_offset(action, args, data_params)}")
+            print(f"Non-normalized action: {action}")
 
 if __name__ == '__main__':
     import argparse
