@@ -46,11 +46,16 @@ def main(args, i=0):
     elif args.mode == 'test_tuning':
         test_optimized_td3(args, data_params, returns)
     else:
+        global global_first_lap
+        if global_first_lap:
+            analytical_risky_action, analytical_utility = analytical_solutions(args, data_params)
+            print(f"Analytical Actions: {np.insert(analytical_risky_action, 0, 1 - sum(analytical_risky_action))}, Analytical Utility: {analytical_utility}, Risky Fraciton is {sum(analytical_risky_action)}")
+            print('_____')
+            global_first_lap = False
         run(args, spec, data_params, returns, i)
 
-
 def run(args, spec, data_params, returns, i=0):
-    print('Executing TD3 on %s, %s' % (args.dataset, spec))
+    #print('Executing TD3 on %s, %s' % (args.dataset, spec))
 
     if args.mode == 'train':
         env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns))  # Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns), filename='log')
@@ -115,18 +120,11 @@ def run(args, spec, data_params, returns, i=0):
 
     elif args.mode == 'test_solution':
         print(f"Batch_size: {model.batch_size}, Learning_rate: {model.learning_rate}")  # print(args)
-        print('_____')
-        analytical_risky_action, analytical_utility = analytical_solutions(args, data_params)
-        print(f"Analytical Actions: {1 - sum(analytical_risky_action), analytical_risky_action}, Analytical Utility: {analytical_utility}")
-        print(f"Risky Fraciton is {sum(analytical_risky_action)}")
         if already_trained_timesteps > 0:
             obs, info = env.reset()
             action, _ = model.predict(obs, deterministic=True)
             norm_action = action_normalizer(action)
-            print(f"Current action: {norm_action}, Expected Utility: {expected_utility(norm_action[1:], args, data_params)}")
-            print(f"Risky Fraciton is {sum(norm_action[1:])}")
-
-            print(f"Entry_Wealth_Offset: {analytical_entry_wealth_offset(action, args, data_params)}")
+            print(f"Current action: {norm_action}, Risky Fraciton is {sum(norm_action[1:])}, Expected Utility: {expected_utility(norm_action[1:], args, data_params)}, Entry_Wealth_Offset: {analytical_entry_wealth_offset(action, args, data_params)}")
 
 if __name__ == '__main__':
     import argparse
@@ -172,12 +170,14 @@ if __name__ == '__main__':
 
 
     if args.mode in ['train', 'compare', 'test_solution']:
+        global_first_lap = True
         args.laps = len(args.learning_rates) * len(args.batch_sizes)
         start_id = args.model_ID
         for i in range(args.laps):
             args.model_ID = start_id + i
             args.learning_rate = args.learning_rates[i % len(args.learning_rates)]
             args.batch_size = args.batch_sizes[i // len(args.learning_rates)]
+            print('_____')
             print(f"This is lap {i+1} of {args.laps}")
             main(args, i)
     else:
