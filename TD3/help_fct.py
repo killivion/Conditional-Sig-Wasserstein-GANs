@@ -21,7 +21,7 @@ def pull_data(args, data_params):
     returns = data.pct_change().dropna().values + 1  # Compute dt change ratio [not dt returns]
     daily_risk_free_rate = (1 + args.risk_free_rate) ** (1 / args.grid_points)
     risk_free_column = np.full((returns.shape[0], 1), daily_risk_free_rate)
-    return np.hstack((risk_free_column, returns))
+    return np.hstack((risk_free_column, returns)), np.array(data)
 
 
 def generate_random_params(num_paths, num_bm):
@@ -163,7 +163,10 @@ class ActionLoggingCallback(BaseCallback):
             with self.summary_writer.as_default():
                 # Log actions
                 for i, action in enumerate(actions):
-                    tf.summary.scalar(f"action/Action", sum(action_normalizer(action)[1:]), step=episode_num)
+                    #tf.summary.scalar(f"action/Action_1", sum(action_normalizer(action)[1:]), step=episode_num)
+                    normalized_actions = action_normalizer(action)
+                    for j in range(len(action)-1):
+                        tf.summary.scalar(f"action/Action_{j+1}", normalized_actions[j+1], step=episode_num)
 
                 # Log episode reward
                 tf.summary.scalar("action/Episode_Reward", total_reward, step=episode_num)

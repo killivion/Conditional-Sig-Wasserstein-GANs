@@ -4,18 +4,21 @@ from help_fct import pull_data, analytical_solutions, find_confidence_intervals,
 from collections import deque
 
 class PortfolioEnv(gym.Env):
-    def __init__(self, args, data_params, stock_data):
+    def __init__(self, args, data_params, stock_returns, stock_data):
         super(PortfolioEnv, self).__init__()
+        self.stock_returns = stock_returns
         self.stock_data = stock_data
-        self.num_stocks = stock_data.shape[1]
+        self.num_stocks = stock_returns.shape[1]
         self.args = args
         self.data_params = data_params
 
-        self.normalized_stock_data = (self.stock_data - 1) / np.std(self.stock_data, axis=1, keepdims=True)
+        self.normalized_stock_returns = (self.stock_returns - 1) / np.std(self.stock_returns, axis=1, keepdims=True)
         self._normalize_parameter()
 
         # Define action and observation space
-        feature_size = len(self.mu) + len(self.vola_matrix.flatten())  #self.num_stocks + len(self.mu) + len(self.vola_matrix.flatten())
+        feature_size = len(self.mu) + len(self.vola_matrix.flatten())
+        if args.time_dependent:
+            feature_size += self.num_stocks-1
         if args.allow_lending:
             self.action_space = gym.spaces.Box(low=-8, high=8, shape=(self.num_stocks,), dtype=np.float32)
         else:
@@ -43,11 +46,11 @@ class PortfolioEnv(gym.Env):
         #    print(f"{self.i_steps*10}% done")
         #    self.i_steps += 2
 
-        done = self.current_step >= len(self.stock_data)
+        done = self.current_step >= len(self.stock_returns)
 
         self.action = action_normalizer(action)  # normalizes to 1  # if self.num_stocks > 1 else [1 - action, action]
-        self.portfolio_value *= self.action @ self.stock_data[self.current_step-1]  # Tipp: adjust by 1 to compensate if sum(action)=0, so portfolio return 1 stays baseline
-        self.optimal_portfolio *= np.insert(self.analytical_risky_action, 0, 1 - sum(self.analytical_risky_action)) @ self.stock_data[self.current_step-1]
+        self.portfolio_value *= self.action @ self.stock_returns[self.current_step-1]  # Idea: adjust by 1 to compensate if sum(action)=0, so portfolio return 1 stays baseline
+        self.optimal_portfolio *= np.insert(self.analytical_risky_action, 0, 1 - sum(self.analytical_risky_action)) @ self.stock_returns[self.current_step-1]
         reward = self._calc_reward(done)
 
         obs = self._get_feature_map()
@@ -74,21 +77,23 @@ class PortfolioEnv(gym.Env):
                 self.data_params = dict(data_params=dict(mu=mu, vola_matrix=vola_matrix, window_size=self.args.window_size, num_paths=self.args.num_paths, num_bm=self.args.num_bm, grid_points=self.args.window_size))
                 self.analytical_risky_action, self.analytical_utility = analytical_solutions(self.args, self.data_params)
                 self._normalize_parameter()
-            self.stock_data = pull_data(self.args, self.data_params)
-            # self.normalized_stock_data = (self.stock_data - 1) / np.std(self.stock_data, axis=1, keepdims=True)
+            self.stock_returns, self.stock_data = pull_data(self.args, self.data_params)
+            # self.normalized_stock_returns = (self.stock_returns - 1) / np.std(self.stock_returns, axis=1, keepdims=True)
         obs = self._get_feature_map()
         info = {}
         return obs, info
 
     def _get_feature_map(self):
-        # normalized_returns = self.normalized_stock_data[self.current_step-1]
-        feature_map = np.concatenate([self.mu, self.vola_matrix.flatten()])  #np.concatenate([normalized_returns, self.mu, self.vola_matrix.flatten()])
+        # normalized_returns = self.normalized_stock_returns[self.current_step-1]
+        feature_map = np.concatenate([self.mu, self.vola_matrix.flatten()])
+        if self.args.time_dependent:
+            feature_map = np.insert(feature_map, 0, self.stock_data[self.current_step])
         return feature_map
 
     def _calc_reward(self, done):
         if done:  # Terminal utility -> Central Reward-fct.
             if self.portfolio_value <= 0:
-                print(f"Careful: negative portfolio value: {self.portfolio_value, self.stock_data[self.current_step-1], self.action}")
+                print(f"Careful: negative portfolio value: {self.portfolio_value, self.stock_returns[self.current_step-1], self.action}")
             reward = (self.portfolio_value ** (1 - self.args.p)) if not self.portfolio_value <= 0 else 0 * abs(self.portfolio_value)  # / (1 - self.args.p) leave out the constant divisor since it only scales the expectation
             optimal_utility = (self.optimal_portfolio ** (1 - self.args.p)) if not self.optimal_portfolio <= 0 else 0
             reward = reward - optimal_utility

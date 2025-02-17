@@ -36,15 +36,15 @@ def main(args, i=0):
         for s, d in generator:
             spec, data_params = s, d  # odd way to do it - easiest at the time, works in 1-d
 
-    returns = pull_data(args, data_params)
+    returns, stock_data = pull_data(args, data_params)
     if args.mode == 'tuning':
-        custom_args = {"args": args, "data_params": data_params, "returns": returns}
+        custom_args = {"args": args, "data_params": data_params, "returns": returns, "stock_data": stock_data}
         optimize_func = partial(optimize_td3, **custom_args)
         study = optuna.create_study(direction="maximize")
         study.optimize(optimize_func, n_trials=args.n_trials, show_progress_bar=True)
         print("Best hyperparameters:", study.best_params)
     elif args.mode == 'test_tuning':
-        test_optimized_td3(args, data_params, returns)
+        test_optimized_td3(args, data_params, returns, stock_data)
     else:
         global global_first_lap
         if global_first_lap:
@@ -52,24 +52,23 @@ def main(args, i=0):
             print(f"Analytical Actions: {np.insert(analytical_risky_action, 0, 1 - sum(analytical_risky_action))}, Analytical Utility: {analytical_utility}, Risky Fraciton is {sum(analytical_risky_action)}")
             print('_____')
             global_first_lap = False
-        run(args, spec, data_params, returns, i)
+        run(args, spec, data_params, returns, stock_data, i)
 
-def run(args, spec, data_params, returns, i=0):
+def run(args, spec, data_params, returns, stock_data, i=0):
     #print('Executing TD3 on %s, %s' % (args.dataset, spec))
 
     if args.mode == 'train':
-        env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns))  # Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns), filename='log')
+        env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_returns=returns, stock_data=stock_data))
     else:
-        env = PortfolioEnv(args=args, data_params=data_params, stock_data=returns)
+        env = PortfolioEnv(args=args, data_params=data_params, stock_returns=returns, stock_data=stock_data)
     vec_env = DummyVecEnv([lambda: env])
 
     # Add action noise (exploration)
     n_actions = env.action_space.shape[0]
     action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=args.action_noise_sigma * np.ones(n_actions))
 
-
-    hardware = 'LRZ' if torch.cuda.is_available() else 'cpu'
-    model_save_path = f"./agent/{args.model_ID}_{hardware}_td3_{args.actor_dataset}_assets_{args.num_paths}_window_{args.window_size}"
+    dataset = 'corrBS' if args.actor_dataset == 'correlated_Blackscholes' else args.actor_dataset
+    model_save_path = f"./agent/{args.model_ID}_{dataset}_assets_{args.num_paths}_window_{args.window_size}"
 
     # Load Model
     if os.path.exists(f"{model_save_path}.zip"):
@@ -135,6 +134,7 @@ if __name__ == '__main__':
     parser.add_argument('-actor_dataset', default='correlated_Blackscholes', type=str)  # An Actor ID to determine which actor will be loaded (if it exists), then trained or tested/evaluated on
     #parser.add_argument('-utility_function', default="power", type=str)
     parser.add_argument('-allow_lending', action='store_true', help="Enable lending")
+    parser.add_argument('-time_dependent', action='store_true', help="Enables stockdata input")
 
     parser.add_argument('-episode_reset', default=10000000, type=int)  #currently off
     #parser.add_argument('-learning_starts', default=100000, type=int)
@@ -155,19 +155,18 @@ if __name__ == '__main__':
     parser.add_argument('-num_episodes', default=100, type=int)
     parser.add_argument('-n_trials', default=50, type=int)
 
-    parser.add_argument('-model_ID', default=5, type=int)
-    parser.add_argument('-laps', default=1, type=int)
-    parser.add_argument('-statement', default='actionLogger', type=str)
-    parser.add_argument('-mode', default='test_solution', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
+    parser.add_argument('-model_ID', default=7, type=int)
+    #parser.add_argument('-laps', default=1, type=int)
+    parser.add_argument('-statement', default='TimeDependency', type=str)
+    parser.add_argument('-mode', default='train', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
 
-    parser.add_argument('--learning_rates', default=[0.001, 0.01], type=float, nargs="+")
-    parser.add_argument('--batch_sizes', default=[256], type=int, nargs="+")
+    parser.add_argument('--learning_rates', default=[0.0001], type=float, nargs="+")
+    parser.add_argument('--batch_sizes', default=[1024], type=int, nargs="+")
 
     args = parser.parse_args()
 
     args.batch_size = args.batch_sizes[0]
     args.learning_rate = args.learning_rates[0]
-
 
     if args.mode in ['train', 'compare', 'test_solution']:
         global_first_lap = True

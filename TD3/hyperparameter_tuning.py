@@ -21,7 +21,7 @@ import time
 import matplotlib.cm as cm
 
 
-def optimize_td3(trial, args, data_params, returns):
+def optimize_td3(trial, args, data_params, returns, stock_data):
     start_time = time.time()
 
     batch_size = trial.suggest_categorical("batch_size", [64, 256, 512, 1024, 2048])
@@ -35,7 +35,7 @@ def optimize_td3(trial, args, data_params, returns):
     total_timesteps = 20000 * args.window_size
     learning_starts = int(total_timesteps / learning_starts_factor)
 
-    env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns))
+    env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_returns=returns, stock_data=stock_data))
     vec_env = DummyVecEnv([lambda: env])
     n_actions = env.action_space.shape[0]
     action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=action_noise_std * np.ones(n_actions))
@@ -119,12 +119,12 @@ class CustomEvalCallback(BaseCallback):
             print(f"Results saved to {file_path}")
 
 
-def test_optimized_td3(args, data_params, returns):
+def test_optimized_td3(args, data_params, returns, stock_data):
     if os.path.exists("./evalLogs/trial_None_results.csv"):
         os.remove("./evalLogs/trial_None_results.csv")
 
     best_model = TD3.load("./evalLogs/best_model.zip")
-    env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_data=returns))
+    env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_returns=returns, stock_data=stock_data))
     vec_env = DummyVecEnv([lambda: env])
     mean_reward, std_reward = evaluate_policy(best_model, vec_env, n_eval_episodes=1000, render=False)
     print(best_model.batch_size, best_model.tau, best_model.train_freq)
