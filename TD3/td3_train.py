@@ -129,7 +129,6 @@ def run(args, spec, data_params, returns, i=0):
 
 if __name__ == '__main__':
     import argparse
-
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes'
