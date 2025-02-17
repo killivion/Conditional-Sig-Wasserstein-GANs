@@ -23,7 +23,7 @@ def get_algo_config(dataset, data_params):
         key += str(data_params['dim'])
     elif dataset == 'STOCKS':
         key += '_' + '_'.join(data_params['assets'])
-#    return SIGCWGAN_CONFIGS[key]
+    return SIGCWGAN_CONFIGS[key]
 
 
 def set_seed(seed):
@@ -96,7 +96,7 @@ def get_dataset_configuration(dataset, window_size, num_paths, grid_points):
         generator = [('a', dict())]
     elif dataset == 'Blackscholes':
         generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
-                     for mu, sigma in [(0.05, 0.2)]
+                     for mu, sigma in [(0.07, 0.2)]
         )
     elif dataset == 'Heston':
         generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, V0=V0, kappa=kappa, xi=xi, rho=rho, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
@@ -188,7 +188,7 @@ def main(args):
                     mc_samples=1000
                 )
                 set_seed(seed)
-                generator = get_dataset_configuration(dataset, window_size=args.window_size, num_paths=args.num_paths)
+                generator = get_dataset_configuration(dataset, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.grid_points)
                 for spec, data_params in generator:
                     run(
                         algo_id=algo_id,
@@ -211,8 +211,8 @@ if __name__ == '__main__':
     parser.add_argument('-num_seeds', default=1, type=int)
     parser.add_argument('-initial_seed', default=0, type=int)
     #parser.add_argument('-datasets', default=['ARCH', 'STOCKS', 'ECG', 'VAR', ], nargs="+")
-    parser.add_argument('-datasets', default=['Y'], nargs="+")  # ['Stocks', 'ARCH', 'VAR'] 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance'
-    parser.add_argument('-algos', default=['SigCWGAN', 'GMMN', 'RCGAN', 'TimeGAN', 'RCWGAN', 'CWGAN',], nargs="+")
+    parser.add_argument('-datasets', default=['ARCH', 'VAR', 'Blackscholes'], nargs="+")  # ['Stocks', 'ARCH', 'VAR'] 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance'
+    parser.add_argument('-algos', default=['SigCWGAN', 'GMMN', 'RCGAN', 'TimeGAN', 'RCWGAN', 'CWGAN',], nargs="+")  # 'SigCWGAN', 'GMMN', 'RCGAN', 'TimeGAN', 'RCWGAN', 'CWGAN',
 
 
     # Algo hyperparameters
@@ -222,6 +222,7 @@ if __name__ == '__main__':
     parser.add_argument('-hidden_dims', default=3 * (50,), type=tuple)
     parser.add_argument('-total_steps', default=1000, type=int)
     parser.add_argument('-window_size', default=1000, type=int)
+    parser.add_argument('-grid_points', default=252, type=int)
     parser.add_argument('-num_paths', default=1, type=int)  # atm unnecessary because only one path is allowed: If this is increased the paths will be merged into one path with [(windowsize - 1) * num_paths] values
 
     args = parser.parse_args()
