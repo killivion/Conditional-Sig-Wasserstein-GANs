@@ -33,6 +33,10 @@ def generate_random_params(num_paths, num_bm):
         total_vola = np.array([[0.2]])
         weights = np.array([[1]])
         mu = np.array([0.06])
+    elif num_paths == 2 and num_bm == 3:
+        total_vola = np.array([[0.1, 0.25]])
+        weights = np.array([[0.5, 0.3, 0.2], [0.1, 0.4, 0.5]])  # rows sum to one
+        mu = np.array([0.08, 0.10])
 
     else:  # Adjustment of up and lower bound depending on num_paths size (number of correlations), amounts to slightly more than 20% vol
         low_vol = 0.1 * 3 * (np.log(1000)) ** (0.8) / (np.log(num_paths) ** (1.8))
@@ -53,7 +57,7 @@ def generate_random_params(num_paths, num_bm):
         correlation = eigvecs @ np.diag(eigvals) @ eigvecs.T  # correlation matrix with p_ij entries
         """
 
-    vola_matrix = np.sqrt(total_vola * weights)  # [sigma] = vola_matrix
+    vola_matrix = np.sqrt(weights * total_vola.T)  # [sigma] = vola_matrix
 
     return mu, vola_matrix  # mu is drift, vola_matrix
 

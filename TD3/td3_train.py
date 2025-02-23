@@ -143,7 +143,7 @@ if __name__ == '__main__':
     parser.add_argument('-grid_points', default=1, type=int)
     parser.add_argument('-window_size', default=1, type=int)
     parser.add_argument('-num_paths', default=2, type=int)
-    parser.add_argument('-num_bm', default=2, type=int)  # Number of random sources N
+    parser.add_argument('-num_bm', default=3, type=int)  # Number of random sources N
 
     parser.add_argument('-action_noise_sigma', default=0.02, type=float)
     parser.add_argument('-train_freq', default=1, type=int)
@@ -158,7 +158,7 @@ if __name__ == '__main__':
     parser.add_argument('-model_ID', default=7, type=int)
     #parser.add_argument('-laps', default=1, type=int)
     parser.add_argument('-statement', default='TimeDependency', type=str)
-    parser.add_argument('-mode', default='train', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
+    parser.add_argument('-mode', default='test_solution', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
 
     parser.add_argument('--learning_rates', default=[0.0001], type=float, nargs="+")
     parser.add_argument('--batch_sizes', default=[1024], type=int, nargs="+")
