@@ -163,7 +163,7 @@ class ActionLoggingCallback(BaseCallback):
             with self.summary_writer.as_default():
                 # Log actions
                 for i, action in enumerate(actions):
-                    #tf.summary.scalar(f"action/Action_1", sum(action_normalizer(action)[1:]), step=episode_num)
+                    tf.summary.scalar(f"action/Action", sum(action_normalizer(action)[1:]), step=episode_num)
                     normalized_actions = action_normalizer(action)
                     for j in range(len(action)-1):
                         tf.summary.scalar(f"action/Action_{j+1}", normalized_actions[j+1], step=episode_num)
