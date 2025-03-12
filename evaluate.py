@@ -124,7 +124,7 @@ def evaluate_generator(model_name, seed, experiment_dir, dataset, use_cuda=True)
         for i in range(steps):
             x_past_sample = x_past[i * size:(i + 1) * size] if i < (steps - 1) else x_past[i * size:]
             sigs_fake_ce = sample_sig_fake(G, q, sig_config, x_past_sample)[0]
-            pd.concat([sigs_conditional, sigs_fake_ce]) #sigs_conditional.append(sigs_fake_ce)
+            sigs_conditional.append(sigs_fake_ce) #pd.concat([sigs_conditional, sigs_fake_ce])
         sigs_conditional = torch.cat(sigs_conditional, dim=0)
         sig_w1_metric = sigcwgan_loss(sigs_pred, sigs_conditional)
     experiment_summary['sig_w1_metric'] = sig_w1_metric.item()
