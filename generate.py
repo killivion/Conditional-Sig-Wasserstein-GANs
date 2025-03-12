@@ -62,7 +62,7 @@ def get_top_dirs(path):
     return [directory for directory in os.listdir(path) if os.path.isdir(os.path.join(path, directory))]
 
 
-def generate_data(args, base_dir, datasets, algos):
+def generate_data(args):
     """
     for dataset in os.listdir(base_dir):
         dataset_path = os.path.join(base_dir, dataset)
@@ -101,5 +101,4 @@ if __name__ == '__main__':
     parser.add_argument('-algo', default='SigCWGAN', type=str)
 
     args = parser.parse_args()
-
-    generate_data(base_dir=args.base_dir, datasets=args.datasets, algos=args.algos)
+    generate_data(args)
