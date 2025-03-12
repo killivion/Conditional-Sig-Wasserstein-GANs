@@ -12,7 +12,7 @@ import warnings
 
 import eval_actor
 from track_learning import monitor_plot
-from help_fct import find_largest_td3_folder, ActionLoggingCallback, generate_random_params, pull_data, fuse_folders, analytical_solutions, action_normalizer, expected_utility, analytical_entry_wealth_offset
+from help_fct import CustomTD3Policy, find_largest_td3_folder, ActionLoggingCallback, generate_random_params, pull_data, fuse_folders, analytical_solutions, action_normalizer, expected_utility, analytical_entry_wealth_offset, get_dataset_configuration
 from portfolio_env import PortfolioEnv
 from hyperparameter_tuning import optimize_td3, test_optimized_td3
 
@@ -26,7 +26,6 @@ tensorboard --logdir ./logs
 """
 
 def main(args, i=0):
-    from train import get_dataset_configuration
     if args.dataset == 'correlated_Blackscholes':
         mu, vola_matrix = generate_random_params(args.num_paths, args.num_bm)
         spec = 'args.num_paths={}_window_size={}'.format(args.num_paths, args.window_size)
@@ -88,7 +87,8 @@ def run(args, spec, data_params, returns, stock_data, i=0):
         model.learning_starts = 0
     else:
         print("No saved model found; starting new training.")
-        model = TD3("MlpPolicy", vec_env, buffer_size=args.buffer_size, gamma=1, learning_rate=args.learning_rate, action_noise=action_noise, batch_size=args.batch_size, verbose=0, tensorboard_log="./logs/", train_freq=(args.train_freq, "episode"))
+        model = TD3(CustomTD3Policy, vec_env, buffer_size=args.buffer_size, gamma=1, learning_rate=args.learning_rate, action_noise=action_noise, batch_size=args.batch_size, verbose=0, tensorboard_log="./logs/", train_freq=(args.train_freq, "episode"), policy_kwargs={'allow_lending': args.allow_lending})
+        #model = TD3("MlpPolicy", vec_env, buffer_size=args.buffer_size, gamma=1, learning_rate=args.learning_rate, action_noise=action_noise, batch_size=args.batch_size, verbose=0, tensorboard_log="./logs/", train_freq=(args.train_freq, "episode"))
         model.learning_starts = args.total_timesteps / 5
         already_trained_timesteps = 0
     #model.verbose = 0 if hardware == 'cpu' else 0
@@ -151,14 +151,14 @@ if __name__ == '__main__':
     parser.add_argument('-buffer_size', default=1000000, type=int)
     #parser.add_argument('-learning_rate', default=0.001, type=float)
 
-    parser.add_argument('-total_timesteps', default=100, type=int)
+    parser.add_argument('-total_timesteps', default=100000, type=int)
     parser.add_argument('-num_episodes', default=100, type=int)
     parser.add_argument('-n_trials', default=50, type=int)
 
-    parser.add_argument('-model_ID', default=7, type=int)
+    parser.add_argument('-model_ID', default=11, type=int)
     #parser.add_argument('-laps', default=1, type=int)
-    parser.add_argument('-statement', default='TimeDependency', type=str)
-    parser.add_argument('-mode', default='test_solution', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
+    parser.add_argument('-statement', default='CustomActionNorm', type=str)
+    parser.add_argument('-mode', default='train', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
 
     parser.add_argument('--learning_rates', default=[0.0001], type=float, nargs="+")
     parser.add_argument('--batch_sizes', default=[1024], type=int, nargs="+")

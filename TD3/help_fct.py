@@ -5,23 +5,40 @@ import yfinance as yf
 import numpy as np
 import shutil
 from scipy.stats import norm
+from stable_baselines3.td3.policies import TD3Policy
 
+from sklearn.model_selection import train_test_split
+
+
+class CustomTD3Policy(TD3Policy):
+    def __init__(self, *args, allow_lending=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.allow_lending = allow_lending
+
+    def softmax(self, x, axis=-1):
+        # Compute softmax using NumPy
+        x = np.array(x)
+        exp_x = np.exp(x - np.max(x, axis=axis, keepdims=True))
+        return exp_x / np.sum(exp_x, axis=axis, keepdims=True)
+
+    def _predict(self, observation, deterministic=False):
+        raw_actions = self.actor(observation)
+        if self.allow_lending:
+            mean_actions = np.mean(raw_actions, axis=-1, keepdim=True)
+            n = raw_actions.shape[-1]
+            actions = raw_actions - mean_actions + (1.0 / n)
+        else:
+            actions = self.softmax(raw_actions, axis=-1)  # Apply softmax to ensure the outputs sum to 1
+        return actions
+
+        raw_actions = self.actor(observation)
+        # Compute the mean along the action dimension
+        # Number of actions (assuming last dimension is the action dimension)
+        # Normalize such that actions sum to 1
 
 def action_normalizer(action):
-    return action / sum(action) if not sum(action) == 0 else np.insert(action[1:], 0, 1)
-
-
-def pull_data(args, data_params):
-    from lib.data import get_data
-    if args.dataset == 'YFinance':
-        ticker = data_params['data_params']['ticker']
-        data = yf.download(ticker, start="2020-01-01", end="2024-01-01")['Adj Close']
-    else:
-        data = get_data(args.dataset, p=1, q=0, isSigLib=False, **data_params).T
-    returns = data.pct_change().dropna().values + 1  # Compute dt change ratio [not dt returns]
-    daily_risk_free_rate = (1 + args.risk_free_rate) ** (1 / args.grid_points)
-    risk_free_column = np.full((returns.shape[0], 1), daily_risk_free_rate)
-    return np.hstack((risk_free_column, returns)), np.array(data)
+    return action
+    # return action / sum(action) if not sum(action) == 0 else np.insert(action[1:], 0, 1)
 
 
 def generate_random_params(num_paths, num_bm):
@@ -185,3 +202,93 @@ class ActionLoggingCallback(BaseCallback):
 
         return True
 
+
+def pull_data(args, data_params):
+    if args.dataset == 'YFinance':
+        ticker = data_params['data_params']['ticker']
+        data = yf.download(ticker, start="2020-01-01", end="2024-01-01")['Adj Close']
+    else:
+        data = get_data(args.dataset, isSigLib=False, **data_params).T
+    returns = data.pct_change().dropna().values + 1  # Compute dt change ratio [not dt returns]
+    #incremental_risk_free_rate = (1 + args.risk_free_rate) ** (1 / args.grid_points)
+    risk_free_column = np.full((returns.shape[0], 1), np.exp(args.risk_free_rate/args.grid_points))
+    return np.hstack((risk_free_column, returns)), np.array(data)
+
+
+def get_data(dataset, isSigLib, **data_params):
+    if dataset in ['Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes']:
+        #generates data via GBM, Heston, VarGamma, KouJumpDiffusion or LevyIto model and loads it via the DataLoader file
+        import DataLoader as DataLoader
+        loader = DataLoader.LoadData(dataset=dataset, isSigLib=isSigLib, data_params=data_params)
+        data = loader.create_dataset(output_type="DataFrame")
+    else:
+        raise NotImplementedError('Dataset %s not valid' % dataset)
+    return data
+
+
+def get_dataset_configuration(dataset, window_size, num_paths, grid_points):
+    if dataset == 'Blackscholes':
+        generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
+                     for mu, sigma in [(0.07, 0.2)]
+        )
+    elif dataset == 'Heston':
+        generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, V0=V0, kappa=kappa, xi=xi, rho=rho, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
+                     for mu, sigma, V0, kappa, xi, rho in [(0.05, 0.2, 0.3, 0.2, 0.2, 0.5)]
+        )
+    elif dataset == 'VarianceGamma':
+        generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, nu=nu, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
+                     for mu, sigma, nu in [(0.05, 0.2, 0.02)]
+        )
+    elif dataset == 'Kou_Jump_Diffusion':
+        generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, kou_lambda=kou_lambda, p=p, eta1=eta1, eta2=eta2, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
+                     for mu, sigma, kou_lambda, p, eta1, eta2 in [(0.05, 0.2, 2, 0.3, 25, 50)]
+        )
+    elif dataset == 'Levy_Ito':
+        generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, lambda_large=lambda_large, lambda_small=lambda_small, jump_mean_large=jump_mean_large, jump_std_large=jump_std_large, jump_mean_small=jump_mean_small, jump_std_small=jump_std_small, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
+                     for mu, sigma, lambda_large, lambda_small, jump_mean_large, jump_std_large, jump_mean_small, jump_std_small in [(0.05, 0.2, 2, 300, 0.03, 0.05, 0.0005, 0.0005)]
+        )
+    elif dataset == 'YFinance':
+        generator = (('ticker_length={}'.format(len(ticker)), dict(data_params=dict(ticker=ticker))) for ticker in [(["^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX",
+        # Large-Cap Tech Stocks (FAANG & Others)
+        "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA", "ORCL", "INTC", "CSCO", "IBM", "ADBE", "CRM", "TXN",
+
+        # Financial Sector
+        "JPM", "BAC", "GS", "C", "WFC", "MS", "SCHW", "BLK", "BK", "AXP", "COF", "USB", "TFC", "CME",
+
+        # Consumer Goods & Retail
+        "WMT", "PG", "KO", "PEP", "COST", "MCD", "NKE", "TGT", "SBUX", "HD", "LOW", "DG", "TJX", "YUM",
+
+        # Healthcare
+        "JNJ", "PFE", "UNH", "MRK", "CVS", "LLY", "ABT", "TMO", "BMY", "DHR", "ZTS", "MDT", "BSX",
+
+        # Energy Sector
+        "XOM", "CVX", "SLB", "COP", "OXY", "PSX", "VLO", "HAL", "MPC", "BKR", "EOG", "FANG", "KMI",
+
+        # Industrials
+        "BA", "CAT", "MMM", "GE", "HON", "UPS", "UNP", "LMT", "RTX", "FDX", "CSX", "NSC", "WM", "NOC",
+
+        # Utilities
+        "NEE", "DUK", "SO", "D", "EXC", "AEP", "SRE", "PEG", "WEC", "ED", "XEL", "ES", "AWK", "DTE",
+
+        # Telecommunications
+        "T", "VZ", "TMUS", "CCI", "AMT", "VOD", "S", "CHT", "TU", "NOK", "ORAN", "BTI", "KT", "PHI",
+
+        # Real Estate
+        "PLD", "AMT", "CCI", "SPG", "PSA", "EQIX", "EQR", "ESS", "AVB", "O", "MAA", "UDR", "VTR", "HCP",
+
+        # Consumer Discretionary
+        "DIS", "HD", "MCD", "SBUX", "NKE", "LVS", "GM", "F", "HMC", "TM", "TSLA", "YUM", "MAR", "CCL",
+
+        # ETFs and Funds
+        "SPY", "QQQ", "DIA", "IWM", "GLD", "SLV", "TLT", "XLF", "XLK", "XLE", "XLU", "XLI", "XLY", "XLP",
+
+        # Commodities
+        "CL=F", "GC=F", "SI=F", "NG=F", "HG=F", "ZC=F", "ZW=F", "ZS=F", "LE=F", "HE=F", "KC=F", "CC=F", "CT=F",
+
+        # Forex and Cryptocurrency
+        "EURUSD=X", "GBPUSD=X", "JPY=X", "AUDUSD=X", "BTC-USD", "ETH-USD", "LTC-USD", "XRP-USD", "BCH-USD",
+        "DOT-USD",]
+        )])
+    else:
+        raise Exception('%s not a valid data type.' % dataset)
+    return generator
