@@ -49,8 +49,10 @@ class PortfolioEnv(gym.Env):
         done = self.current_step >= len(self.stock_returns)
 
         self.action = action_normalizer(action)  # normalizes to 1  # if self.num_stocks > 1 else [1 - action, action]
-        self.portfolio_value *= self.action @ self.stock_returns[self.current_step-1]  # Idea: adjust by 1 to compensate if sum(action)=0, so portfolio return 1 stays baseline
-        self.optimal_portfolio *= np.insert(self.analytical_risky_action, 0, 1 - sum(self.analytical_risky_action)) @ self.stock_returns[self.current_step-1]
+        self.action_return = self.action @ self.stock_returns[self.current_step-1]
+        self.portfolio_value *= self.action_return  # Idea: adjust by 1 to compensate if sum(action)=0, so portfolio return 1 stays baseline
+        self.optimal_return = np.insert(self.analytical_risky_action, 0, 1 - sum(self.analytical_risky_action)) @ self.stock_returns[self.current_step-1]
+        self.optimal_portfolio *= self.optimal_return
         reward = self._calc_reward(done)
 
         obs = self._get_feature_map()
@@ -91,11 +93,11 @@ class PortfolioEnv(gym.Env):
         return feature_map
 
     def _calc_reward(self, done):
-        if done:  # Terminal utility -> Central Reward-fct.
+        if True: #if done:  # Terminal utility -> Central Reward-fct.
             if self.portfolio_value <= 0:
                 print(f"Careful: negative portfolio value: {self.portfolio_value, self.stock_returns[self.current_step-1], self.action}")
-            reward = (self.portfolio_value ** (1 - self.args.p)) if not self.portfolio_value <= 0 else 0 * abs(self.portfolio_value)  # / (1 - self.args.p) leave out the constant divisor since it only scales the expectation
-            optimal_utility = (self.optimal_portfolio ** (1 - self.args.p)) if not self.optimal_portfolio <= 0 else 0
+            reward = (self.action_return ** (1 - self.args.p)) if not self.action_return <= 0 else 0 * abs(self.action_return)  # / (1 - self.args.p) leave out the constant divisor since it only scales the expectation
+            optimal_utility = (self.optimal_return ** (1 - self.args.p)) if not self.optimal_return <= 0 else 0
             reward = reward - optimal_utility
             #self.reward_window.append(reward)
             #if not self.fixed:

@@ -112,7 +112,7 @@ def analytical_entry_wealth_offset(action, args, data_params):
     policy_expected_utility = expected_utility(action[1:], args, data_params)
     analy_expected_utility = expected_utility(analytical_risky_action, args, data_params)
     entry_wealth_offset = (analy_expected_utility/policy_expected_utility) ** (1/(1-args.p))
-    #other logic - gives same result: entry_wealth_offset = np.exp((analytical_risky_action - action[1:]) @ risky_lambda - args.p/2 * (analytical_risky_action.T @ big_sigma @ analytical_risky_action - action[1:].T @ big_sigma @ action[1:]))  # (1-p) and (1/(1-p)) cancel, r-r cancels
+    #alternative logic - gives same result: entry_wealth_offset = np.exp((analytical_risky_action - action[1:]) @ risky_lambda - args.p/2 * (analytical_risky_action.T @ big_sigma @ analytical_risky_action - action[1:].T @ big_sigma @ action[1:]))  # (1-p) and (1/(1-p)) cancel, r-r cancels
 
     return entry_wealth_offset
 
@@ -121,10 +121,11 @@ def find_confidence_intervals(analytical_risky_action, data_params, args):  # On
     confidence = 0.95
     big_sigma = data_params['data_params']['vola_matrix'] @ data_params['data_params']['vola_matrix'].T
     z_c = norm.ppf((1 + confidence) / 2)
-    mu_adj = data_params['data_params']['mu'][0] - np.diag(big_sigma)[0]
-    interval = mu_adj + np.array([-1, 1]) * z_c * np.sqrt(np.diag(big_sigma)[0])  # exp((1-p)[(μ-σ^2/2)T (+/-) 1.96σ*sqrt(T)])
+    dt = (1/args.grid_points)
+    mu_adj = (data_params['data_params']['mu'][0] - np.diag(big_sigma)[0]) * dt
+    interval = mu_adj + np.array([-1, 1]) * z_c * np.sqrt(np.diag(big_sigma)[0] * dt)  # exp((1-p)[(μ-σ^2/2)T (+/-) 1.96σ*sqrt(T)])
     cf_low, cf_high = np.exp((1 - args.p) * interval)  # Extreme case x0=1 is invested in asset 1
-    cf_low2, cf_high2 = sum(analytical_risky_action) * np.exp((1-args.p)*interval) + (1 - sum(analytical_risky_action)) * np.exp((1 - args.p) * args.risk_free_rate)  # simplified that all risky action is in asset 1
+    cf_low2, cf_high2 = sum(analytical_risky_action) * np.exp((1-args.p)*interval) + (1 - sum(analytical_risky_action)) * np.exp((1 - args.p) * args.risk_free_rate * dt)  # simplified that all risky action is in asset 1
 
     return cf_low - cf_low2, cf_high - cf_high2
 

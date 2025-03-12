@@ -1,20 +1,10 @@
 import os
-import warnings
 
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 import torch
-from sklearn.linear_model import LinearRegression
 
-from hyperparameters import SIGCWGAN_CONFIGS
+#from hyperparameters import SIGCWGAN_CONFIGS
 from lib.algos.base import BaseConfig
-from lib.algos.base import is_multivariate
-from lib.algos.sigcwgan import calibrate_sigw1_metric, sample_sig_fake
-from lib.algos.sigcwgan import sigcwgan_loss
 from lib.arfnn import SimpleGenerator
-from lib.plot import plot_summary, compare_cross_corr
-from lib.test_metrics import test_metrics
 from lib.utils import load_pickle, to_numpy
 
 
@@ -64,11 +54,23 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Turn cuda off / on during evalution.')
     parser.add_argument('-base_dir', default='./numerical_results', type=str)
     parser.add_argument('-use_cuda', action='store_true')
-    parser.add_argument('-datasets', default=['correlated_Blackscholes'], nargs="+")  # , 'STOCKS', 'ECG', 'VAR',
-    parser.add_argument('-algos', default=['SigCWGAN'], nargs="+") #, 'GMMN', 'RCGAN', 'TimeGAN', 'RCWGAN',
 
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)
     parser.add_argument('-algo', default='SigCWGAN', type=str)
 
     args = parser.parse_args()
     generate_data(args)
+
+""" Concept:
+1) One-time train the GAN
+2) Evaluate for good performance
+
+Sample data:
+1) Load G in td3.train, so it's only loaded once
+2) get paths of length windowsize q? (based on any past paths p - possibly shorten them or sample or smth. / perhaps load them in also and sample)
+with that make sure that the drift and volatility are equal in GAN training and output specified for TD3
+3) transform so they are of the right form for TD3
+4) Train TD3 [construct if GAN_sampled -> different sample mechanism]
+5) Eval TD3 ... 
+
+"""

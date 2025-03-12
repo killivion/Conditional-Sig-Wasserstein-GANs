@@ -87,7 +87,7 @@ def run(args, spec, data_params, returns, stock_data, i=0):
         model.learning_starts = 0
     else:
         print("No saved model found; starting new training.")
-        model = TD3(CustomTD3Policy, vec_env, buffer_size=args.buffer_size, gamma=1, learning_rate=args.learning_rate, action_noise=action_noise, batch_size=args.batch_size, verbose=0, tensorboard_log="./logs/", train_freq=(args.train_freq, "episode"), policy_kwargs={'allow_lending': args.allow_lending})
+        model = TD3(CustomTD3Policy, vec_env, buffer_size=args.buffer_size, gamma=1, learning_rate=args.learning_rate, action_noise=action_noise, batch_size=args.batch_size, verbose=0, tensorboard_log="./logs/", train_freq=(args.train_freq, "step"), policy_kwargs={'allow_lending': args.allow_lending})
         #model = TD3("MlpPolicy", vec_env, buffer_size=args.buffer_size, gamma=1, learning_rate=args.learning_rate, action_noise=action_noise, batch_size=args.batch_size, verbose=0, tensorboard_log="./logs/", train_freq=(args.train_freq, "episode"))
         model.learning_starts = args.total_timesteps / 5
         already_trained_timesteps = 0
@@ -140,10 +140,10 @@ if __name__ == '__main__':
     #parser.add_argument('-learning_starts', default=100000, type=int)
     parser.add_argument('-p', default=0.8, type=float)
     parser.add_argument('-risk_free_rate', default=0.04, type=float)
-    parser.add_argument('-grid_points', default=1, type=int)
-    parser.add_argument('-window_size', default=1, type=int)
-    parser.add_argument('-num_paths', default=2, type=int)
-    parser.add_argument('-num_bm', default=3, type=int)  # Number of random sources N
+    parser.add_argument('-grid_points', default=252, type=int)
+    parser.add_argument('-window_size', default=252, type=int)
+    parser.add_argument('-num_paths', default=1, type=int)
+    parser.add_argument('-num_bm', default=1, type=int)  # Number of random sources N
 
     parser.add_argument('-action_noise_sigma', default=0.02, type=float)
     parser.add_argument('-train_freq', default=1, type=int)
