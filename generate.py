@@ -29,8 +29,9 @@ def generate_from_generator(experiment_dir, dataset, use_cuda=True):
     # Load and prepare real path.
     # ----------------------------------------------
     x_real = load_pickle(os.path.join(os.path.dirname(experiment_dir), 'x_real_test.torch')).to(device)
+    print(x_real)
     x_past = x_real[:, :p]
-    x_future = x_real[:, p:p + q]
+    #x_future = x_real[:, p:p + q]
     dim = x_real.shape[-1]
     # ----------------------------------------------
     # Load generator weights and hyperparameters
@@ -41,15 +42,6 @@ def generate_from_generator(experiment_dir, dataset, use_cuda=True):
     # ----------------------------------------------
     # generate fake paths
     # ----------------------------------------------
-    """
-    with torch.no_grad():
-        steps = 100
-        size = x_past.size(0) // steps
-        for i in range(steps):
-            x_past_sample = x_past[i * size:(i + 1) * size] if i < (steps - 1) else x_past[i * size:]
-            sigs_fake_ce = sample_sig_fake(G, q, sig_config, x_past_sample)[0]
-        print(f'Sig_Fake: {sigs_fake_ce}')
-    """
     with torch.no_grad():
         _x_past = x_past.clone()
         x_fake_future = G.sample(q, _x_past)
@@ -58,29 +50,7 @@ def generate_from_generator(experiment_dir, dataset, use_cuda=True):
     return x_fake_future
 
 
-def get_top_dirs(path):
-    return [directory for directory in os.listdir(path) if os.path.isdir(os.path.join(path, directory))]
-
-
 def generate_data(args):
-    """
-    for dataset in os.listdir(base_dir):
-        dataset_path = os.path.join(base_dir, dataset)
-        if dataset not in datasets:
-            continue
-        for experiment_dir in os.listdir(dataset_path):
-            experiment_path = os.path.join(dataset_path, experiment_dir)
-            for seed_dir in get_top_dirs(experiment_path):
-                seed_path = os.path.join(experiment_path, seed_dir)
-                for algo_dir in get_top_dirs(seed_path):
-                    if algo_dir not in algos:
-                        continue
-                    algo_path = os.path.join(seed_path, algo_dir)
-                    print(experiment_dir)
-                    print(dataset)
-                    print(algo_dir)
-                    """
-
     #algo_path = os.path.join(args.base_dir, args.dataset, experiment_dir, seed_dir, args.algo)
     spec = 'mu=[0.06]_sigma=[[0.4472136]]_window_size=1000'
     algo_path = f'./numerical_results/{args.dataset}/{spec}/seed=42/{args.algo}'
@@ -97,7 +67,7 @@ if __name__ == '__main__':
     parser.add_argument('-datasets', default=['correlated_Blackscholes'], nargs="+")  # , 'STOCKS', 'ECG', 'VAR',
     parser.add_argument('-algos', default=['SigCWGAN'], nargs="+") #, 'GMMN', 'RCGAN', 'TimeGAN', 'RCWGAN',
 
-    parser.add_argument('-datasets', default='correlated_Blackscholes', type=str)
+    parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)
     parser.add_argument('-algo', default='SigCWGAN', type=str)
 
     args = parser.parse_args()
