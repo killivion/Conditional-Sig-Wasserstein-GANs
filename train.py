@@ -128,7 +128,7 @@ def get_dataset_configuration(dataset, window_size, num_paths, num_bm, grid_poin
     elif dataset == 'correlated_Blackscholes':
         param_mu, param_vola_matrix = generate_random_params(num_paths, num_bm)
         generator = (('mu={}_sigma={}_window_size={}'.format(mu, vola_matrix, window_size), dict(
-            data_params=dict(mu=mu, vola_matrix=vola_matrix, window_size=window_size, num_paths=num_paths,
+            data_params=dict(mu=mu, vola_matrix=vola_matrix, window_size=window_size, num_paths=num_paths, num_bm=num_bm,
                              grid_points=grid_points)))
                      for mu, vola_matrix in [(param_mu, param_vola_matrix)]
                      )
