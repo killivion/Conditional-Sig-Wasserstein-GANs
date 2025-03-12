@@ -16,7 +16,7 @@ class CustomTD3Policy(TD3Policy):
         self.allow_lending = allow_lending
 
     def softmax(self, x, axis=-1):
-        x = x.cpu.numpy()
+        x = x.cpu().numpy()
         exp_x = np.exp(x - np.max(x, axis=axis, keepdims=True))
         return exp_x / np.sum(exp_x, axis=axis, keepdims=True)
 
