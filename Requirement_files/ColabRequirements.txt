@@ -3,7 +3,4 @@ olefile
 sip
 dataclasses
 fbm
-stable-baselines3
-gymnasium
 yfinance
-rich
