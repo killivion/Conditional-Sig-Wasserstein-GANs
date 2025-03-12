@@ -4,3 +4,6 @@ sip
 dataclasses
 fbm
 yfinance
+stable-baselines3
+gymnasium
+rich
