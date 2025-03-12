@@ -14,7 +14,7 @@ from lib.data import download_man_ahl_dataset, download_mit_ecg_dataset
 from lib.data import get_data
 from lib.plot import savefig, create_summary
 from lib.utils import pickle_it
-import TD3
+from TD3.help_fct import generate_random_params
 
 
 def get_algo_config(dataset, data_params):
@@ -100,7 +100,7 @@ def get_dataset_configuration(dataset, window_size, num_paths, num_bm, grid_poin
                      for mu, sigma in [(0.06, 0.2)]
         )
     elif dataset == 'correlated_Blackscholes':
-        param_mu, param_vola_matrix = TD3.help_fct.generate_random_params(num_paths, num_bm)
+        param_mu, param_vola_matrix = generate_random_params(num_paths, num_bm)
         generator = (('mu={}_sigma={}_window_size={}'.format(mu, vola_matrix, window_size), dict(
             data_params=dict(mu=mu, vola_matrix=vola_matrix, window_size=window_size, num_paths=num_paths,
                              grid_points=grid_points)))
@@ -219,8 +219,8 @@ if __name__ == '__main__':
     parser.add_argument('-num_seeds', default=1, type=int)
     parser.add_argument('-initial_seed', default=0, type=int)
     #parser.add_argument('-datasets', default=['ARCH', 'STOCKS', 'ECG', 'VAR', ], nargs="+")
-    parser.add_argument('-datasets', default=['ARCH', 'VAR', 'Blackscholes'], nargs="+")  # ['Stocks', 'ARCH', 'VAR'] 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance'
-    parser.add_argument('-algos', default=['SigCWGAN', 'GMMN', 'RCGAN', 'TimeGAN', 'RCWGAN', 'CWGAN',], nargs="+")  # 'SigCWGAN', 'GMMN', 'RCGAN', 'TimeGAN', 'RCWGAN', 'CWGAN',
+    parser.add_argument('-datasets', default=['correlated_Blackscholes'], nargs="+")  # ['Stocks', 'ARCH', 'VAR'] 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance'
+    parser.add_argument('-algos', default=['SigCWGAN'], nargs="+")  # 'SigCWGAN', 'GMMN', 'RCGAN', 'TimeGAN', 'RCWGAN', 'CWGAN',
 
 
     # Algo hyperparameters
