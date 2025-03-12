@@ -197,8 +197,9 @@ def evaluate_benchmarks(algos, base_dir, datasets, use_cuda=False):
                     )
                     # add relevant parameters used during training to the experiment summary
                     experiment_summary = complete_experiment_summary(dataset_dir, experiment_dir, experiment_summary)
-                    df = df.append(experiment_summary, ignore_index=True, ) #pd.concat([df, experiment_summary], ignore_index=True, )
-            df_dst_path = os.path.join(base_dir, dataset_dir, experiment_dir, 'summary.csv')
+                    df = df.append(experiment_summary, ignore_index=True, )
+            df_dst_path = os.path.join(experiment_path, 'summary.csv')
+            print(f'Saving summary to {df_dst_path} ...')
             df.to_csv(df_dst_path, decimal=',', sep=';', float_format='%.5f', index=False)
 
 
