@@ -62,7 +62,8 @@ def get_top_dirs(path):
     return [directory for directory in os.listdir(path) if os.path.isdir(os.path.join(path, directory))]
 
 
-def generate_data(base_dir, datasets, algos):
+def generate_data(args, base_dir, datasets, algos):
+    """
     for dataset in os.listdir(base_dir):
         dataset_path = os.path.join(base_dir, dataset)
         if dataset not in datasets:
@@ -78,7 +79,13 @@ def generate_data(base_dir, datasets, algos):
                     print(experiment_dir)
                     print(dataset)
                     print(algo_dir)
-                    generate_from_generator(experiment_dir=algo_path, dataset=dataset, use_cuda=True)
+                    """
+
+    #algo_path = os.path.join(args.base_dir, args.dataset, experiment_dir, seed_dir, args.algo)
+    spec = 'mu=[0.06]_sigma=[[0.4472136]]_window_size=1000'
+    algo_path = f'./numerical_results/{args.dataset}/{spec}/seed=42/{args.algo}'
+    print(algo_path)
+    generate_from_generator(experiment_dir=algo_path, dataset=args.dataset, use_cuda=True)
 
 
 if __name__ == '__main__':
@@ -89,6 +96,10 @@ if __name__ == '__main__':
     parser.add_argument('-use_cuda', action='store_true')
     parser.add_argument('-datasets', default=['correlated_Blackscholes'], nargs="+")  # , 'STOCKS', 'ECG', 'VAR',
     parser.add_argument('-algos', default=['SigCWGAN'], nargs="+") #, 'GMMN', 'RCGAN', 'TimeGAN', 'RCWGAN',
+
+    parser.add_argument('-datasets', default='correlated_Blackscholes', type=str)
+    parser.add_argument('-algo', default='SigCWGAN', type=str)
+
     args = parser.parse_args()
 
     generate_data(base_dir=args.base_dir, datasets=args.datasets, algos=args.algos)
