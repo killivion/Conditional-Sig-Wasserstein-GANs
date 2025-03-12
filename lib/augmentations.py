@@ -5,7 +5,7 @@ signature.
 from dataclasses import dataclass
 from typing import List, Tuple
 
-#import signatory
+import signatory
 import torch
 
 __all__ = ['AddLags', 'Concat', 'Cumsum', 'LeadLag', 'Scale']
