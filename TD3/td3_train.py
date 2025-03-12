@@ -140,8 +140,8 @@ if __name__ == '__main__':
     #parser.add_argument('-learning_starts', default=100000, type=int)
     parser.add_argument('-p', default=0.8, type=float)
     parser.add_argument('-risk_free_rate', default=0.04, type=float)
-    parser.add_argument('-grid_points', default=252, type=int)
-    parser.add_argument('-window_size', default=252, type=int)
+    parser.add_argument('-grid_points', default=1, type=int)
+    parser.add_argument('-window_size', default=1, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
     parser.add_argument('-num_bm', default=1, type=int)  # Number of random sources N
 
@@ -158,7 +158,7 @@ if __name__ == '__main__':
     parser.add_argument('-model_ID', default=11, type=int)
     #parser.add_argument('-laps', default=1, type=int)
     parser.add_argument('-statement', default='CustomActionNorm', type=str)
-    parser.add_argument('-mode', default='train', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
+    parser.add_argument('-mode', default='compare', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
 
     parser.add_argument('--learning_rates', default=[0.0001], type=float, nargs="+")
     parser.add_argument('--batch_sizes', default=[1024], type=int, nargs="+")

@@ -27,7 +27,8 @@ class CustomTD3Policy(TD3Policy):
             actions = raw_actions - mean_actions + (1.0 / n)
         else:
             actions = self.softmax(raw_actions, axis=-1)
-        return actions
+        invers_scaled_action = (actions - self.action_space.low)/(0.5 * (self.action_space.high - self.action_space.low)) - 1
+        return invers_scaled_action
 
     """
     def softmax(self, x, axis=-1):

@@ -4,7 +4,7 @@ from tqdm import tqdm
 from help_fct import analytical_solutions, analytical_entry_wealth_offset, action_normalizer, expected_utility
 
 
-def test_actor(args, data_params, model, env):
+def test_actor(args, data_params, model, env): #depricated
     obs = env.reset()  # obs, info = env.reset(test=True)
     total_reward = 0
     average_riskfree_action, average_risky_action = [], []
@@ -28,7 +28,7 @@ def test_actor(args, data_params, model, env):
     print("Analytical expected Utility:", analytical_utility)
 
 
-def evaluate_actor(args, data_params, model, env):
+def evaluate_actor(args, data_params, model, env): #depricated
     portfolio_values = []
     for episode in tqdm(range(args.num_episodes), desc="Episodes", leave=False):
         portfolio_value = [1.0]  # Initial portfolio value
