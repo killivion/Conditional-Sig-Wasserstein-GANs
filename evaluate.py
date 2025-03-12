@@ -112,9 +112,9 @@ def evaluate_generator(model_name, seed, experiment_dir, dataset, use_cuda=True)
     # ----------------------------------------------
     # Compute Sig-W_1 distance.
     # ----------------------------------------------
-    #if dataset in ['VAR', 'ARCH']:
-    #    x_past = x_past[::10]
-    #    x_future = x_future[::10]
+    if dataset in ['VAR', 'ARCH']:
+        x_past = x_past[::10]
+        x_future = x_future[::10]
     sigs_pred = calibrate_sigw1_metric(sig_config, x_future, x_past)
     # generate fake paths
     sigs_conditional = list()
@@ -185,8 +185,8 @@ def evaluate_benchmarks(algos, base_dir, datasets, use_cuda=False):
                 for algo_dir in get_top_dirs(seed_path):
                     if algo_dir not in algos:
                         continue
-                    print(dataset_dir, experiment_dir, algo_dir, )
                     algo_path = os.path.join(seed_path, algo_dir)
+                    print(f"   {algo_path}")
                     # evaluate the generator
                     experiment_summary = evaluate_generator(
                         model_name=algo_dir,
