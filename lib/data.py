@@ -204,7 +204,7 @@ def download_mit_ecg_dataset():
 
 
 def get_test_stocks(dataset, isSigLib, data_params):
-    #generates data via GBM, Heston, VarGamma, KouJumpDiffusion or LevyIto model and loads it via the DataLoader file
+    #generates data via GBM, correlated_GBM, Heston, VarGamma, KouJumpDiffusion or LevyIto model and loads it via the DataLoader file
     import lib.DataLoader as DataLoader
     loader = DataLoader.LoadData(dataset=dataset, isSigLib=isSigLib, data_params=data_params)
     if isSigLib:

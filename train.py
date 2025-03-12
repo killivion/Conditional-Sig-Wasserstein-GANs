@@ -14,6 +14,7 @@ from lib.data import download_man_ahl_dataset, download_mit_ecg_dataset
 from lib.data import get_data
 from lib.plot import savefig, create_summary
 from lib.utils import pickle_it
+import TD3
 
 
 def get_algo_config(dataset, data_params):
@@ -76,7 +77,7 @@ def run(algo_id, base_config, base_dir, dataset, spec, data_params={}):
     savefig('losses.png', experiment_directory)
 
 
-def get_dataset_configuration(dataset, window_size, num_paths, grid_points):
+def get_dataset_configuration(dataset, window_size, num_paths, num_bm, grid_points):
     if dataset == 'ECG':
         generator = [('id=100', dict(filenames=['100']))]
     elif dataset == 'STOCKS':
@@ -96,8 +97,15 @@ def get_dataset_configuration(dataset, window_size, num_paths, grid_points):
         generator = [('a', dict())]
     elif dataset == 'Blackscholes':
         generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
-                     for mu, sigma in [(0.07, 0.2)]
+                     for mu, sigma in [(0.06, 0.2)]
         )
+    elif dataset == 'correlated_Blackscholes':
+        param_mu, param_vola_matrix = TD3.help_fct.generate_random_params(num_paths, num_bm)
+        generator = (('mu={}_sigma={}_window_size={}'.format(mu, vola_matrix, window_size), dict(
+            data_params=dict(mu=mu, vola_matrix=vola_matrix, window_size=window_size, num_paths=num_paths,
+                             grid_points=grid_points)))
+                     for mu, vola_matrix in [(param_mu, param_vola_matrix)]
+                     )
     elif dataset == 'Heston':
         generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, V0=V0, kappa=kappa, xi=xi, rho=rho, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
                      for mu, sigma, V0, kappa, xi, rho in [(0.05, 0.2, 0.3, 0.2, 0.2, 0.5)]
@@ -188,7 +196,7 @@ def main(args):
                     mc_samples=1000
                 )
                 set_seed(seed)
-                generator = get_dataset_configuration(dataset, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.grid_points)
+                generator = get_dataset_configuration(dataset, window_size=args.window_size, num_paths=args.num_paths, num_bm=args.num_bm, grid_points=args.grid_points)
                 for spec, data_params in generator:
                     run(
                         algo_id=algo_id,
@@ -224,6 +232,7 @@ if __name__ == '__main__':
     parser.add_argument('-window_size', default=1000, type=int)
     parser.add_argument('-grid_points', default=252, type=int)
     parser.add_argument('-num_paths', default=1, type=int)  # atm unnecessary because only one path is allowed: If this is increased the paths will be merged into one path with [(windowsize - 1) * num_paths] values
+    parser.add_argument('-num_bm', default=1, type=int)
 
     args = parser.parse_args()
     main(args)
