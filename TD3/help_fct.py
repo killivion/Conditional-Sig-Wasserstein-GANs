@@ -6,6 +6,7 @@ import numpy as np
 import shutil
 from scipy.stats import norm
 from stable_baselines3.td3.policies import TD3Policy
+import torch
 
 from sklearn.model_selection import train_test_split
 
@@ -16,9 +17,23 @@ class CustomTD3Policy(TD3Policy):
         self.allow_lending = allow_lending
 
     def softmax(self, x, axis=-1):
-        x = x.cpu().numpy()
-        exp_x = np.exp(x - np.max(x, axis=axis, keepdims=True))
-        return exp_x / np.sum(exp_x, axis=axis, keepdims=True)
+        return torch.softmax(x, dim=axis)
+
+    def _predict(self, observation, deterministic=False):
+        raw_actions = self.actor(observation)
+        if self.allow_lending:
+            mean_actions = torch.mean(raw_actions, dim=-1, keepdim=True)
+            n = raw_actions.shape[-1]
+            actions = raw_actions - mean_actions + (1.0 / n)
+        else:
+            actions = self.softmax(raw_actions, axis=-1)
+        return actions
+
+    """
+    def softmax(self, x, axis=-1):
+        x = np.array(x)
+       exp_x = np.exp(x - np.max(x, axis=axis, keepdims=True))
+       return exp_x / np.sum(exp_x, axis=axis, keepdims=True)
 
     def _predict(self, observation, deterministic=False):
         raw_actions = self.actor(observation)
@@ -29,6 +44,7 @@ class CustomTD3Policy(TD3Policy):
         else:
             actions = self.softmax(raw_actions, axis=-1)  # Apply softmax to ensure the outputs sum to 1
         return actions
+    """
 
 def action_normalizer(action):
     return action

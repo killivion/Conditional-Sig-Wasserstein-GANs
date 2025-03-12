@@ -151,7 +151,7 @@ if __name__ == '__main__':
     parser.add_argument('-buffer_size', default=1000000, type=int)
     #parser.add_argument('-learning_rate', default=0.001, type=float)
 
-    parser.add_argument('-total_timesteps', default=100000, type=int)
+    parser.add_argument('-total_timesteps', default=10000, type=int)
     parser.add_argument('-num_episodes', default=100, type=int)
     parser.add_argument('-n_trials', default=50, type=int)
 
