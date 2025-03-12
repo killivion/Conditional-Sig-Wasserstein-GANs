@@ -84,7 +84,7 @@ def generate_data(base_dir, datasets, algos):
                         continue
                     algo_path = os.path.join(seed_path, algo_dir)
                     print(experiment_dir, dataset)
-                    generate_from_generator(experiment_dir, dataset, use_cuda=True)
+                    generate_from_generator(experiment_dir=algo_path, dataset=dataset, use_cuda=True)
 
 
 if __name__ == '__main__':
