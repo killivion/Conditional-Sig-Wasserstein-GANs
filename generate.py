@@ -18,26 +18,18 @@ from lib.test_metrics import test_metrics
 from lib.utils import load_pickle, to_numpy
 
 
-def get_algo_config(dataset, experiment_dir):
-    key = dataset
-    sig_config = SIGCWGAN_CONFIGS[key]
-    return sig_config
-
-
 def generate_from_generator(experiment_dir, dataset, use_cuda=True):
     torch.random.manual_seed(0)
     device = 'cuda' if use_cuda else 'cpu'
 
-    sig_config = get_algo_config(dataset, experiment_dir)
-    # shorthands
+    #sig_config = get_algo_config(dataset, experiment_dir)
     base_config = BaseConfig(device=device)
     p, q = base_config.p, base_config.q
     # ----------------------------------------------
     # Load and prepare real path.
     # ----------------------------------------------
-    print(f"{os.path.join(os.path.dirname(experiment_dir), 'x_real_test.torch')}")
     x_real = load_pickle(os.path.join(os.path.dirname(experiment_dir), 'x_real_test.torch')).to(device)
-    x_past, x_future = x_real[:, :p], x_real[:, p:p + q]
+    x_past = x_real[:, :p]
     x_future = x_real[:, p:p + q]
     dim = x_real.shape[-1]
     # ----------------------------------------------
@@ -46,10 +38,10 @@ def generate_from_generator(experiment_dir, dataset, use_cuda=True):
     G_weights = load_pickle(os.path.join(experiment_dir, 'G_weights.torch'))
     G = SimpleGenerator(dim * p, dim, 3 * (50,), dim).to(device)
     G.load_state_dict(G_weights)
-
     # ----------------------------------------------
     # generate fake paths
     # ----------------------------------------------
+    """
     with torch.no_grad():
         steps = 100
         size = x_past.size(0) // steps
@@ -57,9 +49,9 @@ def generate_from_generator(experiment_dir, dataset, use_cuda=True):
             x_past_sample = x_past[i * size:(i + 1) * size] if i < (steps - 1) else x_past[i * size:]
             sigs_fake_ce = sample_sig_fake(G, q, sig_config, x_past_sample)[0]
         print(f'Sig_Fake: {sigs_fake_ce}')
-
+    """
     with torch.no_grad():
-        _x_past =  x_past.clone()
+        _x_past = x_past.clone()
         x_fake_future = G.sample(q, _x_past)
     print(f'x_fake_future: {x_fake_future}')
 
@@ -83,7 +75,9 @@ def generate_data(base_dir, datasets, algos):
                     if algo_dir not in algos:
                         continue
                     algo_path = os.path.join(seed_path, algo_dir)
-                    print(experiment_dir, dataset)
+                    print(experiment_dir)
+                    print(dataset)
+                    print(algo_dir)
                     generate_from_generator(experiment_dir=algo_path, dataset=dataset, use_cuda=True)
 
 
