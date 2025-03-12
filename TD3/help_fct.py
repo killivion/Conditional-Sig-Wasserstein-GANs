@@ -16,8 +16,7 @@ class CustomTD3Policy(TD3Policy):
         self.allow_lending = allow_lending
 
     def softmax(self, x, axis=-1):
-        # Compute softmax using NumPy
-        x = np.array(x)
+        x = x.cpu.numpy()
         exp_x = np.exp(x - np.max(x, axis=axis, keepdims=True))
         return exp_x / np.sum(exp_x, axis=axis, keepdims=True)
 
@@ -30,11 +29,6 @@ class CustomTD3Policy(TD3Policy):
         else:
             actions = self.softmax(raw_actions, axis=-1)  # Apply softmax to ensure the outputs sum to 1
         return actions
-
-        raw_actions = self.actor(observation)
-        # Compute the mean along the action dimension
-        # Number of actions (assuming last dimension is the action dimension)
-        # Normalize such that actions sum to 1
 
 def action_normalizer(action):
     return action
