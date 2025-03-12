@@ -15,6 +15,8 @@ class CustomTD3Policy(TD3Policy):
     def __init__(self, *args, allow_lending=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.allow_lending = allow_lending
+        self.low = torch.tensor(self.action_space.low)
+        self.high = torch.tensor(self.action_space.high)
 
     def softmax(self, x, axis=-1):
         return torch.softmax(x, dim=axis)
@@ -27,7 +29,7 @@ class CustomTD3Policy(TD3Policy):
             actions = raw_actions - mean_actions + (1.0 / n)
         else:
             actions = self.softmax(raw_actions, axis=-1)
-        invers_scaled_action = (actions - self.action_space.low)/(0.5 * (self.action_space.high - self.action_space.low)) - 1
+        invers_scaled_action = (actions - self.low)/(0.5 * (self.high - self.low)) - 1  # in td3 the action is in the space [-1,1] we inversly scale it
         return invers_scaled_action
 
     """
