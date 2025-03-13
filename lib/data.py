@@ -212,11 +212,13 @@ def get_test_stocks(dataset, isSigLib, data_params):
     loader = DataLoader.LoadData(dataset=dataset, isSigLib=isSigLib, data_params=data_params)
     if isSigLib:
         price_paths, time = loader.create_dataset(output_type="np.ndarray")
+        print(price_paths)
         log_prices = np.log(price_paths)
         logrtn = np.diff(log_prices, axis=1)
         data_raw = torch.from_numpy(logrtn[..., None]).float()
         pipeline = Pipeline(steps=[('standard_scale', StandardScalerTS(axis=(0, 1)))])
         data_pre = pipeline.transform(data_raw)  # scales Data to StandardNormal
+        print(data_pre)
     else:  # for TD3
         data_pre = loader.create_dataset(output_type="DataFrame")
         data_raw, pipeline = 1, 1  # dummy return so it doesnt bug
