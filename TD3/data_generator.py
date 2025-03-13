@@ -25,7 +25,7 @@ class Data_Puller:
             dim = x_real.shape[-1]
             self.x_past = x_real[:, :self.p]
 
-            stats = torch.load(f'./numerical_results/{args.dataset}/{spec}/seed=42/meanstd.pt')
+            stats = torch.load(f'./numerical_results/{args.dataset}/{spec}/seed=42/meanstd.pt', weights_only=True)
             self.real_mean, self.reaL_std = stats['mean'], stats['std']
 
             G_weights = load_pickle(os.path.join(self.experiment_dir, 'SigCWGAN/G_weights.torch'))
