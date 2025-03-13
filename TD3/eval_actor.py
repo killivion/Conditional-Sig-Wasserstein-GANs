@@ -58,7 +58,8 @@ def compare_actor(args, data_params, actor, env):
     average_risky_action = []
     first = True
     analytical_risky_action, analytical_utility = analytical_solutions(args, data_params)
-    for episode in tqdm(range(args.num_episodes), desc="Episodes", leave=False):
+    for episode in range(args.num_episodes):
+    #for episode in tqdm(range(args.num_episodes), desc="Episodes", leave=False):
         for optimal_actor in [False, True]:
             obs, info = env.reset(optimal_actor=optimal_actor)
             portfolio_value = [1.0]
