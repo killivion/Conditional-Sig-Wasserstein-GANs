@@ -61,9 +61,9 @@ class Data_Puller:
             x_past_sample = self.x_past[idx:idx+1]
             _x_past = x_past_sample.clone()
             x_fake_future = self.G.sample(self.q, _x_past)
-            print(f'x_fake_future: {x_fake_future}')
+            #print(f'x_fake_future: {x_fake_future}')
         S_fake_future = self.inverse_transformer(x_fake_future)
-        print(f'S_fake_future: {S_fake_future}')
+        #print(f'S_fake_future: {S_fake_future}')
 
         return S_fake_future
 
