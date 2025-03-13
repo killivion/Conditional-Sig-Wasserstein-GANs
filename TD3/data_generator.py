@@ -74,4 +74,4 @@ class Data_Puller:
         price_paths_reconstructed = np.exp(log_prices_reconstructed)
         price_paths_reconstructed = np.insert(price_paths_reconstructed, 0, 1)
 
-        return price_paths_reconstructed
+        return pd.DataFrame(price_paths_reconstructed)
