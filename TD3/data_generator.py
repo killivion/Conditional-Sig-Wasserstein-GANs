@@ -25,7 +25,7 @@ class Data_Puller:
             dim = x_real.shape[-1]
             self.x_past = x_real[:, :self.p]
 
-            G_weights = load_pickle(os.path.join(self.experiment_dir, 'G_weights.torch'))
+            G_weights = load_pickle(os.path.join(self.experiment_dir, 'SigCWGAN/G_weights.torch'))
             self.G = SimpleGenerator(dim * self.p, dim, 3 * (50,), dim).to(device)
             self.G.load_state_dict(G_weights)
 
