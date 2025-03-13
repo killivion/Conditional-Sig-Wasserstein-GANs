@@ -8,7 +8,7 @@ from scipy.stats import norm
 from stable_baselines3.td3.policies import TD3Policy
 import torch
 
-import generate
+#import generate
 
 from sklearn.model_selection import train_test_split
 
@@ -222,7 +222,7 @@ class ActionLoggingCallback(BaseCallback):
 def pull_data(args, data_params):
     if args.GAN_sampling == True:
         spec = ('mu={}_sigma={}_window_size={}'.format(data_params['mu'], data_params['vola_matrix'], args.window_size))
-        data = generate.generate_data(spec, args)
+        #data = generate.generate_data(spec, args)
     elif args.dataset == 'YFinance':
         ticker = data_params['data_params']['ticker']
         data = yf.download(ticker, start="2020-01-01", end="2024-01-01")['Adj Close']
@@ -235,7 +235,7 @@ def pull_data(args, data_params):
 
 
 def get_data(dataset, isSigLib, **data_params):
-    if dataset in ['Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes']:
+    if dataset in ['Blackscholes', 'Heston', 'YFinance', 'correlated_Blackscholes']:
         #generates data via GBM, Heston, VarGamma, KouJumpDiffusion or LevyIto model and loads it via the DataLoader file
         import DataLoader as DataLoader
         loader = DataLoader.LoadData(dataset=dataset, isSigLib=isSigLib, data_params=data_params)
@@ -253,18 +253,6 @@ def get_dataset_configuration(dataset, window_size, num_paths, grid_points):
     elif dataset == 'Heston':
         generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, V0=V0, kappa=kappa, xi=xi, rho=rho, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
                      for mu, sigma, V0, kappa, xi, rho in [(0.05, 0.2, 0.3, 0.2, 0.2, 0.5)]
-        )
-    elif dataset == 'VarianceGamma':
-        generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, nu=nu, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
-                     for mu, sigma, nu in [(0.05, 0.2, 0.02)]
-        )
-    elif dataset == 'Kou_Jump_Diffusion':
-        generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, kou_lambda=kou_lambda, p=p, eta1=eta1, eta2=eta2, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
-                     for mu, sigma, kou_lambda, p, eta1, eta2 in [(0.05, 0.2, 2, 0.3, 25, 50)]
-        )
-    elif dataset == 'Levy_Ito':
-        generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, lambda_large=lambda_large, lambda_small=lambda_small, jump_mean_large=jump_mean_large, jump_std_large=jump_std_large, jump_mean_small=jump_mean_small, jump_std_small=jump_std_small, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
-                     for mu, sigma, lambda_large, lambda_small, jump_mean_large, jump_std_large, jump_mean_small, jump_std_small in [(0.05, 0.2, 2, 300, 0.03, 0.05, 0.0005, 0.0005)]
         )
     elif dataset == 'YFinance':
         generator = (('ticker_length={}'.format(len(ticker)), dict(data_params=dict(ticker=ticker))) for ticker in [(["^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX",
