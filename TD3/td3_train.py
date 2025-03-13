@@ -30,15 +30,15 @@ def main(args, i=0):
     if args.dataset == 'correlated_Blackscholes':
         mu, vola_matrix = generate_random_params(args.num_paths, args.num_bm)
         data_params = dict(data_params=dict(mu=mu, vola_matrix=vola_matrix, window_size=args.window_size, num_paths=args.num_paths, num_bm=args.num_bm, grid_points=args.grid_points))
-        spec = ('mu={}_sigma={}_window_size={}'.format(data_params['mu'], data_params['vola_matrix'], args.window_size))
+        spec = ('mu={}_sigma={}_window_size={}'.format(data_params['data_params']['mu'], data_params['data_params']['vola_matrix'], args.window_size))
     elif args.dataset == 'Heston':
         lambda_0, v0_sqrt, kappa, sigma, xi, rho = 0.06, 0.2, 1.5, 0.2, 0.3, -0.7
         data_params = dict(data_params=dict(lambda_0=lambda_0, v0_sqrt=v0_sqrt, kappa=kappa, sigma=sigma, xi=xi, rho=rho, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.grid_points))
-        spec = ('mu={}_sigma={}_window_size={}'.format(data_params['lambda_0'], data_params['v0_sqrt'], args.window_size))
+        spec = ('mu={}_sigma={}_window_size={}'.format(data_params['data_params']['lambda_0'], data_params['data_params']['v0_sqrt'], args.window_size))
     elif args.dataset == 'YFinance':
         ticker, start, end = "^GSPC", "2000-01-01", "2025-01-01"
-        data_params = dict(params=dict(ticker=ticker, start=start, end=end))
-        spec = ('ticker={}_start={}_end={}'.format(data_params['ticker'], data_params['start'], data_params['end']))
+        data_params = dict(data_params=dict(ticker=ticker, start=start, end=end))
+        spec = ('ticker={}_start={}_end={}'.format(data_params['data_params']['ticker'], data_params['data_params']['start'], data_params['end']))
     else:
         generator = get_dataset_configuration(args.dataset, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.grid_points)
         for s, d in generator:
@@ -169,7 +169,7 @@ if __name__ == '__main__':
     parser.add_argument('-model_ID', default=11, type=int)
     #parser.add_argument('-laps', default=1, type=int)
     parser.add_argument('-statement', default='CustomActionNorm', type=str)
-    parser.add_argument('-mode', default='compare', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
+    parser.add_argument('-mode', default='train', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
 
     parser.add_argument('--learning_rates', default=[0.0001], type=float, nargs="+")
     parser.add_argument('--batch_sizes', default=[1024], type=int, nargs="+")

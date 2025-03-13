@@ -17,8 +17,9 @@ class CustomTD3Policy(TD3Policy):
     def __init__(self, *args, allow_lending=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.allow_lending = allow_lending
-        self.low = torch.tensor(self.action_space.low, device='cuda')
-        self.high = torch.tensor(self.action_space.high, device='cuda') # actions.device
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.low = torch.tensor(self.action_space.low, device=device)
+        self.high = torch.tensor(self.action_space.high, device=device)  # actions.device
 
     def softmax(self, x, axis=-1):
         return torch.softmax(x, dim=axis)
