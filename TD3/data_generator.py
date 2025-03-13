@@ -39,7 +39,6 @@ class Data_Puller:
         else:
             data = self.stochastically_get_data(args.dataset).T
         returns = data.pct_change().dropna().values + 1  # Compute dt change ratio [not dt returns]
-        print(returns)
         #incremental_risk_free_rate = (1 + args.risk_free_rate) ** (1 / args.grid_points)
         risk_free_column = np.full((returns.shape[0], 1), np.exp(args.risk_free_rate/args.grid_points))
         return np.hstack((risk_free_column, returns)), np.array(data)
@@ -55,9 +54,13 @@ class Data_Puller:
 
     def generate(self):
         with torch.no_grad():
-            _x_past = self.x_past.clone()
+            idx = torch.randint(0, self.x_past.shape[1], (1,)).item()
+            x_past_sample = self.x_past[:, idx, :]
+            _x_past = x_past_sample.clone()
             x_fake_future = self.G.sample(self.q, _x_past)
+            print(f'x_fake_future: {x_fake_future}')
         S_fake_future = self.inverse_transformer(x_fake_future)
+        print(f'S_fake_future: {S_fake_future}')
 
         return S_fake_future
 

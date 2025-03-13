@@ -175,6 +175,8 @@ if __name__ == '__main__':
     parser.add_argument('--batch_sizes', default=[1024], type=int, nargs="+")
 
     args = parser.parse_args()
+    if not torch.cuda.is_available():
+        args.GAN_sampling = True
 
     args.batch_size = args.batch_sizes[0]
     args.learning_rate = args.learning_rates[0]
