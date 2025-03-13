@@ -16,6 +16,7 @@ class Data_Puller:
         self.loader = DataLoader.LoadData(dataset=args.dataset, isSigLib=False, data_params=data_params)
         if args.GAN_sampling:
             self.experiment_dir = f'./numerical_results/{args.dataset}/{spec}/seed=42/SigCWGAN'
+            print(self.experiment_dir)
             torch.random.manual_seed(0)
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
             #base_config = BaseConfig(device=device)
