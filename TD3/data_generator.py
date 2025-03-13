@@ -55,9 +55,7 @@ class Data_Puller:
     def generate(self):
         with torch.no_grad():
             _x_past = self.x_past.clone()
-            print(_x_past)
             x_fake_future = self.G.sample(self.q, _x_past)
-            print(x_fake_future)
         S_fake_future = self.inverse_transformer(x_fake_future)
 
         return S_fake_future
