@@ -133,8 +133,8 @@ def get_dataset_configuration(dataset, window_size, num_paths, num_bm, grid_poin
                      for mu, vola_matrix in [(param_mu, param_vola_matrix)]
                      )
     elif dataset == 'Heston':
-        generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, V0=V0, kappa=kappa, xi=xi, rho=rho, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
-                     for mu, sigma, V0, kappa, xi, rho in [(0.05, 0.2, 0.3, 0.2, 0.2, 0.5)]
+        generator = (('mu={}_sigma={}_window_size={}'.format(lambda_0, v0_sqrt, window_size), dict(data_params=dict(lambda_0=lambda_0, v0_sqrt=v0_sqrt, kappa=kappa, sigma=sigma, xi=xi, rho=rho, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
+                     for lambda_0, v0_sqrt, kappa, sigma, xi, rho in [(0.06, 0.2, 1.5, 0.2, 0.3, -0.7)]
         )
     elif dataset == 'VarianceGamma':
         generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, nu=nu, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
@@ -149,7 +149,20 @@ def get_dataset_configuration(dataset, window_size, num_paths, num_bm, grid_poin
                      for mu, sigma, lambda_large, lambda_small, jump_mean_large, jump_std_large, jump_mean_small, jump_std_small in [(0.05, 0.2, 2, 300, 0.03, 0.05, 0.0005, 0.0005)]
         )
     elif dataset == 'YFinance':
-        generator = (('ticker_length={}'.format(len(ticker)), dict(data_params=dict(ticker=ticker))) for ticker in [(["^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX",
+        generator = ((
+                'ticker={}_start={}_end={}'.format(ticker, start, end),
+                dict(params=dict(ticker=ticker, start=start, end=end)))
+            for ticker, start, end in [
+            ("^GSPC", "2000-01-01", "2025-01-01"),
+            #("^GSPC", "2004-07-01", "2024-06-30"),
+            #("^GSPC", "2009-07-01", "2024-06-30"),
+            #("^GSPC", "2014-07-01", "2024-06-30"),
+            #("^GSPC", "2019-07-01", "2024-06-30"),
+            #("^GSPC", "2021-07-01", "2024-06-30"),
+            #("^GSPC", "2022-07-01", "2024-06-30")
+            ])
+        """
+        ["^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX",
         # Large-Cap Tech Stocks (FAANG & Others)
         "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA", "ORCL", "INTC", "CSCO", "IBM", "ADBE", "CRM", "TXN",
 
@@ -188,8 +201,8 @@ def get_dataset_configuration(dataset, window_size, num_paths, num_bm, grid_poin
 
         # Forex and Cryptocurrency
         "EURUSD=X", "GBPUSD=X", "JPY=X", "AUDUSD=X", "BTC-USD", "ETH-USD", "LTC-USD", "XRP-USD", "BCH-USD",
-        "DOT-USD",]
-        )])
+        "DOT-USD",])])
+        """
     else:
         raise Exception('%s not a valid data type.' % dataset)
     return generator

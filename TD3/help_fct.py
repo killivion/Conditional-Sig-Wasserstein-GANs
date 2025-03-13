@@ -221,7 +221,12 @@ class ActionLoggingCallback(BaseCallback):
 
 def pull_data(args, data_params):
     if args.GAN_sampling == True:
-        spec = ('mu={}_sigma={}_window_size={}'.format(data_params['mu'], data_params['vola_matrix'], args.window_size))
+        if args.dataset == 'correlated_Blackscholes':
+            spec = ('mu={}_sigma={}_window_size={}'.format(data_params['mu'], data_params['vola_matrix'], args.window_size))
+        elif args.dataset == 'Heston':
+            spec = ('mu={}_sigma={}_window_size={}'.format(data_params['lambda_0'], data_params['v0_sqrt'], args.window_size))
+        elif args.dataset == 'YFinance':
+            spec = ('ticker={}_start={}_end={}'.format(data_params['ticker'], data_params['start'], data_params['end']))
         #data = generate.generate_data(spec, args)
     elif args.dataset == 'YFinance':
         ticker = data_params['data_params']['ticker']
@@ -250,52 +255,19 @@ def get_dataset_configuration(dataset, window_size, num_paths, grid_points):
         generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
                      for mu, sigma in [(0.07, 0.2)]
         )
-    elif dataset == 'Heston':
-        generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, V0=V0, kappa=kappa, xi=xi, rho=rho, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
-                     for mu, sigma, V0, kappa, xi, rho in [(0.05, 0.2, 0.3, 0.2, 0.2, 0.5)]
-        )
     elif dataset == 'YFinance':
-        generator = (('ticker_length={}'.format(len(ticker)), dict(data_params=dict(ticker=ticker))) for ticker in [(["^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX",
-        # Large-Cap Tech Stocks (FAANG & Others)
-        "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA", "ORCL", "INTC", "CSCO", "IBM", "ADBE", "CRM", "TXN",
-
-        # Financial Sector
-        "JPM", "BAC", "GS", "C", "WFC", "MS", "SCHW", "BLK", "BK", "AXP", "COF", "USB", "TFC", "CME",
-
-        # Consumer Goods & Retail
-        "WMT", "PG", "KO", "PEP", "COST", "MCD", "NKE", "TGT", "SBUX", "HD", "LOW", "DG", "TJX", "YUM",
-
-        # Healthcare
-        "JNJ", "PFE", "UNH", "MRK", "CVS", "LLY", "ABT", "TMO", "BMY", "DHR", "ZTS", "MDT", "BSX",
-
-        # Energy Sector
-        "XOM", "CVX", "SLB", "COP", "OXY", "PSX", "VLO", "HAL", "MPC", "BKR", "EOG", "FANG", "KMI",
-
-        # Industrials
-        "BA", "CAT", "MMM", "GE", "HON", "UPS", "UNP", "LMT", "RTX", "FDX", "CSX", "NSC", "WM", "NOC",
-
-        # Utilities
-        "NEE", "DUK", "SO", "D", "EXC", "AEP", "SRE", "PEG", "WEC", "ED", "XEL", "ES", "AWK", "DTE",
-
-        # Telecommunications
-        "T", "VZ", "TMUS", "CCI", "AMT", "VOD", "S", "CHT", "TU", "NOK", "ORAN", "BTI", "KT", "PHI",
-
-        # Real Estate
-        "PLD", "AMT", "CCI", "SPG", "PSA", "EQIX", "EQR", "ESS", "AVB", "O", "MAA", "UDR", "VTR", "HCP",
-
-        # Consumer Discretionary
-        "DIS", "HD", "MCD", "SBUX", "NKE", "LVS", "GM", "F", "HMC", "TM", "TSLA", "YUM", "MAR", "CCL",
-
-        # ETFs and Funds
-        "SPY", "QQQ", "DIA", "IWM", "GLD", "SLV", "TLT", "XLF", "XLK", "XLE", "XLU", "XLI", "XLY", "XLP",
-
-        # Commodities
-        "CL=F", "GC=F", "SI=F", "NG=F", "HG=F", "ZC=F", "ZW=F", "ZS=F", "LE=F", "HE=F", "KC=F", "CC=F", "CT=F",
-
-        # Forex and Cryptocurrency
-        "EURUSD=X", "GBPUSD=X", "JPY=X", "AUDUSD=X", "BTC-USD", "ETH-USD", "LTC-USD", "XRP-USD", "BCH-USD",
-        "DOT-USD",]
-        )])
+        generator = ((
+            'ticker={}_start={}_end={}'.format(ticker, start, end),
+            dict(params=dict(ticker=ticker, start=start, end=end)))
+            for ticker, start, end in [
+            ("^GSPC", "2000-01-01", "2025-01-01"),
+            # ("^GSPC", "2004-07-01", "2024-06-30"),
+            # ("^GSPC", "2009-07-01", "2024-06-30"),
+            # ("^GSPC", "2014-07-01", "2024-06-30"),
+            # ("^GSPC", "2019-07-01", "2024-06-30"),
+            # ("^GSPC", "2021-07-01", "2024-06-30"),
+            # ("^GSPC", "2022-07-01", "2024-06-30")
+        ])
     else:
         raise Exception('%s not a valid data type.' % dataset)
     return generator

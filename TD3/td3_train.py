@@ -28,8 +28,13 @@ tensorboard --logdir ./logs
 def main(args, i=0):
     if args.dataset == 'correlated_Blackscholes':
         mu, vola_matrix = generate_random_params(args.num_paths, args.num_bm)
-        spec = 'args.num_paths={}_window_size={}'.format(args.num_paths, args.window_size)
         data_params = dict(data_params=dict(mu=mu, vola_matrix=vola_matrix, window_size=args.window_size, num_paths=args.num_paths, num_bm=args.num_bm, grid_points=args.grid_points))
+    elif args.dataset == 'Heston':
+        lambda_0, v0_sqrt, kappa, sigma, xi, rho = 0.06, 0.2, 1.5, 0.2, 0.3, -0.7
+        data_params = dict(data_params=dict(lambda_0=lambda_0, v0_sqrt=v0_sqrt, kappa=kappa, sigma=sigma, xi=xi, rho=rho, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.grid_points))
+    elif args.dataset == 'YFinance':
+        ticker, start, end = "^GSPC", "2000-01-01", "2025-01-01"
+        data_params = dict(params=dict(ticker=ticker, start=start, end=end))
     else:
         generator = get_dataset_configuration(args.dataset, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.grid_points)
         for s, d in generator:
@@ -51,9 +56,9 @@ def main(args, i=0):
             print(f"Analytical Actions: {np.insert(analytical_risky_action, 0, 1 - sum(analytical_risky_action))}, Analytical Utility: {analytical_utility}, Risky Fraciton is {sum(analytical_risky_action)}")
             print('_____')
             global_first_lap = False
-        run(args, spec, data_params, returns, stock_data, i)
+        run(args, data_params, returns, stock_data, i)
 
-def run(args, spec, data_params, returns, stock_data, i=0):
+def run(args, data_params, returns, stock_data, i=0):
     #print('Executing TD3 on %s, %s' % (args.dataset, spec))
 
     if args.mode == 'train':
