@@ -21,7 +21,7 @@ class Data_Puller:
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
             #base_config = BaseConfig(device=device)
             self.p, self.q = 3, 3  # base_config.p, base_config.q
-            x_real = load_pickle(os.path.join(os.path.dirname(self.experiment_dir), 'x_real_test.torch')).to(device)
+            x_real = load_pickle(os.path.join(os.path.dirname(self.experiment_dir), 'x_real_test.torch')).to(device)  # change this to x_real.torch
             dim = x_real.shape[-1]
             self.x_past = x_real[:, :self.p]
 
@@ -55,7 +55,9 @@ class Data_Puller:
     def generate(self):
         with torch.no_grad():
             _x_past = self.x_past.clone()
+            print(_x_past)
             x_fake_future = self.G.sample(self.q, _x_past)
+            print(x_fake_future)
         S_fake_future = self.inverse_transformer(x_fake_future)
 
         return S_fake_future
