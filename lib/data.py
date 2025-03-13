@@ -43,6 +43,9 @@ class StandardScalerTS():
         return (x - self.mean.to(x.device)) / self.std.to(x.device)
 
     def inverse_transform(self, x):
+        if self.mean is None:
+            self.mean = torch.mean(x, dim=self.axis)
+            self.std = torch.std(x, dim=self.axis)
         return x * self.std.to(x.device) + self.mean.to(x.device)
 
 
