@@ -39,6 +39,7 @@ class Data_Puller:
         else:
             data = self.stochastically_get_data(args.dataset).T
         returns = data.pct_change().dropna().values + 1  # Compute dt change ratio [not dt returns]
+        print(returns)
         #incremental_risk_free_rate = (1 + args.risk_free_rate) ** (1 / args.grid_points)
         risk_free_column = np.full((returns.shape[0], 1), np.exp(args.risk_free_rate/args.grid_points))
         return np.hstack((risk_free_column, returns)), np.array(data)
