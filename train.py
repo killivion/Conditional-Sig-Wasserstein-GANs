@@ -151,7 +151,7 @@ def get_dataset_configuration(dataset, window_size, num_paths, num_bm, grid_poin
     elif dataset == 'YFinance':
         generator = ((
                 'ticker={}_start={}_end={}'.format(ticker, start, end),
-                dict(params=dict(ticker=ticker, start=start, end=end)))
+                dict(data_params=dict(ticker=ticker, start=start, end=end)))
             for ticker, start, end in [
             ("^GSPC", "2000-01-01", "2025-01-01"),
             #("^GSPC", "2004-07-01", "2024-06-30"),
