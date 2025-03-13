@@ -20,11 +20,11 @@ class Pipeline:
             x = step.transform(x)
         return x
 
-    def inverse_transform(self, x, until=None):
+    def inverse_transform(self, x, real_mean, real_std, until=None):
         for n, step in self.steps[::-1]:
             if n == until:
                 break
-            x = step.inverse_transform(x)
+            x = step.inverse_transform(x, real_mean, real_std)
         return x
 
 
@@ -42,10 +42,10 @@ class StandardScalerTS():
             self.std = torch.std(x, dim=self.axis)
         return (x - self.mean.to(x.device)) / self.std.to(x.device)
 
-    def inverse_transform(self, x):
+    def inverse_transform(self, x, real_mean, real_std):
         if self.mean is None:
-            self.mean = torch.mean(x, dim=self.axis)
-            self.std = torch.std(x, dim=self.axis)
+            self.mean = real_mean
+            self.std = real_std
         return x * self.std.to(x.device) + self.mean.to(x.device)
 
 
@@ -216,6 +216,16 @@ def get_test_stocks(dataset, isSigLib, data_params):
         log_prices = np.log(price_paths)
         logrtn = np.diff(log_prices, axis=1)
         data_raw = torch.from_numpy(logrtn[..., None]).float()
+        if dataset == 'correlated_Blackscholes':
+            spec = ('mu={}_sigma={}_window_size={}'.format(data_params['data_params']['mu'],data_params['data_params']['vola_matrix'], data_params['data_params']['window_size']))
+        elif dataset == 'Heston':
+            spec = ('mu={}_sigma={}_window_size={}'.format(data_params['data_params']['lambda_0'], data_params['data_params']['v0_sqrt'], data_params['data_params']['args.window_size' ]))
+        elif dataset == 'YFinance':
+            spec = ('ticker={}_start={}_end={}'.format(data_params['data_params']['ticker'],data_params['data_params']['start'], data_params['data_params']['end']))
+        mean = torch.mean(data_raw, dim=(0, 1))
+        std = torch.std(data_raw, dim=(0, 1))
+        stats = {'mean': mean, 'std': std}
+        torch.save(stats, f'./numerical_results/{dataset}/{spec}/seed=42/meanstd.pt')
         pipeline = Pipeline(steps=[('standard_scale', StandardScalerTS(axis=(0, 1)))])
         data_pre = pipeline.transform(data_raw)  # scales Data to StandardNormal
         print(data_pre)

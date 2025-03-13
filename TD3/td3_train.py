@@ -38,7 +38,7 @@ def main(args, i=0):
     elif args.dataset == 'YFinance':
         ticker, start, end = "^GSPC", "2000-01-01", "2025-01-01"
         data_params = dict(data_params=dict(ticker=ticker, start=start, end=end))
-        spec = ('ticker={}_start={}_end={}'.format(data_params['data_params']['ticker'], data_params['data_params']['start'], data_params['end']))
+        spec = ('ticker={}_start={}_end={}'.format(data_params['data_params']['ticker'], data_params['data_params']['start'], data_params['data_params']['end']))
     else:
         generator = get_dataset_configuration(args.dataset, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.grid_points)
         for s, d in generator:

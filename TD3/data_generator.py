@@ -25,6 +25,9 @@ class Data_Puller:
             dim = x_real.shape[-1]
             self.x_past = x_real[:, :self.p]
 
+            stats = torch.load(f'./numerical_results/{args.dataset}/{spec}/seed=42/meanstd.pt')
+            self.real_mean, self.reaL_std = stats['mean'], stats['std']
+
             G_weights = load_pickle(os.path.join(self.experiment_dir, 'SigCWGAN/G_weights.torch'))
             self.G = SimpleGenerator(dim * self.p, dim, 3 * (50,), dim).to(device)
             self.G.load_state_dict(G_weights)
@@ -68,7 +71,7 @@ class Data_Puller:
     def inverse_transformer(self, data):
         from lib.data import Pipeline, StandardScalerTS
         pipeline = Pipeline(steps=[('standard_scale', StandardScalerTS(axis=(0, 1)))])
-        logrtn_recovered = pipeline.inverse_transform(data)
+        logrtn_recovered = pipeline.inverse_transform(data, self.real_mean, self.reaL_std)
         logrtn_recovered = logrtn_recovered.detach().cpu().numpy() if isinstance(logrtn_recovered,torch.Tensor) else logrtn_recovered
         logrtn_recovered = logrtn_recovered.squeeze(-1)
 
@@ -77,3 +80,49 @@ class Data_Puller:
         price_paths_reconstructed = np.insert(price_paths_reconstructed, 0, 1)
 
         return pd.DataFrame(price_paths_reconstructed)
+
+
+if __name__ == "__main__": #Testing
+    x_test = torch.tensor([[[ 0.6958],
+         [ 0.0344],
+         [ 0.8531],
+         [ 1.7649],
+         [-0.0655],
+         [-0.0655],
+         [ 1.8234],
+         [ 0.9778],
+         [-0.3106],
+         [ 0.7436],
+         [-0.3043],
+         [-0.3067],
+         [ 0.4305],
+         [-1.8145],
+         [-1.6183],
+         [-0.4073],
+         [-0.8766],
+         [ 0.5058],
+         [-0.7674],
+         [-1.2927]]])
+
+    from lib.data import Pipeline, StandardScalerTS
+
+    pipeline = Pipeline(steps=[('standard_scale', StandardScalerTS(axis=(0, 1)))])
+    logrtn_recovered = pipeline.inverse_transform(x_test)
+    logrtn_recovered = logrtn_recovered.detach().cpu().numpy() if isinstance(logrtn_recovered, torch.Tensor) else logrtn_recovered
+    logrtn_recovered = logrtn_recovered.squeeze(-1)
+
+    log_prices_reconstructed = np.cumsum(logrtn_recovered, axis=1)
+    price_paths_reconstructed = np.exp(log_prices_reconstructed)
+    price_paths_reconstructed = np.insert(price_paths_reconstructed, 0, 1)
+
+    print(pd.DataFrame(price_paths_reconstructed))
+
+    data_test = np.array([[1.,         1.01393075, 1.00982871, 1.02826051, 1.0731694 , 1.0659443,
+  1.05876833 ,1.10676 ,   1.13076921, 1.11573508, 1.13274016, 1.11787054,
+  1.10312426, 1.11049313, 1.05205446 ,1.00199408 ,0.98609036 ,0.95819947,
+  0.96656656, 0.94200516, 0.90511759]])
+    log_prices = np.log(data_test)
+    logrtn = np.diff(log_prices, axis=1)
+    data_raw = torch.from_numpy(logrtn[..., None]).float()
+    pipeline = Pipeline(steps=[('standard_scale', StandardScalerTS(axis=(0, 1)))])
+    data_pre = pipeline.transform(data_raw)
