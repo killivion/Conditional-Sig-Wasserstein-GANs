@@ -145,7 +145,7 @@ def evaluate_generator(model_name, seed, experiment_dir, dataset, use_cuda=True)
     # ----------------------------------------------
     with torch.no_grad():
         x_fake = G.sample(8000, x_past[0:1])
-    plot_summary(x_fake=x_fake, x_real=x_real, max_lag=q)
+        plot_summary(x_fake=x_fake, x_real=x_real, max_lag=q)
     plt.savefig(os.path.join(experiment_dir, 'summary_long.png'))
     plt.close()
     plt.plot(to_numpy(x_fake[0, :1000]))
