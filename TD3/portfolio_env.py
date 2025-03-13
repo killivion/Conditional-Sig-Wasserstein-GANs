@@ -4,7 +4,7 @@ from help_fct import analytical_solutions, find_confidence_intervals, action_nor
 from collections import deque
 
 class PortfolioEnv(gym.Env):
-    def __init__(self, args, data_params, stock_returns, stock_data):
+    def __init__(self, args, data_params, stock_returns, stock_data, spec):
         super(PortfolioEnv, self).__init__()
         self.stock_returns = stock_returns
         self.stock_data = stock_data
@@ -15,7 +15,7 @@ class PortfolioEnv(gym.Env):
         self.normalized_stock_returns = (self.stock_returns - 1) / np.std(self.stock_returns, axis=1, keepdims=True)
         self._normalize_parameter()
         import data_generator
-        self.data_puller = data_generator.Data_Puller()
+        self.data_puller = data_generator.Data_Puller(args, spec, data_params)
         # Define action and observation space
         feature_size = len(self.mu) + len(self.vola_matrix.flatten())
         if args.time_dependent:

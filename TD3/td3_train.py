@@ -12,9 +12,10 @@ import warnings
 
 import eval_actor
 from track_learning import monitor_plot
-from help_fct import CustomTD3Policy, find_largest_td3_folder, ActionLoggingCallback, generate_random_params, pull_data, fuse_folders, analytical_solutions, action_normalizer, expected_utility, analytical_entry_wealth_offset, get_dataset_configuration
+from help_fct import CustomTD3Policy, find_largest_td3_folder, ActionLoggingCallback, generate_random_params, fuse_folders, analytical_solutions, action_normalizer, expected_utility, analytical_entry_wealth_offset, get_dataset_configuration
 from portfolio_env import PortfolioEnv
 from hyperparameter_tuning import optimize_td3, test_optimized_td3
+import data_generator
 
 """
 tensorboard --logdir ./TD3/logs
@@ -29,18 +30,23 @@ def main(args, i=0):
     if args.dataset == 'correlated_Blackscholes':
         mu, vola_matrix = generate_random_params(args.num_paths, args.num_bm)
         data_params = dict(data_params=dict(mu=mu, vola_matrix=vola_matrix, window_size=args.window_size, num_paths=args.num_paths, num_bm=args.num_bm, grid_points=args.grid_points))
+        spec = ('mu={}_sigma={}_window_size={}'.format(data_params['mu'], data_params['vola_matrix'], args.window_size))
     elif args.dataset == 'Heston':
         lambda_0, v0_sqrt, kappa, sigma, xi, rho = 0.06, 0.2, 1.5, 0.2, 0.3, -0.7
         data_params = dict(data_params=dict(lambda_0=lambda_0, v0_sqrt=v0_sqrt, kappa=kappa, sigma=sigma, xi=xi, rho=rho, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.grid_points))
+        spec = ('mu={}_sigma={}_window_size={}'.format(data_params['lambda_0'], data_params['v0_sqrt'], args.window_size))
     elif args.dataset == 'YFinance':
         ticker, start, end = "^GSPC", "2000-01-01", "2025-01-01"
         data_params = dict(params=dict(ticker=ticker, start=start, end=end))
+        spec = ('ticker={}_start={}_end={}'.format(data_params['ticker'], data_params['start'], data_params['end']))
     else:
         generator = get_dataset_configuration(args.dataset, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.grid_points)
         for s, d in generator:
             spec, data_params = s, d  # odd way to do it - easiest at the time, works in 1-d
 
-    returns, stock_data = pull_data(args, data_params)
+    import data_generator
+    data_puller = data_generator.Data_Puller(args, spec, data_params)
+    returns, stock_data = data_puller.pull_data(args, data_params)
     if args.mode == 'tuning':
         custom_args = {"args": args, "data_params": data_params, "returns": returns, "stock_data": stock_data}
         optimize_func = partial(optimize_td3, **custom_args)
@@ -56,15 +62,15 @@ def main(args, i=0):
             print(f"Analytical Actions: {np.insert(analytical_risky_action, 0, 1 - sum(analytical_risky_action))}, Analytical Utility: {analytical_utility}, Risky Fraciton is {sum(analytical_risky_action)}")
             print('_____')
             global_first_lap = False
-        run(args, data_params, returns, stock_data, i)
+        run(args, data_params, returns, stock_data, spec)
 
-def run(args, data_params, returns, stock_data, i=0):
+def run(args, data_params, returns, stock_data, spec):
     #print('Executing TD3 on %s, %s' % (args.dataset, spec))
 
     if args.mode == 'train':
-        env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_returns=returns, stock_data=stock_data))
+        env = Monitor(PortfolioEnv(args=args, data_params=data_params, stock_returns=returns, stock_data=stock_data, spec=spec))
     else:
-        env = PortfolioEnv(args=args, data_params=data_params, stock_returns=returns, stock_data=stock_data)
+        env = PortfolioEnv(args=args, data_params=data_params, stock_returns=returns, stock_data=stock_data, spec=spec)
     vec_env = DummyVecEnv([lambda: env])
 
     # Add action noise (exploration)

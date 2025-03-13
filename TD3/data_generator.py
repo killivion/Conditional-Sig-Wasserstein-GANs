@@ -15,13 +15,6 @@ class Data_Puller:
     def __init__(self, args, spec, data_params):
         self.loader = DataLoader.LoadData(dataset=args.dataset, isSigLib=False, data_params=data_params)
         if args.GAN_sampling:
-            if args.dataset == 'correlated_Blackscholes':
-                spec = ('mu={}_sigma={}_window_size={}'.format(data_params['mu'], data_params['vola_matrix'], args.window_size))
-            elif args.dataset == 'Heston':
-                spec = ('mu={}_sigma={}_window_size={}'.format(data_params['lambda_0'], data_params['v0_sqrt'], args.window_size))
-            elif args.dataset == 'YFinance':
-                spec = ('ticker={}_start={}_end={}'.format(data_params['ticker'], data_params['start'], data_params['end']))
-
             self.experiment_dir = f'./numerical_results/{args.dataset}/{spec}/seed=42/{args.algo}'
             torch.random.manual_seed(0)
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
