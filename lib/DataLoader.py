@@ -201,7 +201,7 @@ class LoadData:
 
         return S, t
 
-    def get_yfinance_data(self, S0 = 1., ticker="^GSPC", start="2020-01-01", end="2024-01-01", window_size=22, split=False, plot=False):
+    def get_yfinance_data(self, S0 = 1., ticker="^GSPC", start="2000-01-01", end="2025-01-01", window_size=252, split=False, plot=False):
         """Download and reformat yfinance data starting at S0. "
         Parameters: ticker: List of Stocks that are viewed, start, end: None"""
 
@@ -251,8 +251,9 @@ class LoadData:
 
         return S, t
 
+
 if __name__ == "__main__": #Testing
-    test = 1
+    test = 0
     if test == 0:
         import matplotlib.pyplot as plt
 
@@ -372,8 +373,8 @@ if __name__ == "__main__": #Testing
             #"VarianceGamma": {**VarGamma_parameter, **general_parameter},
             #"Kou_Jump_Diffusion": {**Kou_parameter, **general_parameter},
             #"Levy_Ito": {**LevyIto_parameter, **general_parameter},
-            #"YFinance": YFinance_parameter,
-            "correlated_Blackscholes": {"mu": mu, "vola_matrix": vola_matrix, "window_size": general_parameter['window_size'], "num_paths": num_paths},
+            "YFinance": {"S0": 1},
+            #"correlated_Blackscholes": {"mu": mu, "vola_matrix": vola_matrix, "window_size": general_parameter['window_size'], "num_paths": num_paths},
         }
 
         if plot:
