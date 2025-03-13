@@ -54,6 +54,7 @@ class Data_Puller:
 
     def generate(self):
         with torch.no_grad():
+            print(self.x_past.shape)
             idx = torch.randint(0, self.x_past.shape[1], (1,)).item()
             x_past_sample = self.x_past[:, idx, :]
             _x_past = x_past_sample.clone()
