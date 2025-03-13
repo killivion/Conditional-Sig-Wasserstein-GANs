@@ -237,7 +237,7 @@ def get_data(dataset, p, q, isSigLib, **data_params):
         pipeline, x_real_raw, x_real = get_var_dataset(**data_params)
     elif dataset in ['Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes']:
         pipeline, x_real_raw, x_real = get_test_stocks(dataset, isSigLib, **data_params)
-        assert x_real.shape[0] == 2
+        assert x_real.shape[0] == 2 #print
     else:
         raise NotImplementedError('Dataset %s not valid' % dataset)
 

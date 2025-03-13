@@ -74,7 +74,7 @@ class LoadData:
 
         for i in range(1, window_size+1):
             W = np.random.normal(size=num_bm)
-            S[:, i] = S[:, i - 1] * np.exp(mu - 0.5 * np.diag(vola_matrix @ vola_matrix.T) * dt + vola_matrix @ W * np.sqrt(dt))
+            S[:, i] = S[:, i - 1] * np.exp((mu - 0.5 * np.diag(vola_matrix @ vola_matrix.T)) * dt + vola_matrix @ W * np.sqrt(dt))
 
         #prices_df = pd.DataFrame(S, columns=t)
         #print('Mean and Std of correlated BS %s %s' % (prices_df.iloc[:, -1].mean()**(1 / T) - 1, prices_df.iloc[:, -1].std() / np.sqrt(T)))

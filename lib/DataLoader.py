@@ -64,7 +64,6 @@ class LoadData:
     def generate_correlated_BS(self, mu, vola_matrix, window_size, num_paths, num_bm, grid_points=252, S0=1):
         """Generates num_paths of correlated Black-Scholes, from num_bm Brownian Motions
         mu: Drift, vola_matrix: Volatility [corrospondence of asset to Brownian Motion]"""
-        print(mu, vola_matrix, window_size, num_paths, num_bm, grid_points)
 
         T = window_size / grid_points
         dt = 1 / grid_points
@@ -75,7 +74,7 @@ class LoadData:
 
         for i in range(1, window_size+1):
             W = np.random.normal(size=num_bm)
-            S[:, i] = S[:, i - 1] * np.exp(mu - 0.5 * np.diag(vola_matrix @ vola_matrix.T) * dt + vola_matrix @ W * np.sqrt(dt))
+            S[:, i] = S[:, i - 1] * np.exp((mu - 0.5 * np.diag(vola_matrix @ vola_matrix.T)) * dt + vola_matrix @ W * np.sqrt(dt))
 
         #prices_df = pd.DataFrame(S, columns=t)
         #print('Mean and Std of correlated BS %s %s' % (prices_df.iloc[:, -1].mean()**(1 / T) - 1, prices_df.iloc[:, -1].std() / np.sqrt(T)))
@@ -368,14 +367,18 @@ if __name__ == "__main__": #Testing
         T = general_parameter['window_size']/general_parameter['grid_points']
 
         plot = True
+
+        mu = np.array([0.06])
+        vola_matrix = np.array([[0.44]])
+        window_size = 1000
         models = {
-            #"Blackscholes": {**GBM_parameter, **general_parameter},
+            "Blackscholes": {**GBM_parameter, **general_parameter},
             #"Heston": {**Heston_parameter, **general_parameter},
             #"VarianceGamma": {**VarGamma_parameter, **general_parameter},
             #"Kou_Jump_Diffusion": {**Kou_parameter, **general_parameter},
             #"Levy_Ito": {**LevyIto_parameter, **general_parameter},
-            "YFinance": {"S0": 1},
-            #"correlated_Blackscholes": {"mu": mu, "vola_matrix": vola_matrix, "window_size": general_parameter['window_size'], "num_paths": num_paths},
+            #"YFinance": {"S0": 1},
+            "correlated_Blackscholes": {"mu": mu, "vola_matrix": vola_matrix, "window_size": window_size, "num_paths": num_paths, "num_bm": 1}
         }
 
         if plot:
