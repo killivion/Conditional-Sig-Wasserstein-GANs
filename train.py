@@ -51,7 +51,7 @@ def generate_random_params(num_paths, num_bm):
 
     vola_matrix = np.sqrt(weights * total_vola.T)  # [sigma] = vola_matrix
 
-    return mu, vola_matrix  # mu is drift, vola_matrix
+    return mu, vola_matrix
 
 def set_seed(seed):
     torch.manual_seed(seed)

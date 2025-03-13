@@ -1,6 +1,8 @@
 import os
 
 import torch
+import pandas as pd
+import numpy as np
 
 #from hyperparameters import SIGCWGAN_CONFIGS
 from lib.algos.base import BaseConfig
@@ -40,13 +42,24 @@ def generate_from_generator(experiment_dir, dataset, use_cuda=True):
     return x_fake_future
 
 
-def generate_data(args):
+def generate_data(spec, args):
     #algo_path = os.path.join(args.base_dir, args.dataset, experiment_dir, seed_dir, args.algo)
     spec = 'mu=[0.06]_sigma=[[0.4472136]]_window_size=1000'
     algo_path = f'./numerical_results/{args.dataset}/{spec}/seed=42/{args.algo}'
-    print(algo_path)
-    generate_from_generator(experiment_dir=algo_path, dataset=args.dataset, use_cuda=True)
 
+    x_fake_future = generate_from_generator(experiment_dir=algo_path, dataset=args.dataset, use_cuda=True)
+
+    # Reverse the scaling transformation
+    from lib.data import Pipeline, StandardScalerTS
+    pipeline = Pipeline(steps=[('standard_scale', StandardScalerTS(axis=(0, 1)))])
+    logrtn_recovered = pipeline.inverse_transform(x_fake_future)
+    logrtn_recovered = logrtn_recovered.detach().cpu().numpy() if isinstance(logrtn_recovered, torch.Tensor) else logrtn_recovered
+    logrtn_recovered = logrtn_recovered.squeeze(-1)
+    log_prices_reconstructed = np.cumsum(logrtn_recovered, axis=1)
+    price_paths_reconstructed = np.exp(log_prices_reconstructed)
+    price_paths_reconstructed = np.insert(price_paths_reconstructed, 0, 1)
+
+    return pd.DataFrame(price_paths_reconstructed)
 
 if __name__ == '__main__':
     import argparse

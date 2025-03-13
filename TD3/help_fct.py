@@ -8,6 +8,8 @@ from scipy.stats import norm
 from stable_baselines3.td3.policies import TD3Policy
 import torch
 
+import generate
+
 from sklearn.model_selection import train_test_split
 
 
@@ -15,8 +17,8 @@ class CustomTD3Policy(TD3Policy):
     def __init__(self, *args, allow_lending=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.allow_lending = allow_lending
-        self.low = torch.tensor(self.action_space.low)
-        self.high = torch.tensor(self.action_space.high)
+        self.low = torch.tensor(self.action_space.low, device='cuda')
+        self.high = torch.tensor(self.action_space.high, device='cuda') # actions.device
 
     def softmax(self, x, axis=-1):
         return torch.softmax(x, dim=axis)
@@ -218,7 +220,10 @@ class ActionLoggingCallback(BaseCallback):
 
 
 def pull_data(args, data_params):
-    if args.dataset == 'YFinance':
+    if args.GAN_sampling == True:
+        spec = ('mu={}_sigma={}_window_size={}'.format(data_params['mu'], data_params['vola_matrix'], args.window_size))
+        data = generate.generate_data(spec, args)
+    elif args.dataset == 'YFinance':
         ticker = data_params['data_params']['ticker']
         data = yf.download(ticker, start="2020-01-01", end="2024-01-01")['Adj Close']
     else:

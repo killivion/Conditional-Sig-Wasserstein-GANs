@@ -135,6 +135,7 @@ if __name__ == '__main__':
     #parser.add_argument('-utility_function', default="power", type=str)
     parser.add_argument('-allow_lending', action='store_true', help="Enable lending")
     parser.add_argument('-time_dependent', action='store_true', help="Enables stockdata input")
+    parser.add_argument('-GAN_sampling', action='store_true', help="Enables GAN sampling")
 
     parser.add_argument('-episode_reset', default=10000000, type=int)  #currently off
     #parser.add_argument('-learning_starts', default=100000, type=int)

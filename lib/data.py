@@ -157,10 +157,10 @@ def rolling_window(x, x_lag, add_batch_dim=True):
 
 def get_mit_arrythmia_dataset(filenames):
     DATA_DIR = './data/mit-bih-arrhythmia-database-1.0.0/'
-    import wfdb
+    #import wfdb
     records = list()
-    for fn in filenames:
-        records.append(wfdb.rdsamp(os.path.join(DATA_DIR, fn), sampto=3000)[0][None, ...])
+    #for fn in filenames:
+    #    records.append(wfdb.rdsamp(os.path.join(DATA_DIR, fn), sampto=3000)[0][None, ...])
     records = np.concatenate(records, axis=0)
     records = np.log(5 * (records - records.min() + 1))
     data_raw = torch.from_numpy(records).float()
