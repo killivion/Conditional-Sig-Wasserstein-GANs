@@ -217,11 +217,11 @@ def get_test_stocks(dataset, isSigLib, data_params):
         logrtn = np.diff(log_prices, axis=1)
         data_raw = torch.from_numpy(logrtn[..., None]).float()
         if dataset == 'correlated_Blackscholes':
-            spec = ('mu={}_sigma={}_window_size={}'.format(data_params['data_params']['mu'],data_params['data_params']['vola_matrix'], data_params['data_params']['window_size']))
+            spec = ('mu={}_sigma={}_window_size={}'.format(data_params['mu'],data_params['vola_matrix'], data_params['window_size']))
         elif dataset == 'Heston':
-            spec = ('mu={}_sigma={}_window_size={}'.format(data_params['data_params']['lambda_0'], data_params['data_params']['v0_sqrt'], data_params['data_params']['args.window_size' ]))
+            spec = ('mu={}_sigma={}_window_size={}'.format(data_params['lambda_0'], data_params['v0_sqrt'], data_params['args.window_size' ]))
         elif dataset == 'YFinance':
-            spec = ('ticker={}_start={}_end={}'.format(data_params['data_params']['ticker'],data_params['data_params']['start'], data_params['data_params']['end']))
+            spec = ('ticker={}_start={}_end={}'.format(data_params['ticker'], data_params['start'], data_params['end']))
         mean = torch.mean(data_raw, dim=(0, 1))
         std = torch.std(data_raw, dim=(0, 1))
         stats = {'mean': mean, 'std': std}
