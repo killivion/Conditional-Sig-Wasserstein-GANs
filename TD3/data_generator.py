@@ -5,7 +5,7 @@ import torch
 import pandas as pd
 import numpy as np
 
-from lib.algos.base import BaseConfig
+# from lib.algos.base import BaseConfig
 from lib.arfnn import SimpleGenerator
 from lib.utils import load_pickle
 import DataLoader as DataLoader
