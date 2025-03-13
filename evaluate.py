@@ -59,7 +59,6 @@ def get_algo_config(dataset, experiment_dir):
 
 def evaluate_generator(model_name, seed, experiment_dir, dataset, use_cuda=True):
     """
-
     Args:
         model_name:
         experiment_dir:

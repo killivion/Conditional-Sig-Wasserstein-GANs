@@ -96,7 +96,6 @@ def run(args, data_params, returns, stock_data, i=0):
         #model = TD3("MlpPolicy", vec_env, buffer_size=args.buffer_size, gamma=1, learning_rate=args.learning_rate, action_noise=action_noise, batch_size=args.batch_size, verbose=0, tensorboard_log="./logs/", train_freq=(args.train_freq, "episode"))
         model.learning_starts = args.total_timesteps / 5
         already_trained_timesteps = 0
-    #model.verbose = 0 if hardware == 'cpu' else 0
 
     # Train, Test, Eval [Evaluate], Compare [with some benchmark]
     if args.mode == 'train':  # tensorboard --logdir ./TD3/logs

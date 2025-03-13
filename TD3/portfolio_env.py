@@ -1,6 +1,6 @@
 import gymnasium as gym
 import numpy as np
-from help_fct import pull_data, analytical_solutions, find_confidence_intervals, action_normalizer
+from help_fct import analytical_solutions, find_confidence_intervals, action_normalizer
 from collections import deque
 
 class PortfolioEnv(gym.Env):
@@ -14,7 +14,8 @@ class PortfolioEnv(gym.Env):
 
         self.normalized_stock_returns = (self.stock_returns - 1) / np.std(self.stock_returns, axis=1, keepdims=True)
         self._normalize_parameter()
-
+        import data_generator
+        self.data_puller = data_generator.Data_Puller()
         # Define action and observation space
         feature_size = len(self.mu) + len(self.vola_matrix.flatten())
         if args.time_dependent:
@@ -79,7 +80,7 @@ class PortfolioEnv(gym.Env):
                 self.data_params = dict(data_params=dict(mu=mu, vola_matrix=vola_matrix, window_size=self.args.window_size, num_paths=self.args.num_paths, num_bm=self.args.num_bm, grid_points=self.args.window_size))
                 self.analytical_risky_action, self.analytical_utility = analytical_solutions(self.args, self.data_params)
                 self._normalize_parameter()
-            self.stock_returns, self.stock_data = pull_data(self.args, self.data_params)
+            self.stock_returns, self.stock_data = self.data_puller.pull_data(self.args, self.data_params)
             # self.normalized_stock_returns = (self.stock_returns - 1) / np.std(self.stock_returns, axis=1, keepdims=True)
         obs = self._get_feature_map()
         info = {}

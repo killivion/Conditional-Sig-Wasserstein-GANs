@@ -219,37 +219,6 @@ class ActionLoggingCallback(BaseCallback):
         return True
 
 
-def pull_data(args, data_params):
-    if args.GAN_sampling == True:
-        if args.dataset == 'correlated_Blackscholes':
-            spec = ('mu={}_sigma={}_window_size={}'.format(data_params['mu'], data_params['vola_matrix'], args.window_size))
-        elif args.dataset == 'Heston':
-            spec = ('mu={}_sigma={}_window_size={}'.format(data_params['lambda_0'], data_params['v0_sqrt'], args.window_size))
-        elif args.dataset == 'YFinance':
-            spec = ('ticker={}_start={}_end={}'.format(data_params['ticker'], data_params['start'], data_params['end']))
-        #data = generate.generate_data(spec, args)
-    elif args.dataset == 'YFinance':
-        ticker = data_params['data_params']['ticker']
-        data = yf.download(ticker, start="2020-01-01", end="2024-01-01")['Adj Close']
-    else:
-        data = get_data(args.dataset, isSigLib=False, **data_params).T
-    returns = data.pct_change().dropna().values + 1  # Compute dt change ratio [not dt returns]
-    #incremental_risk_free_rate = (1 + args.risk_free_rate) ** (1 / args.grid_points)
-    risk_free_column = np.full((returns.shape[0], 1), np.exp(args.risk_free_rate/args.grid_points))
-    return np.hstack((risk_free_column, returns)), np.array(data)
-
-
-def get_data(dataset, isSigLib, **data_params):
-    if dataset in ['Blackscholes', 'Heston', 'YFinance', 'correlated_Blackscholes']:
-        #generates data via GBM, Heston, VarGamma, KouJumpDiffusion or LevyIto model and loads it via the DataLoader file
-        import DataLoader as DataLoader
-        loader = DataLoader.LoadData(dataset=dataset, isSigLib=isSigLib, data_params=data_params)
-        data = loader.create_dataset(output_type="DataFrame")
-    else:
-        raise NotImplementedError('Dataset %s not valid' % dataset)
-    return data
-
-
 def get_dataset_configuration(dataset, window_size, num_paths, grid_points):
     if dataset == 'Blackscholes':
         generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
