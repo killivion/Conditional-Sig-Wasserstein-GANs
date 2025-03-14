@@ -205,8 +205,7 @@ class LoadData:
         """Download and reformat yfinance data starting at S0. "
         Parameters: ticker: List of Stocks that are viewed, start, end: None"""
 
-        print(yf.download(tickers=ticker, start=start, end=end, progress=False))
-        data = yf.download(tickers=ticker, start=start, end=end, progress=False)["Adj Close"]
+        data = yf.download(tickers=ticker, start=start, end=end, progress=False)["Close"]
         data = np.array(data).T
         if plot or self.isSigLib == False:
             S = data / data[:, 0].reshape(-1, 1) * S0
