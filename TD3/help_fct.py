@@ -231,12 +231,6 @@ def get_dataset_configuration(dataset, window_size, num_paths, grid_points):
             dict(params=dict(ticker=ticker, start=start, end=end)))
             for ticker, start, end in [
             ("^GSPC", "2000-01-01", "2025-01-01"),
-            # ("^GSPC", "2004-07-01", "2024-06-30"),
-            # ("^GSPC", "2009-07-01", "2024-06-30"),
-            # ("^GSPC", "2014-07-01", "2024-06-30"),
-            # ("^GSPC", "2019-07-01", "2024-06-30"),
-            # ("^GSPC", "2021-07-01", "2024-06-30"),
-            # ("^GSPC", "2022-07-01", "2024-06-30")
         ])
     else:
         raise Exception('%s not a valid data type.' % dataset)
