@@ -56,8 +56,8 @@ class CustomTD3Policy(TD3Policy):
     """
 
 def action_normalizer(action):
-    return action
-    # return action / sum(action) if not sum(action) == 0 else np.insert(action[1:], 0, 1)
+    # return action
+    return action / sum(action) if not sum(action) == 0 else np.zeros(action.shape[0]) + 1/action.shape[0]  # np.insert(action[1:], 0, 1)
 
 
 def generate_random_params(num_paths, num_bm):
