@@ -129,7 +129,7 @@ def find_confidence_intervals(analytical_risky_action, data_params, args):  # On
     z_c = norm.ppf((1 + confidence) / 2)
     dt = (1/args.grid_points)
     mu_adj = (data_params['data_params']['mu'][0] - np.diag(big_sigma)[0]) * dt
-    interval = mu_adj + np.array([-1, 1]) * z_c * np.sqrt(np.diag(big_sigma)[0] * dt)  # exp((1-p)[(μ-σ^2/2)T (+/-) 1.96σ*sqrt(T)])
+    interval = mu_adj + np.array([-1, 1]) * z_c * np.sqrt(np.diag(big_sigma)[0]) * np.sqrt(dt)  # exp((1-p)[(μ-σ^2/2)T (+/-) 1.96σ*sqrt(T)])
     cf_low, cf_high = np.exp((1 - args.p) * interval)  # Extreme case x0=1 is invested in asset 1
     cf_low2, cf_high2 = sum(analytical_risky_action) * np.exp((1-args.p)*interval) + (1 - sum(analytical_risky_action)) * np.exp((1 - args.p) * args.risk_free_rate * dt)  # simplified that all risky action is in asset 1
 

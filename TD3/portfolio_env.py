@@ -94,7 +94,8 @@ class PortfolioEnv(gym.Env):
         return feature_map
 
     def _calc_reward(self, done):
-        if True: #if done:  # Terminal utility -> Central Reward-fct.
+        if True: #dummy
+        #if done:  # Terminal utility -> Central Reward-fct.
             if self.portfolio_value <= 0:
                 print(f"Careful: negative portfolio value: {self.portfolio_value, self.stock_returns[self.current_step-1], self.action}")
             reward = (self.action_return ** (1 - self.args.p)) if not self.action_return <= 0 else 0 * abs(self.action_return)  # / (1 - self.args.p) leave out the constant divisor since it only scales the expectation

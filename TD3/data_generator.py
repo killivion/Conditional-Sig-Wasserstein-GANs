@@ -20,7 +20,7 @@ class Data_Puller:
             torch.random.manual_seed(0)
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
             #base_config = BaseConfig(device=device)
-            self.p, self.q = args.sig_p, args.sig_q  # base_config.p, base_config.q
+            self.p, self.q = args.sig_p, args.window_size  # base_config.p, base_config.q
             x_real = load_pickle(os.path.join(os.path.dirname(self.experiment_dir), 'x_real_test.torch')).to(device)  # change this to x_real.torch
             dim = x_real.shape[-1]
             self.x_past = x_real[:, :self.p]
