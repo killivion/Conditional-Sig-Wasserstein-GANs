@@ -205,6 +205,7 @@ class LoadData:
         """Download and reformat yfinance data starting at S0. "
         Parameters: ticker: List of Stocks that are viewed, start, end: None"""
 
+        print(yf.download(tickers=ticker, start=start, end=end, progress=False))
         data = yf.download(tickers=ticker, start=start, end=end, progress=False)["Adj Close"]
         data = np.array(data).T
         if plot or self.isSigLib == False:
@@ -372,13 +373,13 @@ if __name__ == "__main__": #Testing
         vola_matrix = np.array([[0.44]])
         window_size = 1000
         models = {
-            "Blackscholes": {**GBM_parameter, **general_parameter},
+            #"Blackscholes": {**GBM_parameter, **general_parameter},
             #"Heston": {**Heston_parameter, **general_parameter},
             #"VarianceGamma": {**VarGamma_parameter, **general_parameter},
             #"Kou_Jump_Diffusion": {**Kou_parameter, **general_parameter},
             #"Levy_Ito": {**LevyIto_parameter, **general_parameter},
-            #"YFinance": {"S0": 1},
-            "correlated_Blackscholes": {"mu": mu, "vola_matrix": vola_matrix, "window_size": window_size, "num_paths": num_paths, "num_bm": 1}
+            "YFinance": {"S0": 1},
+            #"correlated_Blackscholes": {"mu": mu, "vola_matrix": vola_matrix, "window_size": window_size, "num_paths": num_paths, "num_bm": 1}
         }
 
         if plot:
