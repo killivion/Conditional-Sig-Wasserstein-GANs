@@ -34,7 +34,7 @@ class CustomTD3Policy(TD3Policy):
         else:
             actions = self.softmax(raw_actions, axis=-1)
         print(f'After Softmax: {actions}')
-        invers_scaled_action = (actions - self.low)/(0.5 * (self.high - self.low)) - 1  # in td3 the action is in the space [-1,1] we inversly scale it
+        invers_scaled_action = (actions - self.low)/(0.5 * (self.high - self.low)) - 1  # in td3 the action is in the space [-1,1], we inversely scale it to [-1,1]
         print(f'Inverse Action: {invers_scaled_action}')
         return invers_scaled_action
 
