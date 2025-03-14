@@ -207,10 +207,9 @@ class LoadData:
 
         data = yf.download(tickers=ticker, start=start, end=end, progress=False)["Close"]
         data = np.array(data).T
-        print(data.shape)
+        print(f'Downloaded Data Shape: {data.shape}')
         if plot or self.isSigLib == False:
             S = data / data[:, 0].reshape(-1, 1) * S0
-            print('YFinance Dataset includes this many days (not only trading days): %s %s' % S.shape)
         else:
             first_stock = True
             for raw_stock in tqdm(data, desc="YFinance", leave=False):
@@ -224,8 +223,10 @@ class LoadData:
                     raw_stock = raw_stock / raw_stock[0].reshape(-1, 1) * S[0][-1]  # normalizes values to the last value of the stock before
                     raw_stock = raw_stock[0][1:].reshape(1, -1)  # remove first value, to avoid 0 return
                     S = np.append(S, raw_stock, axis=1)  # GANs only allow for you one path. We reshape all paths into one since we only look at returns anyway
-            # This gives Info about the Data used
-            print('YFinance Dataset includes this many days (not only trading days): %s %s' % S.shape)
+        # This gives Info about the Data used
+        print(data)
+        print(f'Downloaded Data Shape: {data.shape}')
+        print('YFinance Dataset includes this many days (not only trading days): %s %s' % S.shape)
 
         # if split, split the data into chunks of length window_size:
         if split:
