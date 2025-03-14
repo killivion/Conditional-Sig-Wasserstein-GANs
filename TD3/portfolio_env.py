@@ -40,7 +40,6 @@ class PortfolioEnv(gym.Env):
 
 
     def step(self, action):
-        print(f'Env: {action}')
         self.current_step += 1
 
         #self.step_count += 1

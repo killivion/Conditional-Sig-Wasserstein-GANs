@@ -38,22 +38,6 @@ class CustomTD3Policy(TD3Policy):
         print(f'Inverse Action: {invers_scaled_action}')
         return invers_scaled_action
 
-    """
-    def softmax(self, x, axis=-1):
-        x = np.array(x)
-       exp_x = np.exp(x - np.max(x, axis=axis, keepdims=True))
-       return exp_x / np.sum(exp_x, axis=axis, keepdims=True)
-
-    def _predict(self, observation, deterministic=False):
-        raw_actions = self.actor(observation)
-        if self.allow_lending:
-            mean_actions = np.mean(raw_actions, axis=-1, keepdim=True)
-            n = raw_actions.shape[-1]
-            actions = raw_actions - mean_actions + (1.0 / n)
-        else:
-            actions = self.softmax(raw_actions, axis=-1)  # Apply softmax to ensure the outputs sum to 1
-        return actions
-    """
 
 def action_normalizer(action):
     # return action
