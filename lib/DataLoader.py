@@ -224,9 +224,7 @@ class LoadData:
                     raw_stock = raw_stock[0][1:].reshape(1, -1)  # remove first value, to avoid 0 return
                     S = np.append(S, raw_stock, axis=1)  # GANs only allow for you one path. We reshape all paths into one since we only look at returns anyway
         # This gives Info about the Data used
-        print(data)
-        print(f'Downloaded Data Shape: {data.shape}')
-        print('YFinance Dataset includes this many days (not only trading days): %s %s' % S.shape)
+        print(f'YFinance Dataset includes this many days (not only trading days): %s %s {S.shape[1]}')
 
         # if split, split the data into chunks of length window_size:
         if split:
