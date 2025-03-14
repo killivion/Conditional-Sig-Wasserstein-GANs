@@ -207,6 +207,7 @@ class LoadData:
 
         data = yf.download(tickers=ticker, start=start, end=end, progress=False)["Close"]
         data = np.array(data).T
+        print(data.shape)
         if plot or self.isSigLib == False:
             S = data / data[:, 0].reshape(-1, 1) * S0
             print('YFinance Dataset includes this many days (not only trading days): %s %s' % S.shape)
