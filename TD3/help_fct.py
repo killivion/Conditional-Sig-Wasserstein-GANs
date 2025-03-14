@@ -26,13 +26,16 @@ class CustomTD3Policy(TD3Policy):
 
     def _predict(self, observation, deterministic=False):
         raw_actions = self.actor(observation)
+        print(f'Before Softmax: {raw_actions}')
         if self.allow_lending:
             mean_actions = torch.mean(raw_actions, dim=-1, keepdim=True)
             n = raw_actions.shape[-1]
             actions = raw_actions - mean_actions + (1.0 / n)
         else:
             actions = self.softmax(raw_actions, axis=-1)
+        print(f'After Softmax: {actions}')
         invers_scaled_action = (actions - self.low)/(0.5 * (self.high - self.low)) - 1  # in td3 the action is in the space [-1,1] we inversly scale it
+        print(f'Inverse Action: {invers_scaled_action}')
         return invers_scaled_action
 
     """
