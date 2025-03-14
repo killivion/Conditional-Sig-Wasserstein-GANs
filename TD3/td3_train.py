@@ -147,8 +147,8 @@ if __name__ == '__main__':
     parser.add_argument('-time_dependent', action='store_true', help="Enables stockdata input")
     parser.add_argument('-GAN_sampling', action='store_true', help="Enables GAN sampling")
 
-    parser.add_argument('-p', default=3, type=int)
-    parser.add_argument('-q', default=3, type=int)
+    parser.add_argument('-sig_p', default=3, type=int)
+    parser.add_argument('-sig_q', default=3, type=int)
 
     parser.add_argument('-episode_reset', default=10000000, type=int)  #currently off
     #parser.add_argument('-learning_starts', default=100000, type=int)
