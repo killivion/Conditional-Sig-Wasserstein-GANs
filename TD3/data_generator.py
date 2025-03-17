@@ -16,6 +16,7 @@ class Data_Puller:
         if args.dataset == 'YFinance' and not args.GAN_sampling:
             self.sample_data = yf.download(data_params['data_params']['ticker'], start=data_params['data_params']['start'], end=data_params['data_params']['end'])['Close']
             self.start_index = 0
+            print(self.sample_data)
         self.loader = DataLoader.LoadData(dataset=args.dataset, isSigLib=False, data_params=data_params)
         if args.GAN_sampling:
             self.experiment_dir = f'./numerical_results/{args.dataset}/{spec}/seed=42/'
@@ -52,14 +53,6 @@ class Data_Puller:
         #incremental_risk_free_rate = (1 + args.risk_free_rate) ** (1 / args.grid_points)
         risk_free_column = np.full((returns.shape[0], 1), np.exp(args.risk_free_rate/args.grid_points))
         return np.hstack((risk_free_column, returns)), np.array(data)
-
-
-    def stochastically_get_data(self, dataset):
-        if dataset in ['Blackscholes', 'Heston', 'YFinance', 'correlated_Blackscholes']:
-            data = self.loader.create_dataset(output_type="DataFrame")
-        else:
-            raise NotImplementedError('Dataset %s not valid' % dataset)
-        return data
 
 
     def generate(self):
