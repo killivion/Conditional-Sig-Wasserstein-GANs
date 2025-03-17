@@ -84,19 +84,31 @@ def generate_random_params(num_paths, num_bm):
 
 
 def analytical_solutions(args, data_params):
-    big_sigma = data_params['data_params']['vola_matrix'] @ data_params['data_params']['vola_matrix'].T
-    risky_lambda = data_params['data_params']['mu'] - args.risk_free_rate
-    analytical_risky_action = 1 / args.p * risky_lambda.T @ (np.linalg.inv(big_sigma))
-    analytical_utility = expected_utility(analytical_risky_action, args, data_params)
-    #other logic - gives same result: analytical_utility = np.exp((1 - args.p) * (args.risk_free_rate + 1/2 * analytical_risky_action.T @ risky_lambda))
+    if args.dataset == 'correlated_Blackscholes':
+        big_sigma = data_params['data_params']['vola_matrix'] @ data_params['data_params']['vola_matrix'].T
+        risky_lambda = data_params['data_params']['mu'] - args.risk_free_rate
+        analytical_risky_action = 1 / args.p * risky_lambda.T @ (np.linalg.inv(big_sigma))
+        analytical_utility = expected_utility(analytical_risky_action, args, data_params)
+        #other logic - gives same result: analytical_utility = np.exp((1 - args.p) * (args.risk_free_rate + 1/2 * analytical_risky_action.T @ risky_lambda))
+    elif args.dataset == 'Heston':  #needs to be added
+        analytical_risky_action = np.array([0])
+        analytical_utility = np.array([0])
+    else:
+        analytical_risky_action = np.array([0])
+        analytical_utility = np.array([0])
 
     return analytical_risky_action, analytical_utility
 
 
 def expected_utility(action, args, data_params):
-    risky_lambda = data_params['data_params']['mu'] - args.risk_free_rate
-    big_sigma = data_params['data_params']['vola_matrix'] @ data_params['data_params']['vola_matrix'].T
-    expected_utility = np.exp((1 - args.p) * (args.risk_free_rate + action.T @ risky_lambda - args.p / 2 * (action.T @ big_sigma @ action)))
+    if args.dataset == 'correlated_Blackscholes':
+        risky_lambda = data_params['data_params']['mu'] - args.risk_free_rate
+        big_sigma = data_params['data_params']['vola_matrix'] @ data_params['data_params']['vola_matrix'].T
+        expected_utility = np.exp((1 - args.p) * (args.risk_free_rate + action.T @ risky_lambda - args.p / 2 * (action.T @ big_sigma @ action)))
+    elif args.dataset == 'Heston':  #needs to be added
+        expected_utility = 1
+    else:
+        expected_utility = 1
 
     return expected_utility
 
@@ -113,11 +125,20 @@ def analytical_entry_wealth_offset(action, args, data_params):
 
 def find_confidence_intervals(analytical_risky_action, data_params, args):  # One could upgrade to joint confidence regions: with elliptical regions using the Mahalanobis distance
     confidence = 0.95
-    big_sigma = data_params['data_params']['vola_matrix'] @ data_params['data_params']['vola_matrix'].T
     z_c = norm.ppf((1 + confidence) / 2)
     dt = (1/args.grid_points)
-    mu_adj = (data_params['data_params']['mu'][0] - np.diag(big_sigma)[0]) * dt
-    interval = mu_adj + np.array([-1, 1]) * z_c * np.sqrt(np.diag(big_sigma)[0]) * np.sqrt(dt)  # exp((1-p)[(μ-σ^2/2)T (+/-) 1.96σ*sqrt(T)])
+    if args.dataset == 'correlated_Blackscholes':
+        big_sigma = np.diag(data_params['data_params']['vola_matrix'] @ data_params['data_params']['vola_matrix'].T)[0]
+        mu_adj = (data_params['data_params']['lambda_0'][0] - big_sigma) * dt
+    elif args.dataset == 'Heston':  # needs adjustment
+        big_sigma = np.array([data_params['data_params']['v0_sqrt']]) @ np.array([data_params['data_params']['v0_sqrt']]).T
+        mu_adj = (data_params['data_params']['lambda_0'] - big_sigma) * dt
+    else: # needs adjustment
+        mu_adj = np.array([0.05])
+        big_sigma = np.array([0.2])
+
+
+    interval = mu_adj + np.array([-1, 1]) * z_c * np.sqrt(big_sigma) * np.sqrt(dt)  # exp((1-p)[(μ-σ^2/2)T (+/-) 1.96σ*sqrt(T)])
     cf_low, cf_high = np.exp((1 - args.p) * interval)  # Extreme case x0=1 is invested in asset 1
     cf_low2, cf_high2 = sum(analytical_risky_action) * np.exp((1-args.p)*interval) + (1 - sum(analytical_risky_action)) * np.exp((1 - args.p) * args.risk_free_rate * dt)  # simplified that all risky action is in asset 1
 

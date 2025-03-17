@@ -78,7 +78,7 @@ def run(args, data_params, returns, stock_data, spec):
     n_actions = env.action_space.shape[0]
     action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=args.action_noise_sigma * np.ones(n_actions))
 
-    dataset = 'corrBS' if args.actor_dataset == 'correlated_Blackscholes' else args.actor_dataset
+    dataset = 'corrBS' if args.dataset == 'correlated_Blackscholes' else args.dataset
     model_save_path = f"./agent/{args.model_ID}_{dataset}_assets_{args.num_paths}_window_{args.window_size}"
 
     # Load Model
@@ -142,8 +142,7 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes'
-    parser.add_argument('-actor_dataset', default='correlated_Blackscholes', type=str)  # An Actor ID to determine which actor will be loaded (if it exists), then trained or tested/evaluated on
+    parser.add_argument('-dataset', default='Heston', type=str)  # 'Heston', 'YFinance', 'correlated_Blackscholes'
     #parser.add_argument('-utility_function', default="power", type=str)
     parser.add_argument('-allow_lending', action='store_true', help="Enable lending")
     parser.add_argument('-time_dependent', action='store_true', help="Enables stockdata input")

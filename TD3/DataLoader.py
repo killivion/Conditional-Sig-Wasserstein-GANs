@@ -100,7 +100,8 @@ class LoadData:
         sqrt_dt = np.sqrt(dt)
         sqrt_cor = np.sqrt(1 - rho ** 2)
 
-        for i in tqdm(range(1, window_size + 1), desc="Heston", leave=False):
+        #for i in tqdm(range(1, window_size + 1), desc="Heston", leave=False):
+        for i in range(1, window_size + 1):
             # Generate correlated Wiener Processes
             W1 = np.random.normal(size=num_paths)
             W2 = rho * W1 + sqrt_cor * np.random.normal(size=num_paths)
