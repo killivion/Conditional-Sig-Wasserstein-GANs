@@ -45,6 +45,7 @@ class Data_Puller:
             if self.start_index + args.window_size > len(self.sample_data):
                 self.start_index = 0
             data = pd.DataFrame(self.sample_data[self.start_index:self.start_index + args.window_size])
+            data = data / data[:, 0].reshape(-1, 1)
             print(f'{self.start_index}, {data}')
             self.start_index = self.start_index + args.window_size
         elif args.dataset in ['Blackscholes', 'Heston', 'correlated_Blackscholes']:
