@@ -13,6 +13,9 @@ import DataLoader as DataLoader
 
 class Data_Puller:
     def __init__(self, args, spec, data_params):
+        if args.dataset == 'YFinance' and not args.GAN_sampling:
+            self.sample_data = yf.download(data_params['data_params']['ticker'], start=data_params['data_params']['start'], end=data_params['data_params']['end'])['Close']
+            self.start_index = 0
         self.loader = DataLoader.LoadData(dataset=args.dataset, isSigLib=False, data_params=data_params)
         if args.GAN_sampling:
             self.experiment_dir = f'./numerical_results/{args.dataset}/{spec}/seed=42/'
@@ -37,10 +40,14 @@ class Data_Puller:
         if args.GAN_sampling:
             data = self.generate()
         elif args.dataset == 'YFinance':
-            ticker = data_params['data_params']['ticker']
-            data = yf.download(ticker, start="2020-01-01", end="2024-01-01")['Adj Close']
+            if self.start_index + args.window_size > len(self.sample_data):
+                self.start_index = 0
+            data = pd.DataFrame(self.sample_data[self.start_index:self.start_index + args.window_size])
+            print(f'{self.start_index}, {data}')
+        elif args.dataset in ['Blackscholes', 'Heston', 'correlated_Blackscholes']:
+            data = self.loader.create_dataset(output_type="DataFrame")
         else:
-            data = self.stochastically_get_data(args.dataset).T
+            raise NotImplementedError('Dataset %s not valid' % args.dataset)
         returns = data.pct_change().dropna().values + 1  # Compute dt change ratio [not dt returns]
         #incremental_risk_free_rate = (1 + args.risk_free_rate) ** (1 / args.grid_points)
         risk_free_column = np.full((returns.shape[0], 1), np.exp(args.risk_free_rate/args.grid_points))

@@ -19,7 +19,7 @@ class PortfolioEnv(gym.Env):
         # Define action and observation space
         feature_size = len(self.mu) + len(self.vola_matrix.flatten())
         if args.time_dependent:
-            feature_size += self.num_stocks
+            feature_size += self.num_stocks + 1
 
         self.action_shape = self.num_stocks+1 if self.num_stocks > 1 else 1  # if there is only one asset, we only get the action for the asset: action then gives exposure to volatility
         if args.allow_lending:

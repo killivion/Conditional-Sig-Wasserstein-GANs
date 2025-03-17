@@ -142,7 +142,7 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-dataset', default='Heston', type=str)  # 'Heston', 'YFinance', 'correlated_Blackscholes'
+    parser.add_argument('-dataset', default='YFinance', type=str)  # 'Heston', 'YFinance', 'correlated_Blackscholes'
     #parser.add_argument('-utility_function', default="power", type=str)
     parser.add_argument('-allow_lending', action='store_true', help="Enable lending")
     parser.add_argument('-time_dependent', action='store_true', help="Enables stockdata input")
@@ -155,8 +155,8 @@ if __name__ == '__main__':
     #parser.add_argument('-learning_starts', default=100000, type=int)
     parser.add_argument('-p', default=0.8, type=float)
     parser.add_argument('-risk_free_rate', default=0.04, type=float)
-    parser.add_argument('-grid_points', default=1, type=int)
-    parser.add_argument('-window_size', default=1, type=int)
+    parser.add_argument('-grid_points', default=5, type=int)
+    parser.add_argument('-window_size', default=5, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
     parser.add_argument('-num_bm', default=1, type=int)  # Number of random sources N
 
@@ -179,7 +179,8 @@ if __name__ == '__main__':
     parser.add_argument('--batch_sizes', default=[1024], type=int, nargs="+")
 
     args = parser.parse_args()
-    #if not torch.cuda.is_available():
+    if not torch.cuda.is_available():
+        args.time_dependent = True
     #    args.GAN_sampling = True
 
     args.batch_size = args.batch_sizes[0]
