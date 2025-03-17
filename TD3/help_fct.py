@@ -33,15 +33,16 @@ class CustomTD3Policy(TD3Policy):
             actions = raw_actions - mean_actions + (1.0 / n)
         else:
             actions = self.softmax(raw_actions, axis=-1)
-        print(f'After Softmax: {actions}')
         invers_scaled_action = (actions - self.low)/(0.5 * (self.high - self.low)) - 1  # in td3 the action is in the space [-1,1], we inversely scale it to [-1,1]
-        print(f'Inverse Action: {invers_scaled_action}')
         return invers_scaled_action
 
 
 def action_normalizer(action):
     # return action
-    return action / sum(action) if not sum(action) == 0 else np.zeros(action.shape[0]) + 1/action.shape[0]  # np.insert(action[1:], 0, 1)
+    if action.shape[0] == 1:
+        return np.insert(action, 0, 1-action)
+    else:
+        return action / sum(action) if not sum(action) == 0 else np.zeros(action.shape[0]) + 1/action.shape[0]  # np.insert(action[1:], 0, 1)
 
 
 def generate_random_params(num_paths, num_bm):

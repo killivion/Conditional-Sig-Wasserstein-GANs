@@ -167,21 +167,21 @@ if __name__ == '__main__':
     parser.add_argument('-buffer_size', default=1000000, type=int)
     #parser.add_argument('-learning_rate', default=0.001, type=float)
 
-    parser.add_argument('-total_timesteps', default=1000, type=int)
+    parser.add_argument('-total_timesteps', default=3000, type=int)
     parser.add_argument('-num_episodes', default=100, type=int)
     parser.add_argument('-n_trials', default=50, type=int)
 
-    parser.add_argument('-model_ID', default=11, type=int)
+    parser.add_argument('-model_ID', default=1, type=int)
     #parser.add_argument('-laps', default=1, type=int)
-    parser.add_argument('-statement', default='CustomActionNorm', type=str)
+    parser.add_argument('-statement', default='RevertAction', type=str)
     parser.add_argument('-mode', default='train', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
 
     parser.add_argument('--learning_rates', default=[0.0001], type=float, nargs="+")
     parser.add_argument('--batch_sizes', default=[1024], type=int, nargs="+")
 
     args = parser.parse_args()
-    if not torch.cuda.is_available():
-        args.GAN_sampling = True
+    #if not torch.cuda.is_available():
+    #    args.GAN_sampling = True
 
     args.batch_size = args.batch_sizes[0]
     args.learning_rate = args.learning_rates[0]
