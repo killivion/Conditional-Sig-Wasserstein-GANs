@@ -46,6 +46,7 @@ class Data_Puller:
                 self.start_index = 0
             data = pd.DataFrame(self.sample_data[self.start_index:self.start_index + args.window_size])
             print(f'{self.start_index}, {data}')
+            self.start_index = self.start_index + args.window_size
         elif args.dataset in ['Blackscholes', 'Heston', 'correlated_Blackscholes']:
             data = self.loader.create_dataset(output_type="DataFrame")
         else:
