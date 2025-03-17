@@ -14,10 +14,11 @@ import DataLoader as DataLoader
 class Data_Puller:
     def __init__(self, args, spec, data_params):
         if args.dataset == 'YFinance' and not args.GAN_sampling:
-            self.sample_data = yf.download(data_params['data_params']['ticker'], start=data_params['data_params']['start'], end=data_params['data_params']['end'])['Close']
+            self.sample_data = yf.download(data_params['data_params']['ticker'], start=data_params['data_params']['start'], end=data_params['data_params']['end'], progress=False)['Close']
             self.start_index = 0
             print(self.sample_data)
-        self.loader = DataLoader.LoadData(dataset=args.dataset, isSigLib=False, data_params=data_params)
+        else:
+            self.loader = DataLoader.LoadData(dataset=args.dataset, isSigLib=False, data_params=data_params)
         if args.GAN_sampling:
             self.experiment_dir = f'./numerical_results/{args.dataset}/{spec}/seed=42/'
             print(self.experiment_dir)
