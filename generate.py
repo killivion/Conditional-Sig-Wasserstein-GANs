@@ -87,10 +87,12 @@ if __name__ == '__main__':
     # Create a DataFrame from the collected rows
     results_df = pd.DataFrame(results)
     print(results_df.shape)
+    print(results_df)
 
     # Compute mean and standard deviation for each column
     mean_values = results_df.mean()
     std_values = results_df.std()
+
 
     print("Mean values over 10,000 samples:")
     print(mean_values)
