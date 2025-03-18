@@ -44,7 +44,6 @@ def generate_from_generator(experiment_dir, dataset, use_cuda=True):
 
 def generate_data(spec, args):
     #algo_path = os.path.join(args.base_dir, args.dataset, experiment_dir, seed_dir, args.algo)
-    spec = 'mu=[0.06]_sigma=[[0.4472136]]_window_size=1'
     algo_path = f'numerical_results/{args.dataset}/{spec}/seed=42/{args.algo}'
 
     x_fake_future = generate_from_generator(experiment_dir=algo_path, dataset=args.dataset, use_cuda=True)
