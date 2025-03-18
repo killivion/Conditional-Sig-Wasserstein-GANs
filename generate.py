@@ -39,13 +39,6 @@ def generate_from_generator(spec, experiment_dir, dataset, use_cuda=True):
         _x_past = x_past_sample.clone()
         x_fake_future = G.sample(q, _x_past)
 
-    print(dim)
-    print(q)
-    print(p)
-    print(x_past.shape)
-    print(_x_past.shape)
-    print(x_fake_future.shape)
-
     return x_fake_future
 
 
