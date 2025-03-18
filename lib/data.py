@@ -226,11 +226,14 @@ def get_test_stocks(dataset, isSigLib, spec, data_params):
         data_pre = loader.create_dataset(output_type="DataFrame")
         data_raw, pipeline = 1, 1  # dummy return so it doesnt bug
 
+    print(data_pre.shape)
     if isSigLib:
         data_pre = loader.create_dataset(output_type="DataFrame")
         data_pre = data_pre.pct_change().dropna().values
         data_pre = np.ndarray(data_pre)
         data_pre = torch.from_numpy(data_pre[..., None]).float()
+    print('Neue Methode:')
+    print(data_pre.shape)
 
     return pipeline, data_raw, data_pre
 
