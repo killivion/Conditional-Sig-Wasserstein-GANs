@@ -78,11 +78,13 @@ if __name__ == '__main__':
     parser.add_argument('-sig_p', default=3, type=int)
     parser.add_argument('-sig_q', default=3, type=int)
 
+    parser.add_argument('-test_length', default=1000, type=int)
+
     args = parser.parse_args()
 
     results = []
     from tqdm import tqdm
-    for _ in tqdm(range(1000), desc="Sampling", leave=False):
+    for _ in tqdm(range(args.test_length), desc="Sampling", leave=False):
         df = generate_data(args.spec, args)
         # Extract the last row (i.e. the final values) from the DataFrame
         last_row = df.iloc[-1]
