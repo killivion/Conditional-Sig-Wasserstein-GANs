@@ -230,14 +230,10 @@ def get_test_stocks(dataset, isSigLib, spec, data_params):
     print(data_pre.shape)
     if isSigLib:
         data_pre = loader.create_dataset(output_type="DataFrame")
-        print(data_pre)
         data_pre = data_pre.pct_change(axis=1)
         data_pre = data_pre.iloc[:, 1:]
-        print(data_pre)
         data_pre = data_pre.values[..., None]
-        print(data_pre)
         data_pre = torch.from_numpy(data_pre).float()
-        print(data_pre)
     print('Neue Methode:')
     print(data_pre.shape)
 
