@@ -37,9 +37,9 @@ def generate_from_generator(spec, experiment_dir, dataset, use_cuda=True):
     with torch.no_grad():
         _x_past = x_past.clone()
         x_fake_future = G.sample(q, _x_past)
-        print("Dim:" % dim)
-        print("Xpast:" % x_past)
-        print("Xfake:" % x_fake_future)
+        print(dim)
+        print(x_past)
+        print(x_fake_future)
 
     return x_fake_future
 
