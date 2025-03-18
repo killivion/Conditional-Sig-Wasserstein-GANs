@@ -61,7 +61,7 @@ class Data_Puller:
     def generate(self):
         with torch.no_grad():
             idx = torch.randint(0, self.x_past.shape[0], (1,)).item()
-            x_past_sample = self.x_past[idx:idx+self.p]
+            x_past_sample = self.x_past[idx:idx+1]
             _x_past = x_past_sample.clone()
             x_fake_future = self.G.sample(self.q, _x_past)
             #print(f'x_fake_future: {x_fake_future}')

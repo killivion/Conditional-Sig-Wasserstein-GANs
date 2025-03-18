@@ -36,7 +36,8 @@ def generate_from_generator(spec, experiment_dir, dataset, use_cuda=True):
     # ----------------------------------------------
     with torch.no_grad():
         idx = torch.randint(0, x_past.shape[0], (1,)).item()
-        x_past_sample = x_past[idx:idx + args.sig_q]
+        print(idx)
+        x_past_sample = x_past[idx:idx + 1]
         print(x_past_sample)
         _x_past = x_past_sample.clone()
         print(_x_past)
