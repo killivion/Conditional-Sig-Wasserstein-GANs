@@ -67,7 +67,7 @@ def get_algo(algo_id, base_config, dataset, data_params, x_real):
     return algo
 
 
-def run(algo_id, base_config, base_dir, dataset, spec, data_params={}):
+def run(args, algo_id, base_config, base_dir, dataset, spec, data_params={}):
     """ Create the experiment directory, calibrate algorithm, store relevant parameters. """
     print('Executing: %s, %s, %s' % (algo_id, dataset, spec))
     experiment_directory = pt.join(base_dir, dataset, spec, 'seed={}'.format(base_config.seed), algo_id)
@@ -154,55 +154,7 @@ def get_dataset_configuration(dataset, window_size, num_paths, num_bm, grid_poin
                 dict(data_params=dict(ticker=ticker, start=start, end=end)))
             for ticker, start, end in [
             ("^GSPC", "2000-01-01", "2025-01-01"),
-            #("^GSPC", "2004-07-01", "2024-06-30"),
-            #("^GSPC", "2009-07-01", "2024-06-30"),
-            #("^GSPC", "2014-07-01", "2024-06-30"),
-            #("^GSPC", "2019-07-01", "2024-06-30"),
-            #("^GSPC", "2021-07-01", "2024-06-30"),
-            #("^GSPC", "2022-07-01", "2024-06-30")
             ])
-        """
-        ["^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX",
-        # Large-Cap Tech Stocks (FAANG & Others)
-        "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA", "ORCL", "INTC", "CSCO", "IBM", "ADBE", "CRM", "TXN",
-
-        # Financial Sector
-        "JPM", "BAC", "GS", "C", "WFC", "MS", "SCHW", "BLK", "BK", "AXP", "COF", "USB", "TFC", "CME",
-
-        # Consumer Goods & Retail
-        "WMT", "PG", "KO", "PEP", "COST", "MCD", "NKE", "TGT", "SBUX", "HD", "LOW", "DG", "TJX", "YUM",
-
-        # Healthcare
-        "JNJ", "PFE", "UNH", "MRK", "CVS", "LLY", "ABT", "TMO", "BMY", "DHR", "ZTS", "MDT", "BSX",
-
-        # Energy Sector
-        "XOM", "CVX", "SLB", "COP", "OXY", "PSX", "VLO", "HAL", "MPC", "BKR", "EOG", "FANG", "KMI",
-
-        # Industrials
-        "BA", "CAT", "MMM", "GE", "HON", "UPS", "UNP", "LMT", "RTX", "FDX", "CSX", "NSC", "WM", "NOC",
-
-        # Utilities
-        "NEE", "DUK", "SO", "D", "EXC", "AEP", "SRE", "PEG", "WEC", "ED", "XEL", "ES", "AWK", "DTE",
-
-        # Telecommunications
-        "T", "VZ", "TMUS", "CCI", "AMT", "VOD", "S", "CHT", "TU", "NOK", "ORAN", "BTI", "KT", "PHI",
-
-        # Real Estate
-        "PLD", "AMT", "CCI", "SPG", "PSA", "EQIX", "EQR", "ESS", "AVB", "O", "MAA", "UDR", "VTR", "HCP",
-
-        # Consumer Discretionary
-        "DIS", "HD", "MCD", "SBUX", "NKE", "LVS", "GM", "F", "HMC", "TM", "TSLA", "YUM", "MAR", "CCL",
-
-        # ETFs and Funds
-        "SPY", "QQQ", "DIA", "IWM", "GLD", "SLV", "TLT", "XLF", "XLK", "XLE", "XLU", "XLI", "XLY", "XLP",
-
-        # Commodities
-        "CL=F", "GC=F", "SI=F", "NG=F", "HG=F", "ZC=F", "ZW=F", "ZS=F", "LE=F", "HE=F", "KC=F", "CC=F", "CT=F",
-
-        # Forex and Cryptocurrency
-        "EURUSD=X", "GBPUSD=X", "JPY=X", "AUDUSD=X", "BTC-USD", "ETH-USD", "LTC-USD", "XRP-USD", "BCH-USD",
-        "DOT-USD",])])
-        """
     else:
         raise Exception('%s not a valid data type.' % dataset)
     return generator
@@ -237,7 +189,7 @@ def main(args):
                 set_seed(seed)
                 generator = get_dataset_configuration(dataset, window_size=args.window_size, num_paths=args.num_paths, num_bm=args.num_bm, grid_points=args.grid_points, q=args.q)
                 for spec, data_params in generator:
-                    run(
+                    run(args=args,
                         algo_id=algo_id,
                         base_config=base_config,
                         data_params=data_params,
