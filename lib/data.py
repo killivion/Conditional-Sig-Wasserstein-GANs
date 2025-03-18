@@ -206,7 +206,7 @@ def download_mit_ecg_dataset():
     os.remove('./mit_db.zip')
 
 
-def get_test_stocks(dataset, isSigLib, data_params, q):
+def get_test_stocks(dataset, isSigLib, spec, data_params):
     #generates data via GBM, correlated_GBM, Heston, VarGamma, KouJumpDiffusion or LevyIto model and loads it via the DataLoader file
     import lib.DataLoader as DataLoader
     loader = DataLoader.LoadData(dataset=dataset, isSigLib=isSigLib, data_params=data_params)
@@ -215,25 +215,20 @@ def get_test_stocks(dataset, isSigLib, data_params, q):
         log_prices = np.log(price_paths)
         logrtn = np.diff(log_prices, axis=1)
         data_raw = torch.from_numpy(logrtn[..., None]).float()
-        if dataset == 'correlated_Blackscholes':
-            spec = ('mu={}_sigma={}_q={}'.format(data_params['mu'],data_params['vola_matrix'], q))
-        elif dataset == 'Heston':
-            spec = ('mu={}_sigma={}_q={}'.format(data_params['lambda_0'], data_params['v0_sqrt'], q))
-        elif dataset == 'YFinance':
-            spec = ('ticker={}_start={}_end={}_q={}'.format(data_params['ticker'], data_params['start'], data_params['end'], q))
+        pipeline = Pipeline(steps=[('standard_scale', StandardScalerTS(axis=(0, 1)))])
+        data_pre = pipeline.transform(data_raw)  # scales Data to StandardNormal
+
         mean = torch.mean(data_raw, dim=(0, 1))
         std = torch.std(data_raw, dim=(0, 1))
         stats = {'mean': mean, 'std': std}
         torch.save(stats, f'./numerical_results/{dataset}/{spec}/seed=42/meanstd.pt')
-        pipeline = Pipeline(steps=[('standard_scale', StandardScalerTS(axis=(0, 1)))])
-        data_pre = pipeline.transform(data_raw)  # scales Data to StandardNormal
     else:  # for TD3
         data_pre = loader.create_dataset(output_type="DataFrame")
         data_raw, pipeline = 1, 1  # dummy return so it doesnt bug
     return pipeline, data_raw, data_pre
 
 
-def get_data(dataset, p, q, isSigLib, **data_params):
+def get_data(dataset, p, q, isSigLib, spec, **data_params):
     """Outputs: Pipeline, x_real_raw: Diff of LogReturns in a tensor, x_real: StandardN scaled x_real_raw"""
     if dataset == 'STOCKS':
         pipeline, x_real_raw, x_real = get_equities_dataset(**data_params)
@@ -244,7 +239,7 @@ def get_data(dataset, p, q, isSigLib, **data_params):
     elif dataset == 'VAR':
         pipeline, x_real_raw, x_real = get_var_dataset(**data_params)
     elif dataset in ['Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes']:
-        pipeline, x_real_raw, x_real = get_test_stocks(dataset, isSigLib, **data_params, q=q)
+        pipeline, x_real_raw, x_real = get_test_stocks(dataset, isSigLib, spec=spec, **data_params)
     else:
         raise NotImplementedError('Dataset %s not valid' % dataset)
 
