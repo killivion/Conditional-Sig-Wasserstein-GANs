@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)
     parser.add_argument('-algo', default='SigCWGAN', type=str)
-    parser.add_argument('-spec', default='mu=[0.06]_sigma=[[0.4472136]]_q=50', type=str)
+    parser.add_argument('-spec', default='mu=[0.06]_sigma=[[0.4472136]]_q=10', type=str)
     parser.add_argument('-sig_p', default=3, type=int)
     parser.add_argument('-sig_q', default=3, type=int)
 
