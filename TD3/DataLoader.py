@@ -64,6 +64,8 @@ class LoadData:
     def generate_correlated_BS(self, mu, vola_matrix, window_size, num_paths, num_bm, grid_points=252, S0=1):
         """Generates num_paths of correlated Black-Scholes, from num_bm Brownian Motions
         mu: Drift, vola_matrix: Volatility [corrospondence of asset to Brownian Motion]"""
+        print("MU and Vola")
+        print(mu, vola_matrix)
 
         T = window_size / grid_points
         dt = 1 / grid_points
