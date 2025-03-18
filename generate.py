@@ -63,6 +63,10 @@ def generate_data(spec, args):
     price_paths_reconstructed = np.exp(log_prices_reconstructed)
     price_paths_reconstructed = np.insert(price_paths_reconstructed, 0, 1)
 
+    std = 1
+    mean = 0
+
+    x_fake_future = x_fake_future* std.to(x_fake_future.device) + mean.to(x_fake_future.device)
     return pd.DataFrame(x_fake_future.detach().cpu().numpy()) #pd.DataFrame(price_paths_reconstructed)
 
 if __name__ == '__main__':
