@@ -67,7 +67,7 @@ def get_algo(algo_id, base_config, dataset, data_params, x_real):
     return algo
 
 
-def run(algo_id, base_config, base_dir, dataset, spec, data_params={}):
+def run(args, algo_id, base_config, base_dir, dataset, spec, data_params={}):
     """ Create the experiment directory, calibrate algorithm, store relevant parameters. """
     print('Executing: %s, %s, %s' % (algo_id, dataset, spec))
     experiment_directory = pt.join(base_dir, dataset, spec, 'seed={}'.format(base_config.seed), algo_id)
@@ -77,7 +77,7 @@ def run(algo_id, base_config, base_dir, dataset, spec, data_params={}):
     # Set seed for exact reproducibility of the experiments
     set_seed(base_config.seed)
     # initialise dataset and algo
-    x_real = get_data(dataset, base_config.p, base_config.q, isSigLib=True, **data_params)
+    x_real = get_data(dataset, args.p, args.q, isSigLib=True, **data_params)
     x_real = x_real.to(base_config.device)
     ind_train = int(x_real.shape[0] * 0.8)
     x_real_train, x_real_test = x_real[:ind_train], x_real[ind_train:] #train_test_split(x_real, train_size = 0.8)
@@ -237,7 +237,7 @@ def main(args):
                 set_seed(seed)
                 generator = get_dataset_configuration(dataset, window_size=args.window_size, num_paths=args.num_paths, num_bm=args.num_bm, grid_points=args.grid_points, q=args.q)
                 for spec, data_params in generator:
-                    run(
+                    run(args=args,
                         algo_id=algo_id,
                         base_config=base_config,
                         data_params=data_params,

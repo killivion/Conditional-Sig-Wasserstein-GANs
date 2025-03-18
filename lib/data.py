@@ -206,7 +206,7 @@ def download_mit_ecg_dataset():
     os.remove('./mit_db.zip')
 
 
-def get_test_stocks(dataset, isSigLib, data_params):
+def get_test_stocks(dataset, isSigLib, data_params, q):
     #generates data via GBM, correlated_GBM, Heston, VarGamma, KouJumpDiffusion or LevyIto model and loads it via the DataLoader file
     import lib.DataLoader as DataLoader
     loader = DataLoader.LoadData(dataset=dataset, isSigLib=isSigLib, data_params=data_params)
@@ -216,11 +216,11 @@ def get_test_stocks(dataset, isSigLib, data_params):
         logrtn = np.diff(log_prices, axis=1)
         data_raw = torch.from_numpy(logrtn[..., None]).float()
         if dataset == 'correlated_Blackscholes':
-            spec = ('mu={}_sigma={}_window_size={}'.format(data_params['mu'],data_params['vola_matrix'], data_params['window_size']))
+            spec = ('mu={}_sigma={}_q={}'.format(data_params['mu'],data_params['vola_matrix'], q))
         elif dataset == 'Heston':
-            spec = ('mu={}_sigma={}_window_size={}'.format(data_params['lambda_0'], data_params['v0_sqrt'], data_params['args.window_size' ]))
+            spec = ('mu={}_sigma={}_q={}'.format(data_params['lambda_0'], data_params['v0_sqrt'], q))
         elif dataset == 'YFinance':
-            spec = ('ticker={}_start={}_end={}'.format(data_params['ticker'], data_params['start'], data_params['end']))
+            spec = ('ticker={}_start={}_end={}_q={}'.format(data_params['ticker'], data_params['start'], data_params['end'], q))
         mean = torch.mean(data_raw, dim=(0, 1))
         std = torch.std(data_raw, dim=(0, 1))
         stats = {'mean': mean, 'std': std}
@@ -244,7 +244,7 @@ def get_data(dataset, p, q, isSigLib, **data_params):
     elif dataset == 'VAR':
         pipeline, x_real_raw, x_real = get_var_dataset(**data_params)
     elif dataset in ['Blackscholes', 'Heston', 'VarianceGamma', 'Kou_Jump_Diffusion', 'Levy_Ito', 'YFinance', 'correlated_Blackscholes']:
-        pipeline, x_real_raw, x_real = get_test_stocks(dataset, isSigLib, **data_params)
+        pipeline, x_real_raw, x_real = get_test_stocks(dataset, isSigLib, **data_params, q=q)
     else:
         raise NotImplementedError('Dataset %s not valid' % dataset)
 
