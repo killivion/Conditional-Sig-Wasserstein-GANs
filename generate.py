@@ -63,9 +63,9 @@ def generate_data(spec, args):
     price_paths_reconstructed = np.exp(log_prices_reconstructed)
     price_paths_reconstructed = np.insert(price_paths_reconstructed, 0, 1)
 
-    pipeline = Pipeline(steps=[('standard_scale', StandardScalerTS(axis=(0, 1)))])
-    x_fake_future = pipeline.inverse_transform(x=x_fake_future, real_mean=real_mean, real_std=reaL_std)
-    return pd.DataFrame(x_fake_future.detach().cpu().numpy()) #pd.DataFrame(price_paths_reconstructed)
+    x_fake_future = pd.DataFrame(x_fake_future.detach().cpu().numpy())
+    x_fake_future = x_fake_future.squeeze(-1)
+    return x_fake_future  # pd.DataFrame(price_paths_reconstructed)
 
 if __name__ == '__main__':
     import argparse
