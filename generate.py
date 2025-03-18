@@ -52,7 +52,7 @@ def generate_data(spec, args):
     # Reverse the scaling transformation
     from lib.data import Pipeline, StandardScalerTS
     pipeline = Pipeline(steps=[('standard_scale', StandardScalerTS(axis=(0, 1)))])
-    logrtn_recovered = pipeline.inverse_transform(x_fake_future, real_mean=real_mean, reaL_std=reaL_std)
+    logrtn_recovered = pipeline.inverse_transform(x=x_fake_future, real_mean=real_mean, reaL_std=reaL_std)
     logrtn_recovered = logrtn_recovered.detach().cpu().numpy() if isinstance(logrtn_recovered, torch.Tensor) else logrtn_recovered
     logrtn_recovered = logrtn_recovered.squeeze(-1)
     log_prices_reconstructed = np.cumsum(logrtn_recovered, axis=1)
