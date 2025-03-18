@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
     results = []
     from tqdm import tqdm
-    for _ in tqdm(range(10000), desc="YFinance", leave=False):
+    for _ in tqdm(range(1000), desc="Sampling", leave=False):
         df = generate_data(args.spec, args)
         # Extract the last row (i.e. the final values) from the DataFrame
         last_row = df.iloc[-1]
@@ -86,6 +86,7 @@ if __name__ == '__main__':
 
     # Create a DataFrame from the collected rows
     results_df = pd.DataFrame(results)
+    print(results_df.shape)
 
     # Compute mean and standard deviation for each column
     mean_values = results_df.mean()
