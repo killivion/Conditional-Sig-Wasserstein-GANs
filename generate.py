@@ -88,10 +88,11 @@ if __name__ == '__main__':
     from tqdm import tqdm
     for _ in tqdm(range(args.test_length), desc="Sampling", leave=False):
         df = generate_data(args.spec, args)
+        df = df.iloc[0, :]
         print(df)
-        series = df.iloc[:, 0]
-        print(series)
-        y = (1 + series).cumprod().shift(1, fill_value=1)
+        cumulative = (1 + df).cumprod()
+        # Prepend the initial value 1 to the cumulative product
+        y = pd.concat([pd.Series([1]), cumulative], ignore_index=True)
         print(y)
 
         # Extract the last row (i.e. the final values) from the DataFrame
