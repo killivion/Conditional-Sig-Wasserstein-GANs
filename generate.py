@@ -89,11 +89,11 @@ if __name__ == '__main__':
     for _ in tqdm(range(args.test_length), desc="Sampling", leave=False):
         df = generate_data(args.spec, args)
         df = df.iloc[0, :]
-        print(df)
+        print(df.mean())
+
         cumulative = (1 + df).cumprod()
         # Prepend the initial value 1 to the cumulative product
         y = pd.concat([pd.Series([1]), cumulative], ignore_index=True)
-        print(y)
 
         # Extract the last row (i.e. the final values) from the DataFrame
         last_row = y.iloc[-1]
