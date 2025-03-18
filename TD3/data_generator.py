@@ -14,7 +14,7 @@ import DataLoader as DataLoader
 class Data_Puller:
     def __init__(self, args, spec, data_params):
         if args.dataset == 'YFinance' and not args.GAN_sampling:
-            self.sample_data = yf.download(data_params['data_params']['ticker'], start=data_params['data_params']['start'], end=data_params['data_params']['end'], progress=False)['Close']
+            self.sample_data = yf.download(tickers=data_params['data_params']['ticker'], start=data_params['data_params']['start'], end=data_params['data_params']['end'], progress=False)['Close']
             self.start_index = 0
             print(self.sample_data)
         else:
