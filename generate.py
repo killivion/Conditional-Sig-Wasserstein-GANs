@@ -39,6 +39,10 @@ def generate_from_generator(spec, experiment_dir, dataset, use_cuda=True):
         _x_past = x_past_sample.clone()
         x_fake_future = G.sample(q, _x_past)
 
+    print(x_past.shape)
+    print(_x_past.shape)
+    print(x_fake_future)
+
     return x_fake_future
 
 
@@ -64,9 +68,7 @@ def generate_data(spec, args):
     price_paths_reconstructed = np.insert(price_paths_reconstructed, 0, 1)
 
     x_fake_future = x_fake_future.detach().cpu().numpy()
-    print(x_fake_future.shape)
     x_fake_future = pd.DataFrame(x_fake_future.squeeze(-1))
-    print(x_fake_future.shape)
     return x_fake_future  # pd.DataFrame(price_paths_reconstructed)
 
 if __name__ == '__main__':
