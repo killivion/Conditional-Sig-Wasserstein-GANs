@@ -155,8 +155,8 @@ if __name__ == '__main__':
     #parser.add_argument('-learning_starts', default=100000, type=int)
     parser.add_argument('-p', default=0.8, type=float)
     parser.add_argument('-risk_free_rate', default=0.04, type=float)
-    parser.add_argument('-grid_points', default=5, type=int)
-    parser.add_argument('-window_size', default=5, type=int)
+    parser.add_argument('-grid_points', default=1, type=int)
+    parser.add_argument('-window_size', default=1, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
     parser.add_argument('-num_bm', default=1, type=int)  # Number of random sources N
 

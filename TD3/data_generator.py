@@ -17,7 +17,6 @@ class Data_Puller:
             print(f"Data from: {data_params['data_params']['ticker']}, {data_params['data_params']['start']}, {data_params['data_params']['end']}")
             self.sample_data = yf.download(tickers=data_params['data_params']['ticker'], start=data_params['data_params']['start'], end=data_params['data_params']['end'], progress=False)['Close']
             self.start_index = 0
-            print(self.sample_data)
         else:
             self.loader = DataLoader.LoadData(dataset=args.dataset, isSigLib=False, data_params=data_params)
         if args.GAN_sampling:
@@ -43,11 +42,10 @@ class Data_Puller:
         if args.GAN_sampling:
             data = self.generate()
         elif args.dataset == 'YFinance':
-            if self.start_index + args.window_size > len(self.sample_data):
-                self.start_index = 0
-            data = pd.DataFrame(self.sample_data[self.start_index:self.start_index + args.window_size])
-            data = data / data[:, 0].reshape(-1, 1)
-            print(f'{self.start_index}, {data}')
+            if self.start_index + args.window_size + 1 > len(self.sample_data):
+                self.start_index = (self.start_index + args.window_size + 1) % len(self.sample_data)
+            data = np.array(self.sample_data[self.start_index:self.start_index + args.window_size + 1]).T
+            data = pd.DataFrame(data / data[:, 0].reshape(-1, 1)).T
             self.start_index = self.start_index + args.window_size
         elif args.dataset in ['Blackscholes', 'Heston', 'correlated_Blackscholes']:
             data = self.loader.create_dataset(output_type="DataFrame").T

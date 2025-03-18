@@ -81,7 +81,6 @@ class LoadData:
 
         return S, t
 
-
     def generate_heston(self, lambda_0, v0_sqrt, kappa, sigma, xi, rho, window_size, num_paths, grid_points=252, S0=1):
         """generates num_paths time series following the Heston model via CIR
         mu: Drift, V0_squared->V0: Initial Variance, kappa: Mean reversion rate of Variance, sigma->theta: long Variance, xi: Volatility of Volatility, rho: Correlation of Wiener"""

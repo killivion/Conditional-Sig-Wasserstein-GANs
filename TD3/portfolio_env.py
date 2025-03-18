@@ -53,7 +53,7 @@ class PortfolioEnv(gym.Env):
 
         self.action = action_normalizer(action)  # normalizes to 1 or adds risk-free action
         self.action_return = self.action @ self.stock_returns[self.current_step-1]
-        self.portfolio_value *= self.action_return  # Idea: adjust by 1 to compensate if sum(action)=0, so portfolio return 1 stays baseline
+        self.portfolio_value *= self.action_return
         self.optimal_return = np.insert(self.analytical_risky_action, 0, 1 - sum(self.analytical_risky_action)) @ self.stock_returns[self.current_step-1]
         self.optimal_portfolio *= self.optimal_return
         reward = self._calc_reward(done)
