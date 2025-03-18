@@ -74,7 +74,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     results = []
-    spec = 'mu=[0.06]_sigma=[[0.4472136]]_window_size=1'
+    spec = 'mu=[0.06]_sigma=[[0.4472136]]_window_size=1000'
     from tqdm import tqdm
     for _ in tqdm(range(10000), desc="YFinance", leave=False):
         df = generate_data(spec, args)
