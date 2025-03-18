@@ -16,7 +16,7 @@ def generate_from_generator(experiment_dir, dataset, use_cuda=True):
 
     #sig_config = get_algo_config(dataset, experiment_dir)
     base_config = BaseConfig(device=device)
-    p, q = base_config.p, base_config.q
+    p, q = 3, 3
     # ----------------------------------------------
     # Load and prepare real path.
     # ----------------------------------------------
@@ -72,7 +72,27 @@ if __name__ == '__main__':
     parser.add_argument('-algo', default='SigCWGAN', type=str)
 
     args = parser.parse_args()
-    generate_data(args)
+
+    results = []
+    spec = 'mu=[0.06]_sigma=[[0.4472136]]_window_size=1'
+    from tqdm import tqdm
+    for _ in tqdm(range(10000), desc="YFinance", leave=False):
+        df = generate_data(spec, args)
+        # Extract the last row (i.e. the final values) from the DataFrame
+        last_row = df.iloc[-1]
+        results.append(last_row)
+
+    # Create a DataFrame from the collected rows
+    results_df = pd.DataFrame(results)
+
+    # Compute mean and standard deviation for each column
+    mean_values = results_df.mean()
+    std_values = results_df.std()
+
+    print("Mean values over 10,000 samples:")
+    print(mean_values)
+    print("\nStandard deviations over 10,000 samples:")
+    print(std_values)
 
 """ Concept:
 1) One-time train the GAN
