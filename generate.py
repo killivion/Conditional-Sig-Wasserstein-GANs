@@ -69,14 +69,14 @@ if __name__ == '__main__':
 
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)
     parser.add_argument('-algo', default='SigCWGAN', type=str)
+    parser.add_argument('-spec', default='mu=[0.06]_sigma=[[0.4472136]]_window_size=1000', type=str)
 
     args = parser.parse_args()
 
     results = []
-    spec = 'mu=[0.06]_sigma=[[0.4472136]]_window_size=1000'
     from tqdm import tqdm
     for _ in tqdm(range(10000), desc="YFinance", leave=False):
-        df = generate_data(spec, args)
+        df = generate_data(args.spec, args)
         # Extract the last row (i.e. the final values) from the DataFrame
         last_row = df.iloc[-1]
         results.append(last_row)
