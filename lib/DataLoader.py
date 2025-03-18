@@ -205,7 +205,7 @@ class LoadData:
         """Download and reformat yfinance data starting at S0. "
         Parameters: ticker: List of Stocks that are viewed, start, end: None"""
 
-        print('Data from:' % ticker, start, end)
+        print(f'Data from: {ticker}, {start}, {end}')
         data = yf.download(tickers=ticker, start=start, end=end, progress=False)["Close"]
         data = np.array(data).T
         print(f'Downloaded Data Shape: {data.shape}')
