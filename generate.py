@@ -20,9 +20,7 @@ def generate_from_generator(spec, experiment_dir, dataset, use_cuda=True):
     # Load and prepare real path.
     # ----------------------------------------------
     x_real = load_pickle(os.path.join(os.path.dirname(experiment_dir), 'x_real_test.torch')).to(device)
-    print(x_real.shape)
     x_past = x_real[:, :p]
-    print(x_past.shape)
     #x_future = x_real[:, p:p + q]
     dim = x_real.shape[-1]
 
@@ -92,8 +90,6 @@ if __name__ == '__main__':
 
     # Create a DataFrame from the collected rows
     results_df = pd.DataFrame(results)
-    print(results_df.shape)
-    print(results_df)
 
     # Compute mean and standard deviation for each column
     mean_values = results_df.mean()
