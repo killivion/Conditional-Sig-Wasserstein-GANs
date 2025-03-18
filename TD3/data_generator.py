@@ -49,13 +49,14 @@ class Data_Puller:
             print(f'{self.start_index}, {data}')
             self.start_index = self.start_index + args.window_size
         elif args.dataset in ['Blackscholes', 'Heston', 'correlated_Blackscholes']:
-            data = self.loader.create_dataset(output_type="DataFrame")
+            data = self.loader.create_dataset(output_type="DataFrame").T
         else:
             raise NotImplementedError('Dataset %s not valid' % args.dataset)
         returns = data.pct_change().dropna().values + 1  # Compute dt change ratio [not dt returns]
         #incremental_risk_free_rate = (1 + args.risk_free_rate) ** (1 / args.grid_points)
         risk_free_column = np.full((returns.shape[0], 1), np.exp(args.risk_free_rate/args.grid_points))
         return np.hstack((risk_free_column, returns)), np.array(data)
+
 
 
     def generate(self):

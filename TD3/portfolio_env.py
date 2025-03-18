@@ -92,8 +92,8 @@ class PortfolioEnv(gym.Env):
         # normalized_returns = self.normalized_stock_returns[self.current_step-1]
         feature_map = np.concatenate([self.mu, self.vola_matrix.flatten()])
         if self.args.time_dependent:
-            feature_map = np.insert(feature_map, 0, self.stock_data[self.current_step])
-            feature_map = np.insert(feature_map, 0, self.current_step/self.stock_data.shape[1])
+            feature_map = np.insert(feature_map, 0, self.stock_data[self.current_step] - 1)
+            feature_map = np.insert(feature_map, 0, self.current_step/self.stock_data.shape[0])
         return feature_map
 
     def _calc_reward(self, done):
