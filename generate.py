@@ -16,7 +16,7 @@ def generate_from_generator(experiment_dir, dataset, use_cuda=True):
 
     #sig_config = get_algo_config(dataset, experiment_dir)
     base_config = BaseConfig(device=device)
-    p, q = args.p, args.q
+    p, q = args.sig_p, args.sig_q
     # ----------------------------------------------
     # Load and prepare real path.
     # ----------------------------------------------
