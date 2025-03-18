@@ -233,7 +233,7 @@ def get_test_stocks(dataset, isSigLib, spec, data_params):
         print(data_pre)
         data_pre = data_pre.pct_change(axis=1).dropna()
         print(data_pre)
-        data_pre = data_pre[..., None]
+        data_pre = data_pre.values[..., None]
         print(data_pre)
         data_pre = torch.from_numpy(data_pre).float()
         print(data_pre)
