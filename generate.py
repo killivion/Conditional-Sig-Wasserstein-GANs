@@ -86,8 +86,11 @@ if __name__ == '__main__':
     from tqdm import tqdm
     for _ in tqdm(range(args.test_length), desc="Sampling", leave=False):
         df = generate_data(args.spec, args)
+        series = df.iloc[:, 0]
+        y = (1 + series).cumprod().shift(1, fill_value=1)
+
         # Extract the last row (i.e. the final values) from the DataFrame
-        last_row = df.iloc[-1]
+        last_row = y.iloc[-1]
         results.append(last_row)
 
     # Create a DataFrame from the collected rows
