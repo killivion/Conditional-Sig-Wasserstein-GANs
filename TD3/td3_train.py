@@ -12,7 +12,8 @@ import warnings
 
 import eval_actor
 from track_learning import monitor_plot
-from help_fct import CustomTD3Policy, find_largest_td3_folder, ActionLoggingCallback, generate_random_params, fuse_folders, analytical_solutions, action_normalizer, expected_utility, analytical_entry_wealth_offset, get_dataset_configuration
+from help_fct import CustomTD3Policy, find_largest_td3_folder, ActionLoggingCallback, fuse_folders, analytical_solutions, action_normalizer, expected_utility, analytical_entry_wealth_offset, get_dataset_configuration
+from data_generator import generate_random_params
 from portfolio_env import PortfolioEnv
 from hyperparameter_tuning import optimize_td3, test_optimized_td3
 import data_generator

@@ -11,6 +11,44 @@ from lib.utils import load_pickle
 import DataLoader as DataLoader
 
 
+def generate_random_params(num_paths, num_bm):
+    if num_paths == 2 and num_bm == 2:
+        total_vola = np.array([[0.07, 0.12]])
+        weights = np.array([[1, 0], [0, 1]])  # rows sum to one
+        mu = np.array([0.06, 0.08])
+    elif num_paths == 1 and num_bm == 1:  # 1 path, 1 brownian motion
+        total_vola = np.array([[0.04]])
+        weights = np.array([[1]])
+        mu = np.array([0.06])
+    elif num_paths == 2 and num_bm == 3:
+        total_vola = np.array([[0.06, 0.14]])
+        weights = np.array([[0.5, 0.3, 0.2], [0.1, 0.4, 0.5]])  # rows sum to one
+        mu = np.array([0.08, 0.10])
+
+    else:  # Adjustment of up and lower bound depending on num_paths size (number of correlations), amounts to slightly more than 20% vol
+        low_vol = 0.1 * 3 * (np.log(1000)) ** (0.8) / (np.log(num_paths) ** (1.8))
+        up_vol = 2.5 * low_vol
+        low_mu, up_mu = 0.03, 0.13
+
+        mu = np.random.uniform(low_mu, up_mu, size=num_paths)
+        total_vola = np.random.uniform(low_vol, up_vol, size=num_paths)
+        weights = np.random.rand(num_paths, num_bm)
+        weights = weights / weights.sum(axis=1, keepdims=True)
+
+        """
+        correlation = np.random.uniform(-1, 1, size=(num_paths, num_bm))
+        np.fill_diagonal(correlation, 1)
+        correlation = (correlation + correlation.T) / 2
+        eigvals, eigvecs = np.linalg.eigh(correlation)
+        eigvals[eigvals < 0] = 1e-5
+        correlation = eigvecs @ np.diag(eigvals) @ eigvecs.T  # correlation matrix with p_ij entries
+        """
+
+    vola_matrix = np.sqrt(weights * total_vola.T)  # [sigma] = vola_matrix
+
+    return mu, vola_matrix  # mu is drift, vola_matrix
+
+
 class Data_Puller:
     def __init__(self, args, spec, data_params):
         if args.dataset == 'YFinance' and not args.GAN_sampling:

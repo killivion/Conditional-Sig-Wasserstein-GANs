@@ -16,7 +16,6 @@ except ImportError:
 
 from sklearn.model_selection import train_test_split
 
-
 def generate_random_params(num_paths, num_bm):
     if num_paths == 2 and num_bm == 2:
         total_vola = np.array([[0.07, 0.12]])

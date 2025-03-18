@@ -14,7 +14,7 @@ from lib.data import download_man_ahl_dataset, download_mit_ecg_dataset
 from lib.data import get_data
 from lib.plot import savefig, create_summary
 from lib.utils import pickle_it
-from TD3.help_fct import generate_random_params
+from TD3.data_generator import generate_random_params
 
 
 def get_algo_config(dataset, data_params):

@@ -259,7 +259,7 @@ if __name__ == "__main__": #Testing
     test = 1
     if test == 0:
         import matplotlib.pyplot as plt
-        from TD3.help_fct import generate_random_params
+        from TD3.data_generator import generate_random_params
 
         num_paths = 1000
         num_bm = 1

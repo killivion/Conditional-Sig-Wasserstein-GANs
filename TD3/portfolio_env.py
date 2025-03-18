@@ -77,7 +77,7 @@ class PortfolioEnv(gym.Env):
         else:  # if not the first episode, new data is pulled
             if self.args.mode in ['eval', 'compare'] or self.episode_cycle == self.args.episode_reset:  # every episode_reset episodes, pulls new rdm parameters
                 self.episode_cycle = 0
-                from td3_train import generate_random_params
+                from data_generator import generate_random_params
                 mu, vola_matrix = generate_random_params(self.num_stocks, self.args.num_bm)
                 self.data_params = dict(data_params=dict(mu=mu, vola_matrix=vola_matrix, window_size=self.args.window_size, num_paths=self.args.num_paths, num_bm=self.args.num_bm, grid_points=self.args.window_size))
                 self.analytical_risky_action, self.analytical_utility = analytical_solutions(self.args, self.data_params)
