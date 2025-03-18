@@ -16,7 +16,7 @@ def generate_from_generator(experiment_dir, dataset, use_cuda=True):
 
     #sig_config = get_algo_config(dataset, experiment_dir)
     base_config = BaseConfig(device=device)
-    p, q = 3, 3
+    p, q = args.p, args.q
     # ----------------------------------------------
     # Load and prepare real path.
     # ----------------------------------------------
@@ -68,6 +68,8 @@ if __name__ == '__main__':
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)
     parser.add_argument('-algo', default='SigCWGAN', type=str)
     parser.add_argument('-spec', default='mu=[0.06]_sigma=[[0.4472136]]_window_size=1000', type=str)
+    parser.add_argument('-sig_p', default=3, type=int)
+    parser.add_argument('-sig_q', default=3, type=int)
 
     args = parser.parse_args()
 
