@@ -27,7 +27,7 @@ class LoadData:
         if self.dataset in self.dataset_functions:
             if self.seed is not None:
                 np.random.seed(self.seed)
-            if self.isSiglib:
+            if self.isSigLib:
                 paths, time = self.dataset_functions[self.dataset](**self.data_params)
             else:
                 paths, time = self.dataset_functions[self.dataset](**self.data_params['data_params'])
