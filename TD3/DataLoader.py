@@ -259,125 +259,29 @@ if __name__ == "__main__": #Testing
     test = 1
     if test == 0:
         import matplotlib.pyplot as plt
+        from TD3.help_fct import generate_random_params
+
+        num_paths = 1000
+        num_bm = 1
+        window_size = 1000
+        grid_points = 252
+        mu, vola_matrix = generate_random_params(num_paths = 1, num_bm = 1)
+        T = window_size/grid_points
 
         GBM_parameter = {
-            #"mu": 0.05,
-            #"sigma": 0.2
+            "mu": 0.06,
+            "sigma": 0.2
         }
-        Heston_parameter = {
-            #"mu": 0.05,
-            "v0_sqrt": 0.2,  # This is volatility,
-            "kappa": 1.5,
-            #"theta": 0.2**2,  # This is Variance, gbm_sigma indicates volatility
-            "xi": 0.3, #Feller-Condition: 2*kappa*theta > xi**2
-            "rho": -0.5
-        }
-        VarGamma_parameter = {
-            #"mu": 0.05,
-            #"sigma": 0.2,
-            "nu": 0.02,
-        }
-        Kou_parameter = {
-            #"mu": 0.12,
-            #"sigma": 0.2,
-            "kou_lambda": 2.0,
-            "p": 0.3,
-            "eta1": 50.,
-            "eta2": 25.
-        }
-        LevyIto_parameter = {
-            #"mu": 0.05,
-            #"sigma": 0.2,
-            "lambda_large": 2,
-            "lambda_small": 300,
-            "jump_mean_large": 0.03,
-            "jump_std_large": 0.05,
-            "jump_mean_small": 0.0005,
-            "jump_std_small": 0.0005
-        }
-        YFinance_parameter = {
-            "S0": 1.,
-            "plot": False,
-            "ticker": [
-        # Major Indices
-        "^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX",
-        ]
-        }
-        """# Large-Cap Tech Stocks (FAANG & Others)
-             "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA", "ORCL", "INTC", "CSCO", "IBM", "ADBE", "CRM", "TXN",
-    
-             # Financial Sector
-             "JPM", "BAC", "GS", "C", "WFC", "MS", "SCHW", "BLK", "BK", "AXP", "COF", "USB", "TFC", "CME",
-    
-             # Consumer Goods & Retail
-             "WMT", "PG", "KO", "PEP", "COST", "MCD", "NKE", "TGT", "SBUX", "HD", "LOW", "DG", "TJX", "YUM",
-    
-             # Healthcare
-             "JNJ", "PFE", "UNH", "MRK", "CVS", "LLY", "ABT", "TMO", "BMY", "DHR", "ZTS", "MDT", "BSX",
-    
-             # Energy Sector
-             "XOM", "CVX", "SLB", "COP", "OXY", "PSX", "VLO", "HAL", "MPC", "BKR", "EOG", "FANG", "KMI",
-    
-             # Industrials
-             "BA", "CAT", "MMM", "GE", "HON", "UPS", "UNP", "LMT", "RTX", "FDX", "CSX", "NSC", "WM", "NOC",
-    
-             # Utilities
-             "NEE", "DUK", "SO", "D", "EXC", "AEP", "SRE", "PEG", "WEC", "ED", "XEL", "ES", "AWK", "DTE",
-    
-             # Telecommunications
-             "T", "VZ", "TMUS", "CCI", "AMT", "VOD", "S", "CHT", "TU", "NOK", "ORAN", "BTI", "KT", "PHI",
-    
-             # Real Estate
-             "PLD", "AMT", "CCI", "SPG", "PSA", "EQIX", "EQR", "ESS", "AVB", "O", "MAA", "UDR", "VTR", "HCP",
-    
-             # Consumer Discretionary
-             "DIS", "HD", "MCD", "SBUX", "NKE", "LVS", "GM", "F", "HMC", "TM", "TSLA", "YUM", "MAR", "CCL",
-    
-             # ETFs and Funds
-             "SPY", "QQQ", "DIA", "IWM", "GLD", "SLV", "TLT", "XLF", "XLK", "XLE", "XLU", "XLI", "XLY", "XLP",
-    
-             # Commodities
-             "CL=F", "GC=F", "SI=F", "NG=F", "HG=F", "ZC=F", "ZW=F", "ZS=F", "LE=F", "HE=F", "KC=F", "CC=F", "CT=F",
-    
-             # Forex and Cryptocurrency
-             "EURUSD=X", "GBPUSD=X", "JPY=X", "AUDUSD=X", "BTC-USD", "ETH-USD", "LTC-USD", "XRP-USD", "BCH-USD",
-             "DOT-USD","""
-        general_parameter = {
-            "mu": 0.08,  # 0.0618421411431207,  # This is the YFinance data mean;
-            "sigma": 0.2,  # 0.34787525475010267,  # This is the YFinance data Volatility;
-            "S0": 1,
-            "grid_points": 252,
-            "window_size": 252 * 1,
-            "num_paths": 1000
-        }
-        def generate_random_params(num_paths):
-            low_vol = 0.1 * 3*(np.log(1000))**(0.8)/(np.log(num_paths)**(1.8))  # Adjustment of up and lower bound depending on num_paths size (number of correlations)
-            up_vol = 0.25 * 3*(np.log(1000))**(0.8)/(np.log(num_paths)**(1.8))  # amounts to 22% vol
 
-            mu = np.random.uniform(0.03, 0.13, size=num_paths)
-            volatilities = np.random.uniform(low_vol, up_vol, size=num_paths)
-            correlation = np.random.uniform(-1, 1, size=(num_paths, num_paths))
-            np.fill_diagonal(correlation, 1)
-            correlation = (correlation + correlation.T) / 2
-            eigvals, eigvecs = np.linalg.eigh(correlation)
-            eigvals[eigvals < 0] = 1e-5
-            correlation = eigvecs @ np.diag(eigvals) @ eigvecs.T
-
-            vola_matrix = correlation * np.outer(volatilities, volatilities)
-            return mu, vola_matrix
-        num_paths = general_parameter['num_paths']
-        mu, vola_matrix = generate_random_params(num_paths)
-        T = general_parameter['window_size']/general_parameter['grid_points']
-
-        plot = True
+        plot = False
         models = {
-            #"Blackscholes": {**GBM_parameter, **general_parameter},
+            "Blackscholes": {**GBM_parameter, "window_size": window_size, "num_paths": num_paths},
             #"Heston": {**Heston_parameter, **general_parameter},
             #"VarianceGamma": {**VarGamma_parameter, **general_parameter},
             #"Kou_Jump_Diffusion": {**Kou_parameter, **general_parameter},
             #"Levy_Ito": {**LevyIto_parameter, **general_parameter},
             #"YFinance": YFinance_parameter,
-            "correlated_Blackscholes": {"mu": mu, "vola_matrix": vola_matrix, "window_size": general_parameter['window_size'], "num_paths": num_paths},
+            #"correlated_Blackscholes": {"mu": mu, "vola_matrix": vola_matrix, "window_size": window_size, "num_paths": num_paths, "num_bm": 1},
         }
 
         if plot:
@@ -387,7 +291,7 @@ if __name__ == "__main__": #Testing
 
             for i, (model_name, params) in enumerate(models.items()):
                 # Load model and create simulated price data
-                model = LoadData(dataset=model_name, data_params=params, isSigLib=False)
+                model = LoadData(dataset=model_name, data_params=params, isSigLib=True)
                 prices_df = model.create_dataset("DataFrame")
                 clear_output(wait=True)
 
@@ -409,7 +313,7 @@ if __name__ == "__main__": #Testing
             for i, (model_name, params) in enumerate(models.items()):
                 start_time = time.time()
                 # Load model and create simulated price data
-                model = LoadData(dataset=model_name, data_params=params, isSigLib=False)
+                model = LoadData(dataset=model_name, data_params=params, isSigLib=True)
                 prices_df = model.create_dataset("DataFrame")
 
                 print('%s %s %s' % (model_name, (prices_df.iloc[:, -1].mean()) ** (1 / T) - 1, prices_df.iloc[:, -1].std() / np.sqrt(T)))
@@ -420,10 +324,10 @@ if __name__ == "__main__": #Testing
     elif test == 1:
         p = 0.8
         risk_free_rate = 0.04
-        total_vola = np.array([[0.2, 0.25]])
+        total_vola = np.array([[0.06, 0.14]])
         weights = np.array([[0.7, 0.3], [0.2, 0.8]])  # rows sum to one
-        mu = np.array([0.05, 0.07])
-        vola_matrix = total_vola * np.sqrt(weights)  # [sigma]
+        mu = np.array([0.06, 0.08])
+        vola_matrix = np.sqrt(weights * total_vola.T)
 
         grid_points = 1
         window_size = 1
@@ -433,13 +337,12 @@ if __name__ == "__main__": #Testing
         T = window_size / grid_points
         dt = 1 / grid_points
         t = np.linspace(0, T, window_size + 1)
-        cholesky = np.linalg.cholesky(vola_matrix)
 
         risky_lambda = mu - risk_free_rate
-        analytical_risky_action = 1 / p * risky_lambda.T @ np.linalg.inv(cholesky @ cholesky.T)
-        analytical_utility = np.exp((1 - p) * (risk_free_rate + 1 / (2 * p) * risky_lambda.T @ np.linalg.inv(cholesky @ cholesky.T) @ risky_lambda))
+        analytical_risky_action = 1 / p * risky_lambda.T @ np.linalg.inv(vola_matrix @ vola_matrix.T)
+        analytical_utility = np.exp((1 - p) * (risk_free_rate + 1 / (2 * p) * risky_lambda.T @ np.linalg.inv(vola_matrix @ vola_matrix.T) @ risky_lambda))
 
-        print(f"Drift: {mu - vola_matrix / 2}")
+        print(f"Drift: {mu - (vola_matrix*vola_matrix.T) / 2}")
         print(risky_lambda, analytical_risky_action, sum(analytical_risky_action), analytical_utility)
 
         def generate_gbm(mu, sigma, window_size, num_paths, grid_points=252, S0=1):
@@ -460,7 +363,7 @@ if __name__ == "__main__": #Testing
 
             for i in range(1, window_size + 1):
                 Z = np.random.normal(size=num_paths)  # Independent standard normals
-                S[:, i] = S[:, i - 1] * np.exp((mu - 0.5 * np.sum(vola_matrix, axis=1)) * dt + cholesky @ Z * np.sqrt(dt))
+                S[:, i] = S[:, i - 1] * np.exp((mu - 0.5 * np.sum(vola_matrix**2, axis=1)) * dt + vola_matrix @ Z * np.sqrt(dt))
 
             # prices_df = pd.DataFrame(S, columns=t)
             # print('Mean and Std of correlated BS %s %s' % (prices_df.iloc[:, -1].mean()**(1 / T) - 1, prices_df.iloc[:, -1].std() / np.sqrt(T)))
@@ -507,3 +410,56 @@ if __name__ == "__main__": #Testing
         # optimal_portfolio *= np.dot([1 - analytical_risky_action[0], analytical_risky_action[0]], stock_data[current_step - 1])
         print(risky_lambda, analytical_risky_action, sum(analytical_risky_action), analytical_utility)
 
+"""GBM_parameter = {
+            #"mu": 0.05,
+            #"sigma": 0.2
+        }
+        Heston_parameter = {
+            #"mu": 0.05,
+            "v0_sqrt": 0.2,  # This is volatility,
+            "kappa": 1.5,
+            #"theta": 0.2**2,  # This is Variance, gbm_sigma indicates volatility
+            "xi": 0.3, #Feller-Condition: 2*kappa*theta > xi**2
+            "rho": -0.5
+        }
+        VarGamma_parameter = {
+            #"mu": 0.05,
+            #"sigma": 0.2,
+            "nu": 0.02,
+        }
+        Kou_parameter = {
+            #"mu": 0.12,
+            #"sigma": 0.2,
+            "kou_lambda": 2.0,
+            "p": 0.3,
+            "eta1": 50.,
+            "eta2": 25.
+        }
+        LevyIto_parameter = {
+            #"mu": 0.05,
+            #"sigma": 0.2,
+            "lambda_large": 2,
+            "lambda_small": 300,
+            "jump_mean_large": 0.03,
+            "jump_std_large": 0.05,
+            "jump_mean_small": 0.0005,
+            "jump_std_small": 0.0005
+        }
+        YFinance_parameter = {
+            "S0": 1.,
+            "plot": False,
+            "ticker": [
+        # Major Indices
+        "^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX",
+        ]
+        }
+        general_parameter = {
+            "mu": 0.08,  # 0.0618421411431207,  # This is the YFinance data mean;
+            "sigma": 0.2,  # 0.34787525475010267,  # This is the YFinance data Volatility;
+            "S0": 1,
+            "grid_points": 252,
+            "window_size": 252 * 1,
+            "num_paths": 1000
+        }
+
+"""

@@ -47,15 +47,15 @@ def action_normalizer(action):
 
 def generate_random_params(num_paths, num_bm):
     if num_paths == 2 and num_bm == 2:
-        total_vola = np.array([[0.1, 0.3]])
+        total_vola = np.array([[0.07, 0.12]])
         weights = np.array([[1, 0], [0, 1]])  # rows sum to one
-        mu = np.array([0.07, 0.08])
+        mu = np.array([0.06, 0.08])
     elif num_paths == 1 and num_bm == 1:  # 1 path, 1 brownian motion
-        total_vola = np.array([[0.2]])
+        total_vola = np.array([[0.04]])
         weights = np.array([[1]])
         mu = np.array([0.06])
     elif num_paths == 2 and num_bm == 3:
-        total_vola = np.array([[0.1, 0.25]])
+        total_vola = np.array([[0.06, 0.14]])
         weights = np.array([[0.5, 0.3, 0.2], [0.1, 0.4, 0.5]])  # rows sum to one
         mu = np.array([0.08, 0.10])
 
