@@ -81,7 +81,9 @@ if __name__ == '__main__':
     for _ in tqdm(range(1000), desc="Sampling", leave=False):
         df = generate_data(args.spec, args)
         # Extract the last row (i.e. the final values) from the DataFrame
+        print(df)
         last_row = df.iloc[-1]
+        print(last_row)
         results.append(last_row)
 
     # Create a DataFrame from the collected rows
