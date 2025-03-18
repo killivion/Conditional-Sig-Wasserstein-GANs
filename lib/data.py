@@ -212,6 +212,7 @@ def get_test_stocks(dataset, isSigLib, spec, data_params):
     loader = DataLoader.LoadData(dataset=dataset, isSigLib=isSigLib, data_params=data_params)
     if isSigLib:
         price_paths, time = loader.create_dataset(output_type="np.ndarray")
+        print(price_paths)
         log_prices = np.log(price_paths)
         logrtn = np.diff(log_prices, axis=1)
         data_raw = torch.from_numpy(logrtn[..., None]).float()
@@ -228,10 +229,14 @@ def get_test_stocks(dataset, isSigLib, spec, data_params):
 
     print(data_pre.shape)
     if isSigLib:
-        data_pre = loader.create_dataset(output_type="np.ndarray")
+        data_pre = loader.create_dataset(output_type="DataFrame")
+        print(data_pre)
         data_pre = data_pre.pct_change().dropna()
+        print(data_pre)
         data_pre = data_pre.values[..., None]
+        print(data_pre)
         data_pre = torch.from_numpy(data_pre).float()
+        print(data_pre)
     print('Neue Methode:')
     print(data_pre.shape)
 
