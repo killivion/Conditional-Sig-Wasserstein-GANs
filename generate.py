@@ -21,7 +21,6 @@ def generate_from_generator(experiment_dir, dataset, use_cuda=True):
     # Load and prepare real path.
     # ----------------------------------------------
     x_real = load_pickle(os.path.join(os.path.dirname(experiment_dir), 'x_real_test.torch')).to(device)
-    print(x_real)
     x_past = x_real[:, :p]
     #x_future = x_real[:, p:p + q]
     dim = x_real.shape[-1]
@@ -37,7 +36,6 @@ def generate_from_generator(experiment_dir, dataset, use_cuda=True):
     with torch.no_grad():
         _x_past = x_past.clone()
         x_fake_future = G.sample(q, _x_past)
-    print(f'x_fake_future: {x_fake_future}')
 
     return x_fake_future
 
