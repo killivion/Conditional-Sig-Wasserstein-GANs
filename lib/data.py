@@ -229,9 +229,9 @@ def get_test_stocks(dataset, isSigLib, spec, data_params):
 
     print(data_pre.shape)
     if isSigLib:
-        data_pre = loader.create_dataset(output_type="DataFrame").T
+        data_pre = loader.create_dataset(output_type="DataFrame")
         print(data_pre)
-        data_pre = data_pre.pct_change().dropna()
+        data_pre = data_pre.pct_change()(axis=1)
         print(data_pre)
         data_pre = data_pre.values[..., None]
         print(data_pre)
