@@ -225,6 +225,11 @@ def get_test_stocks(dataset, isSigLib, spec, data_params):
     else:  # for TD3
         data_pre = loader.create_dataset(output_type="DataFrame")
         data_raw, pipeline = 1, 1  # dummy return so it doesnt bug
+
+    if isSigLib:
+        data_pre = loader.create_dataset(output_type="DataFrame")
+        data_pre = data_pre.pct_change().dropna().values
+
     return pipeline, data_raw, data_pre
 
 
