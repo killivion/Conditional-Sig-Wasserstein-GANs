@@ -24,6 +24,7 @@ def generate_from_generator(spec, experiment_dir, dataset, use_cuda=True):
     x_past = x_real[:, :p]
     #x_future = x_real[:, p:p + q]
     dim = x_real.shape[-1]
+
     # ----------------------------------------------
     # Load generator weights and hyperparameters
     # ----------------------------------------------
@@ -36,6 +37,9 @@ def generate_from_generator(spec, experiment_dir, dataset, use_cuda=True):
     with torch.no_grad():
         _x_past = x_past.clone()
         x_fake_future = G.sample(q, _x_past)
+        print("Dim:" % dim)
+        print("Xpast:" % x_past)
+        print("Xfake:" % x_fake_future)
 
     return x_fake_future
 
@@ -53,8 +57,10 @@ def generate_data(spec, args):
     from lib.data import Pipeline, StandardScalerTS
     pipeline = Pipeline(steps=[('standard_scale', StandardScalerTS(axis=(0, 1)))])
     logrtn_recovered = pipeline.inverse_transform(x=x_fake_future, real_mean=real_mean, real_std=reaL_std)
+
     logrtn_recovered = logrtn_recovered.detach().cpu().numpy() if isinstance(logrtn_recovered, torch.Tensor) else logrtn_recovered
     logrtn_recovered = logrtn_recovered.squeeze(-1)
+
     log_prices_reconstructed = np.cumsum(logrtn_recovered, axis=1)
     price_paths_reconstructed = np.exp(log_prices_reconstructed)
     price_paths_reconstructed = np.insert(price_paths_reconstructed, 0, 1)
@@ -81,9 +87,7 @@ if __name__ == '__main__':
     for _ in tqdm(range(1000), desc="Sampling", leave=False):
         df = generate_data(args.spec, args)
         # Extract the last row (i.e. the final values) from the DataFrame
-        print(df)
         last_row = df.iloc[-1]
-        print(last_row)
         results.append(last_row)
 
     # Create a DataFrame from the collected rows
