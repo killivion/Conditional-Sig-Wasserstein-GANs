@@ -8,7 +8,7 @@ import numpy as np
 # from lib.algos.base import BaseConfig
 from lib.arfnn import SimpleGenerator
 from lib.utils import load_pickle
-import DataLoader as DataLoader
+
 
 
 def generate_random_params(num_paths, num_bm):
@@ -56,6 +56,7 @@ class Data_Puller:
             self.sample_data = yf.download(tickers=data_params['data_params']['ticker'], start=data_params['data_params']['start'], end=data_params['data_params']['end'], progress=False)['Close']
             self.start_index = 0
         else:
+            import DataLoader as DataLoader
             self.loader = DataLoader.LoadData(dataset=args.dataset, isSigLib=False, data_params=data_params)
         if args.GAN_sampling:
             self.experiment_dir = f'./numerical_results/{args.dataset}/{spec}/seed=42/'
