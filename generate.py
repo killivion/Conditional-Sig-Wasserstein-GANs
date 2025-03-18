@@ -35,11 +35,10 @@ def generate_from_generator(spec, experiment_dir, dataset, use_cuda=True):
     # generate fake paths
     # ----------------------------------------------
     with torch.no_grad():
-        _x_past = x_past.clone()
+        idx = torch.randint(0, x_past.shape[0], (1,)).item()
+        x_past_sample = x_past[idx:idx + 1]
+        _x_past = x_past_sample.clone()
         x_fake_future = G.sample(q, _x_past)
-        print(dim)
-        print(x_past)
-        print(x_fake_future)
 
     return x_fake_future
 
@@ -76,7 +75,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)
     parser.add_argument('-algo', default='SigCWGAN', type=str)
-    parser.add_argument('-spec', default='mu=[0.06]_sigma=[[0.4472136]]_window_size=1000', type=str)
+    parser.add_argument('-spec', default='mu=[0.06]_sigma=[[0.4472136]]_q=50', type=str)
     parser.add_argument('-sig_p', default=3, type=int)
     parser.add_argument('-sig_q', default=3, type=int)
 

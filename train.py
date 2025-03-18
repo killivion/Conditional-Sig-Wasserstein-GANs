@@ -103,7 +103,7 @@ def run(algo_id, base_config, base_dir, dataset, spec, data_params={}):
     savefig('losses.png', experiment_directory)
 
 
-def get_dataset_configuration(dataset, window_size, num_paths, num_bm, grid_points):
+def get_dataset_configuration(dataset, window_size, num_paths, num_bm, grid_points, q):
     if dataset == 'ECG':
         generator = [('id=100', dict(filenames=['100']))]
     elif dataset == 'STOCKS':
@@ -127,17 +127,17 @@ def get_dataset_configuration(dataset, window_size, num_paths, num_bm, grid_poin
         )
     elif dataset == 'correlated_Blackscholes':
         param_mu, param_vola_matrix = generate_random_params(num_paths, num_bm)
-        generator = (('mu={}_sigma={}_window_size={}'.format(mu, vola_matrix, window_size), dict(
+        generator = (('mu={}_sigma={}_q={}'.format(mu, vola_matrix, q), dict(
             data_params=dict(mu=mu, vola_matrix=vola_matrix, window_size=window_size, num_paths=num_paths, num_bm=num_bm,
                              grid_points=grid_points)))
                      for mu, vola_matrix in [(param_mu, param_vola_matrix)]
                      )
     elif dataset == 'Heston':
-        generator = (('mu={}_sigma={}_window_size={}'.format(lambda_0, v0_sqrt, window_size), dict(data_params=dict(lambda_0=lambda_0, v0_sqrt=v0_sqrt, kappa=kappa, sigma=sigma, xi=xi, rho=rho, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
+        generator = (('mu={}_sigma={}_q={}'.format(lambda_0, v0_sqrt, q), dict(data_params=dict(lambda_0=lambda_0, v0_sqrt=v0_sqrt, kappa=kappa, sigma=sigma, xi=xi, rho=rho, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
                      for lambda_0, v0_sqrt, kappa, sigma, xi, rho in [(0.06, 0.2, 1.5, 0.2, 0.3, -0.7)]
         )
     elif dataset == 'VarianceGamma':
-        generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, nu=nu, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
+        generator = (('mu={}_sigma={}_q={}'.format(mu, sigma, q), dict(data_params=dict(mu=mu, sigma=sigma, nu=nu, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
                      for mu, sigma, nu in [(0.05, 0.2, 0.02)]
         )
     elif dataset == 'Kou_Jump_Diffusion':
@@ -150,7 +150,7 @@ def get_dataset_configuration(dataset, window_size, num_paths, num_bm, grid_poin
         )
     elif dataset == 'YFinance':
         generator = ((
-                'ticker={}_start={}_end={}'.format(ticker, start, end),
+                'ticker={}_start={}_end={}_q={}'.format(ticker, start, end, q),
                 dict(data_params=dict(ticker=ticker, start=start, end=end)))
             for ticker, start, end in [
             ("^GSPC", "2000-01-01", "2025-01-01"),
@@ -235,7 +235,7 @@ def main(args):
                     mc_samples=1000
                 )
                 set_seed(seed)
-                generator = get_dataset_configuration(dataset, window_size=args.window_size, num_paths=args.num_paths, num_bm=args.num_bm, grid_points=args.grid_points)
+                generator = get_dataset_configuration(dataset, window_size=args.window_size, num_paths=args.num_paths, num_bm=args.num_bm, grid_points=args.grid_points, q=args.q)
                 for spec, data_params in generator:
                     run(
                         algo_id=algo_id,
