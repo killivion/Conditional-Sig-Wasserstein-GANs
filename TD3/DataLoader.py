@@ -27,7 +27,10 @@ class LoadData:
         if self.dataset in self.dataset_functions:
             if self.seed is not None:
                 np.random.seed(self.seed)
-            paths, time = self.dataset_functions[self.dataset](**self.data_params['data_params'])
+            if self.isSiglib:
+                paths, time = self.dataset_functions[self.dataset](**self.data_params)
+            else:
+                paths, time = self.dataset_functions[self.dataset](**self.data_params['data_params'])
             if output_type == "DataFrame" or self.isSigLib == False:  # for testing and TD3
                 return pd.DataFrame(paths, columns=time)
             elif output_type == "np.ndarray":  # for GANs
