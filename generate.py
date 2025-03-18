@@ -11,7 +11,6 @@ from lib.utils import load_pickle, to_numpy
 
 
 def generate_from_generator(spec, experiment_dir, dataset, use_cuda=True):
-    torch.random.manual_seed(0)
     device = 'cuda' if use_cuda else 'cpu'
 
     #sig_config = get_algo_config(dataset, experiment_dir)

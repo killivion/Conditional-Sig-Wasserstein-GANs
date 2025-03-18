@@ -22,7 +22,6 @@ class Data_Puller:
         if args.GAN_sampling:
             self.experiment_dir = f'./numerical_results/{args.dataset}/{spec}/seed=42/'
             print(self.experiment_dir)
-            torch.random.manual_seed(0)
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
             #base_config = BaseConfig(device=device)
             self.p, self.q = args.sig_p, args.sig_q  # base_config.p, base_config.q
