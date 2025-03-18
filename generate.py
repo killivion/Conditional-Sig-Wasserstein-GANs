@@ -10,7 +10,7 @@ from lib.arfnn import SimpleGenerator
 from lib.utils import load_pickle, to_numpy
 
 
-def generate_from_generator(experiment_dir, dataset, use_cuda=True):
+def generate_from_generator(spec, experiment_dir, dataset, use_cuda=True):
     torch.random.manual_seed(0)
     device = 'cuda' if use_cuda else 'cpu'
 
@@ -44,12 +44,15 @@ def generate_data(spec, args):
     #algo_path = os.path.join(args.base_dir, args.dataset, experiment_dir, seed_dir, args.algo)
     algo_path = f'numerical_results/{args.dataset}/{spec}/seed=42/{args.algo}'
 
-    x_fake_future = generate_from_generator(experiment_dir=algo_path, dataset=args.dataset, use_cuda=True)
+    x_fake_future = generate_from_generator(spec=spec, experiment_dir=algo_path, dataset=args.dataset, use_cuda=True)
+
+    stats = torch.load(f'./numerical_results/{args.dataset}/{spec}/seed=42/meanstd.pt', weights_only=True)
+    real_mean, reaL_std = stats['mean'], stats['std']
 
     # Reverse the scaling transformation
     from lib.data import Pipeline, StandardScalerTS
     pipeline = Pipeline(steps=[('standard_scale', StandardScalerTS(axis=(0, 1)))])
-    logrtn_recovered = pipeline.inverse_transform(x_fake_future)
+    logrtn_recovered = pipeline.inverse_transform(x_fake_future, real_mean=real_mean, reaL_std=reaL_std)
     logrtn_recovered = logrtn_recovered.detach().cpu().numpy() if isinstance(logrtn_recovered, torch.Tensor) else logrtn_recovered
     logrtn_recovered = logrtn_recovered.squeeze(-1)
     log_prices_reconstructed = np.cumsum(logrtn_recovered, axis=1)
