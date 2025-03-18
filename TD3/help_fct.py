@@ -1,48 +1,20 @@
 import os
 import tensorflow as tf
-from stable_baselines3.common.callbacks import BaseCallback
 import yfinance as yf
 import numpy as np
 import shutil
 from scipy.stats import norm
-from stable_baselines3.td3.policies import TD3Policy
 import torch
+
+try:
+    from stable_baselines3.td3.policies import TD3Policy
+    from stable_baselines3.common.callbacks import BaseCallback
+except ImportError:
+    pass
 
 #import generate
 
 from sklearn.model_selection import train_test_split
-
-
-class CustomTD3Policy(TD3Policy):
-    def __init__(self, *args, allow_lending=False, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.allow_lending = allow_lending
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.low = torch.tensor(self.action_space.low, device=device)
-        self.high = torch.tensor(self.action_space.high, device=device)  # actions.device
-
-    def softmax(self, x, axis=-1):
-        return torch.softmax(x, dim=axis)
-
-    def _predict(self, observation, deterministic=False):
-        raw_actions = self.actor(observation)
-        print(f'Before Softmax: {raw_actions}')
-        if self.allow_lending:
-            mean_actions = torch.mean(raw_actions, dim=-1, keepdim=True)
-            n = raw_actions.shape[-1]
-            actions = raw_actions - mean_actions + (1.0 / n)
-        else:
-            actions = self.softmax(raw_actions, axis=-1)
-        invers_scaled_action = (actions - self.low)/(0.5 * (self.high - self.low)) - 1  # in td3 the action is in the space [-1,1], we inversely scale it to [-1,1]
-        return invers_scaled_action
-
-
-def action_normalizer(action):
-    # return action
-    if action.shape[0] == 1:
-        return np.insert(action, 0, 1-action)
-    else:
-        return action / sum(action) if not sum(action) == 0 else np.zeros(action.shape[0]) + 1/action.shape[0]  # np.insert(action[1:], 0, 1)
 
 
 def generate_random_params(num_paths, num_bm):
@@ -81,6 +53,38 @@ def generate_random_params(num_paths, num_bm):
     vola_matrix = np.sqrt(weights * total_vola.T)  # [sigma] = vola_matrix
 
     return mu, vola_matrix  # mu is drift, vola_matrix
+
+
+class CustomTD3Policy(TD3Policy):
+    def __init__(self, *args, allow_lending=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.allow_lending = allow_lending
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.low = torch.tensor(self.action_space.low, device=device)
+        self.high = torch.tensor(self.action_space.high, device=device)  # actions.device
+
+    def softmax(self, x, axis=-1):
+        return torch.softmax(x, dim=axis)
+
+    def _predict(self, observation, deterministic=False):
+        raw_actions = self.actor(observation)
+        print(f'Before Softmax: {raw_actions}')
+        if self.allow_lending:
+            mean_actions = torch.mean(raw_actions, dim=-1, keepdim=True)
+            n = raw_actions.shape[-1]
+            actions = raw_actions - mean_actions + (1.0 / n)
+        else:
+            actions = self.softmax(raw_actions, axis=-1)
+        invers_scaled_action = (actions - self.low)/(0.5 * (self.high - self.low)) - 1  # in td3 the action is in the space [-1,1], we inversely scale it to [-1,1]
+        return invers_scaled_action
+
+
+def action_normalizer(action):
+    # return action
+    if action.shape[0] == 1:
+        return np.insert(action, 0, 1-action)
+    else:
+        return action / sum(action) if not sum(action) == 0 else np.zeros(action.shape[0]) + 1/action.shape[0]  # np.insert(action[1:], 0, 1)
 
 
 def analytical_solutions(args, data_params):
