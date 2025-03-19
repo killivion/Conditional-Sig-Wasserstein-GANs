@@ -63,9 +63,10 @@ def generate_data(spec, args):
     price_paths_reconstructed = np.exp(log_prices_reconstructed)
     price_paths_reconstructed = np.insert(price_paths_reconstructed, 0, 1)
 
-    x_fake_future = x_fake_future.detach().cpu().numpy()
-    x_fake_future = pd.DataFrame(x_fake_future.squeeze(-1))
-    return x_fake_future  # pd.DataFrame(price_paths_reconstructed)
+    #x_fake_future = x_fake_future.detach().cpu().numpy()
+    #x_fake_future = pd.DataFrame(x_fake_future.squeeze(-1))
+    #return x_fake_future
+    return pd.DataFrame(price_paths_reconstructed)
 
 if __name__ == '__main__':
     import argparse
@@ -88,15 +89,15 @@ if __name__ == '__main__':
     from tqdm import tqdm
     for _ in tqdm(range(args.test_length), desc="Sampling", leave=False):
         df = generate_data(args.spec, args)
+        """
         df = df.iloc[0, :]
         print(df.mean())
 
         cumulative = (1 + df).cumprod()
-        # Prepend the initial value 1 to the cumulative product
         y = pd.concat([pd.Series([1]), cumulative], ignore_index=True)
+        """
 
-        # Extract the last row (i.e. the final values) from the DataFrame
-        last_row = y.iloc[-1]
+        last_row = df.iloc[-1]
         results.append(last_row)
 
     # Create a DataFrame from the collected rows
