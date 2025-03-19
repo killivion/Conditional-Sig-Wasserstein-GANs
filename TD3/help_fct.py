@@ -94,11 +94,33 @@ def analytical_solutions(args, data_params):
         analytical_utility = expected_utility(analytical_risky_action, args, data_params)
         #other logic - gives same result: analytical_utility = np.exp((1 - args.p) * (args.risk_free_rate + 1/2 * analytical_risky_action.T @ risky_lambda))
     elif args.dataset == 'Heston':  #needs to be added
-        analytical_risky_action = np.array([0])
-        analytical_utility = np.array([0])
+        """
+        current_timestep = 1
+        T = args.window_size/args.grid_size
+        t = current_timestep/args.grid_size
+        lambda_0, v0_sqrt, kappa, sigma, xi, rho = data_params['data_params']['lambda_0', 'v0_sqrt', 'kappa', 'sigma', 'xi', 'rho']
+        kappa_tilde = kappa - args.p/(args.p) * rho * lambda_0 * sigma
+        c = (args.p)/(args.p + rho**2 * (1-args.p))
+        beta_tilde = -0.5 * 1/c * args.p/(1-args.p) * lambda_0**2
+        a_tilde = np.sqrt(kappa_tilde**2 + 2.0 * beta_tilde * sigma**2)
+        B_fT = 2*beta_tilde * (np.exp(a_tilde * (T - t)) - 1) / (np.exp(a_tilde * (T - t)) * (kappa_tilde + a_tilde) - kappa_tilde + a_tilde)
+
+        analytical_risky_action = lambda_0/(args.p) - 1/(args.p) * c * rho * sigma * B_fT
+        
+        A_T = - kappa * theta * (T - t) * (kappa + a) / sigma**2
+        f_tz = np.exp((gamma / c)*r*(T-t) - A_val - B_fT * z)
+        
+        #V(t,x,z)
+        analytical_utility = 
+        """
+        analytical_risky_action = np.array([data_params['data_params']['lambda_0']/(args.p)])
+        analytical_utility = expected_utility(analytical_risky_action, args, data_params)
     else:
-        analytical_risky_action = np.array([0])
-        analytical_utility = np.array([0])
+        big_sigma = np.array([0.2 * 0.2])
+        risky_lambda = np.array([0.06 - args.risk_free_rate])
+        analytical_risky_action = 1 / args.p * risky_lambda.T @ (np.linalg.inv(big_sigma))
+        analytical_utility = expected_utility(analytical_risky_action, args, data_params)
+
 
     return analytical_risky_action, analytical_utility
 
@@ -109,9 +131,13 @@ def expected_utility(action, args, data_params):
         big_sigma = data_params['data_params']['vola_matrix'] @ data_params['data_params']['vola_matrix'].T
         expected_utility = np.exp((1 - args.p) * (args.risk_free_rate + action.T @ risky_lambda - args.p / 2 * (action.T @ big_sigma @ action)))
     elif args.dataset == 'Heston':  #needs to be added
-        expected_utility = 1
+        big_sigma = np.array([0.2 * 0.2])
+        risky_lambda = np.array([0.08 - args.risk_free_rate])
+        expected_utility = np.exp((1 - args.p) * (args.risk_free_rate + action.T @ risky_lambda - args.p / 2 * (action.T @ big_sigma @ action)))
     else:
-        expected_utility = 1
+        big_sigma = np.array([0.2 * 0.2])
+        risky_lambda = np.array([0.08 - args.risk_free_rate])
+        expected_utility = np.exp((1 - args.p) * (args.risk_free_rate + action.T @ risky_lambda - args.p / 2 * (action.T @ big_sigma @ action)))
 
     return expected_utility
 
