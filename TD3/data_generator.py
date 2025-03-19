@@ -59,7 +59,7 @@ class Data_Puller:
             import DataLoader as DataLoader
             self.loader = DataLoader.LoadData(dataset=args.dataset, isSigLib=False, data_params=data_params)
         if args.GAN_sampling:
-            self.experiment_dir = f'./numerical_results/{args.dataset}/{spec}/seed=42/'
+            self.experiment_dir = f'./numerical_results/{args.dataset}/{spec}/seed=5/'
             print(self.experiment_dir)
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
             #base_config = BaseConfig(device=device)
@@ -67,7 +67,7 @@ class Data_Puller:
             self.x_real = load_pickle(os.path.join(os.path.dirname(self.experiment_dir), 'x_real_test.torch')).to(device)  # change this to x_real.torch
             dim = self.x_real.shape[-1]
 
-            stats = torch.load(f'./numerical_results/{args.dataset}/{spec}/seed=42/meanstd.pt', weights_only=True)
+            stats = torch.load(f'./numerical_results/{args.dataset}/{spec}/seed=5/meanstd.pt', weights_only=True)
             self.real_mean, self.reaL_std = stats['mean'], stats['std']
 
             G_weights = load_pickle(os.path.join(self.experiment_dir, 'SigCWGAN/G_weights.torch'))
