@@ -88,7 +88,7 @@ if __name__ == '__main__':
     from tqdm import tqdm
     for _ in tqdm(range(args.test_length), desc="Sampling", leave=False):
         df = generate_data(args.spec, args)
-        df = df.iloc[0, :]
+        df = df.iloc[:, 0]
         print(df.mean())
 
         cumulative = (1 + df).cumprod()
