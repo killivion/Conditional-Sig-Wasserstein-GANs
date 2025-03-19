@@ -223,7 +223,10 @@ def get_test_stocks(dataset, isSigLib, spec, data_params):
         mean = torch.mean(data_raw, dim=(0, 1))
         std = torch.std(data_raw, dim=(0, 1))
         stats = {'mean': mean, 'std': std}
-        torch.save(stats, f'./numerical_results/{dataset}/{spec}/seed=42/meanstd.pt')
+        path = f'./numerical_results/{dataset}/{spec}/seed=42/meanstd.pt'
+        if not os.path.exists(path):
+            os.makedirs(path)
+        torch.save(stats, path)
     else:  # for TD3
         data_pre = loader.create_dataset(output_type="DataFrame")
         data_raw, pipeline = 1, 1  # dummy return so it doesnt bug
