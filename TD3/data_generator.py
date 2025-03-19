@@ -103,7 +103,7 @@ class Data_Puller:
             print(x_real_sample.shape)
             _x_real = x_real_sample.clone()
             print(_x_real.shape)
-            print(q)
+            print(self.q)
             x_fake_future = self.G.sample(self.q, _x_real)
             print(x_fake_future.shape)
             #print(f'x_fake_future: {x_fake_future}')
