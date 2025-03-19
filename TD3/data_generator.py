@@ -65,6 +65,7 @@ class Data_Puller:
             #base_config = BaseConfig(device=device)
             self.p, self.q = args.sig_p, args.sig_q  # base_config.p, base_config.q
             self.x_real = load_pickle(os.path.join(os.path.dirname(self.experiment_dir), 'x_real_test.torch')).to(device)  # change this to x_real.torch
+            print(self.x_real.shape)
             dim = self.x_real.shape[-1]
 
             stats = torch.load(f'./numerical_results/{args.dataset}/{spec}/seed=5/meanstd.pt', weights_only=True)
@@ -94,13 +95,15 @@ class Data_Puller:
         return np.hstack((risk_free_column, returns)), np.array(data)
 
 
-
     def generate(self):
         with torch.no_grad():
             idx = torch.randint(0, self.x_real.shape[0], (1,)).item()
             x_real_sample = self.x_real[idx:idx+1]
+            print(x_real_sample.shape)
             _x_real = x_real_sample.clone()
+            print(_x_real.shape)
             x_fake_future = self.G.sample(self.q, _x_real)
+            print(x_fake_future.shape)
             #print(f'x_fake_future: {x_fake_future}')
         S_fake_future = self.inverse_transformer(x_fake_future)
         #print(f'S_fake_future: {S_fake_future}')
