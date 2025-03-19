@@ -44,11 +44,11 @@ def generate_from_generator(spec, experiment_dir, dataset, use_cuda=True):
 
 def generate_data(spec, args):
     #algo_path = os.path.join(args.base_dir, args.dataset, experiment_dir, seed_dir, args.algo)
-    algo_path = f'numerical_results/{args.dataset}/{spec}/seed=42/{args.algo}'
+    algo_path = f'numerical_results/{args.dataset}/{spec}/seed=5/{args.algo}'
 
     x_fake_future = generate_from_generator(spec=spec, experiment_dir=algo_path, dataset=args.dataset, use_cuda=True)
 
-    stats = torch.load(f'./numerical_results/{args.dataset}/{spec}/seed=42/meanstd.pt', weights_only=True)
+    stats = torch.load(f'./numerical_results/{args.dataset}/{spec}/seed=5/meanstd.pt', weights_only=True)
     real_mean, reaL_std = stats['mean'], stats['std']
 
     # Reverse the scaling transformation
