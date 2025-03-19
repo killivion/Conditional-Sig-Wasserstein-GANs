@@ -65,7 +65,7 @@ class Data_Puller:
             #base_config = BaseConfig(device=device)
             self.p, self.q = args.sig_p, args.sig_q  # base_config.p, base_config.q
             x_real = load_pickle(os.path.join(os.path.dirname(self.experiment_dir), 'x_real_test.torch')).to(device)  # change this to x_real.torch
-            self.x_past = x_real[:, :p]
+            self.x_past = x_real[:, :self.p]
             dim = self.x_past.shape[-1]
 
             stats = torch.load(f'./numerical_results/{args.dataset}/{spec}/seed=5/meanstd.pt', weights_only=True)
