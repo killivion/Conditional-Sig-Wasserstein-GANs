@@ -29,6 +29,7 @@ def generate_from_generator(spec, experiment_dir, dataset, use_cuda=True):
     # ----------------------------------------------
     G_weights = load_pickle(os.path.join(experiment_dir, 'G_weights.torch'))
     G = SimpleGenerator(dim * p, dim, 3 * (50,), dim).to(device)
+    print(dim, p)
     G.load_state_dict(G_weights)
     # ----------------------------------------------
     # generate fake paths

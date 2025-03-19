@@ -73,6 +73,7 @@ class Data_Puller:
 
             G_weights = load_pickle(os.path.join(self.experiment_dir, 'SigCWGAN/G_weights.torch'))
             self.G = SimpleGenerator(dim * self.p, dim, 3 * (50,), dim).to(device)
+            print(dim, self.p)
             self.G.load_state_dict(G_weights)
 
 
@@ -102,6 +103,7 @@ class Data_Puller:
             print(x_real_sample.shape)
             _x_real = x_real_sample.clone()
             print(_x_real.shape)
+            print(q)
             x_fake_future = self.G.sample(self.q, _x_real)
             print(x_fake_future.shape)
             #print(f'x_fake_future: {x_fake_future}')
