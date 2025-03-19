@@ -213,7 +213,7 @@ def get_test_stocks(dataset, isSigLib, spec, data_params):
     if isSigLib:
         price_paths, time = loader.create_dataset(output_type="np.ndarray")
         print(price_paths)
-        print(f'This has drift: {price_paths[0, -1] ** (252/1000)}')
+        print(f"This has drift: {price_paths[0, -1] ** (252/data_params['window_size'])}")
         log_prices = np.log(price_paths)
         logrtn = np.diff(log_prices, axis=1)
         data_raw = torch.from_numpy(logrtn[..., None]).float()
@@ -223,10 +223,7 @@ def get_test_stocks(dataset, isSigLib, spec, data_params):
         mean = torch.mean(data_raw, dim=(0, 1))
         std = torch.std(data_raw, dim=(0, 1))
         stats = {'mean': mean, 'std': std}
-        path = f'./numerical_results/{dataset}/{spec}/seed=42/'
-        if not os.path.exists(path):
-            os.makedirs(path)
-        torch.save(stats, f'{path}meanstd.pt')
+        torch.save(stats, f'./numerical_results/{dataset}/{spec}/seed={seed}/meanstd.pt')
     else:  # for TD3
         data_pre = loader.create_dataset(output_type="DataFrame")
         data_raw, pipeline = 1, 1  # dummy return so it doesnt bug
