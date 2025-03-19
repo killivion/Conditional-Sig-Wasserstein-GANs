@@ -89,13 +89,13 @@ if __name__ == '__main__':
     from tqdm import tqdm
     for _ in tqdm(range(args.test_length), desc="Sampling", leave=False):
         df = generate_data(args.spec, args)
-        """
+
         df = df.iloc[0, :]
         print(df.mean())
 
         cumulative = (1 + df).cumprod()
         y = pd.concat([pd.Series([1]), cumulative], ignore_index=True)
-        """
+
 
         last_row = df.iloc[-1]
         results.append(last_row)
