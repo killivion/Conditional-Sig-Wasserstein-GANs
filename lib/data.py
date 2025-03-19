@@ -213,7 +213,7 @@ def get_test_stocks(dataset, isSigLib, spec, data_params):
     if isSigLib:
         price_paths, time = loader.create_dataset(output_type="np.ndarray")
         print(price_paths)
-        print(f'This has drift: {price_paths[-1, 0] ** (252/1000)}')
+        print(f'This has drift: {price_paths[0, -1] ** (252/1000)}')
         log_prices = np.log(price_paths)
         logrtn = np.diff(log_prices, axis=1)
         data_raw = torch.from_numpy(logrtn[..., None]).float()
