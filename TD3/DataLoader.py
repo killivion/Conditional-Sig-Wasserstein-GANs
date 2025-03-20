@@ -84,7 +84,7 @@ class LoadData:
 
         return S, t
 
-    def generate_heston(self, lambda_0, v0_sqrt, kappa, sigma, xi, rho, window_size, num_paths, grid_points=252, S0=1):
+    def generate_heston(self, lambda_0, v0, kappa, theta, xi, rho, window_size, num_paths, grid_points=252, S0=1):
         """generates num_paths time series following the Heston model via CIR
         mu: Drift, V0_squared->V0: Initial Variance, kappa: Mean reversion rate of Variance, sigma->theta: long Variance, xi: Volatility of Volatility, rho: Correlation of Wiener"""
         #Feller-Condition: 2*kappa*theta > xi**2
@@ -92,8 +92,6 @@ class LoadData:
         r = 0.04
         T = window_size / grid_points
         dt = 1 / grid_points
-        v0 = v0_sqrt**2
-        theta = sigma**2
 
         S = np.zeros((num_paths, window_size + 1))
         S[:, 0] = S0
@@ -111,7 +109,7 @@ class LoadData:
             # Euler-Maruyama method
             # Variance following the CIR-model
             v_t += kappa * (theta - v_t) * dt + xi * np.sqrt(v_t) * W2 * sqrt_dt
-            v_t = np.maximum(v_t, 0)  # v_t positive [not necessary if Feller Condition is met]
+            v_t = np.maximum(v_t, 0)  # v_t positive [not necessary if Feller Condition is met], that is: 2*kappa*theta > xi^2
 
             # Asset price process
             S[:, i] = S[:, i - 1] * np.exp((r + lambda_0 * v_t - 0.5 * v_t) * dt + np.sqrt(v_t) * W1 * sqrt_dt)

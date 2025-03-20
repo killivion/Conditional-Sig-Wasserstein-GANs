@@ -98,7 +98,7 @@ def analytical_solutions(args, data_params):
         current_timestep = 1
         T = args.window_size/args.grid_size
         t = current_timestep/args.grid_size
-        lambda_0, v0_sqrt, kappa, sigma, xi, rho = data_params['data_params']['lambda_0', 'v0_sqrt', 'kappa', 'sigma', 'xi', 'rho']
+        lambda_0, v0, kappa, theta, xi, rho = data_params['data_params']['lambda_0', 'v0', 'kappa', 'theta', 'xi', 'rho']
         kappa_tilde = kappa - args.p/(args.p) * rho * lambda_0 * sigma
         c = (args.p)/(args.p + rho**2 * (1-args.p))
         beta_tilde = -0.5 * 1/c * args.p/(1-args.p) * lambda_0**2

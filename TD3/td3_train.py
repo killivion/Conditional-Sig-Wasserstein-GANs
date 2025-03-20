@@ -34,9 +34,9 @@ def main(args, i=0):
         data_params = dict(data_params=dict(mu=mu, vola_matrix=vola_matrix, window_size=args.window_size, num_paths=args.num_paths, num_bm=args.num_bm, grid_points=args.grid_points))
         spec = ('mu={}_sigma={}_q={}'.format(data_params['data_params']['mu'], data_params['data_params']['vola_matrix'], args.sig_q))
     elif args.dataset == 'Heston':
-        lambda_0, v0_sqrt, kappa, sigma, xi, rho = 0.06, 0.2, 1.5, 0.2, 0.3, -0.7
-        data_params = dict(data_params=dict(lambda_0=lambda_0, v0_sqrt=v0_sqrt, kappa=kappa, sigma=sigma, xi=xi, rho=rho, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.grid_points))
-        spec = ('mu={}_sigma={}_q={}'.format(data_params['data_params']['lambda_0'], data_params['data_params']['v0_sqrt'], args.sig_q))
+        lambda_0, v0, kappa, theta, xi, rho = 0.5, 0.04, 2.5, 0.04, 0.4, -0.7
+        data_params = dict(data_params=dict(lambda_0=lambda_0, v0=v0, kappa=kappa, theta=theta, xi=xi, rho=rho, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.grid_points))
+        spec = ('mu={}_sigma={}_q={}'.format(data_params['data_params']['lambda_0'], data_params['data_params']['v0'], args.sig_q))
     elif args.dataset == 'YFinance':
         ticker, start, end = "^GSPC", "2000-01-01", "2025-01-01"
         data_params = dict(data_params=dict(ticker=ticker, start=start, end=end))
