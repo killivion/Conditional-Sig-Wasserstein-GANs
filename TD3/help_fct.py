@@ -131,11 +131,11 @@ def expected_utility(action, args, data_params):
         big_sigma = data_params['data_params']['vola_matrix'] @ data_params['data_params']['vola_matrix'].T
         expected_utility = np.exp((1 - args.p) * (args.risk_free_rate + action.T @ risky_lambda - args.p / 2 * (action.T @ big_sigma @ action)))
     elif args.dataset == 'Heston':  #needs to be added
-        big_sigma = np.array([0.2 * 0.2])
+        big_sigma = np.array([[0.2 * 0.2]])
         risky_lambda = np.array([0.08 - args.risk_free_rate])
         expected_utility = np.exp((1 - args.p) * (args.risk_free_rate + action.T @ risky_lambda - args.p / 2 * (action.T @ big_sigma @ action)))
     else:
-        big_sigma = np.array([0.2 * 0.2])
+        big_sigma = np.array([[0.2 * 0.2]])
         risky_lambda = np.array([0.08 - args.risk_free_rate])
         expected_utility = np.exp((1 - args.p) * (args.risk_free_rate + action.T @ risky_lambda - args.p / 2 * (action.T @ big_sigma @ action)))
 
