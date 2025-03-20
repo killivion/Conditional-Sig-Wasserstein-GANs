@@ -17,7 +17,7 @@ def generate_random_params(num_paths, num_bm):
         weights = np.array([[1, 0], [0, 1]])  # rows sum to one
         mu = np.array([0.06, 0.08])
     elif num_paths == 1 and num_bm == 1:  # 1 path, 1 brownian motion
-        total_vola = np.array([[0.04]])
+        total_vola = np.array([[0.2]])
         weights = np.array([[1]])
         mu = np.array([0.06])
     elif num_paths == 2 and num_bm == 3:
