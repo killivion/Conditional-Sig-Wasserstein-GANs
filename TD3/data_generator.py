@@ -12,14 +12,14 @@ from lib.utils import load_pickle
 
 
 def generate_random_params(num_paths, num_bm):
-    if num_paths == 2 and num_bm == 2:
-        total_vola = np.array([[0.07, 0.12]])
-        weights = np.array([[1, 0], [0, 1]])  # rows sum to one
-        mu = np.array([0.06, 0.08])
-    elif num_paths == 1 and num_bm == 1:  # 1 path, 1 brownian motion
+    if num_paths == 1 and num_bm == 1:  # 1 path, 1 brownian motion
         total_vola = np.array([[0.04]])
         weights = np.array([[1]])
         mu = np.array([0.06])
+    elif num_paths == 2 and num_bm == 2:
+        total_vola = np.array([[0.07, 0.12]])
+        weights = np.array([[1, 0], [0, 1]])  # rows sum to one
+        mu = np.array([0.06, 0.08])
     elif num_paths == 2 and num_bm == 3:
         total_vola = np.array([[0.06, 0.14]])
         weights = np.array([[0.5, 0.3, 0.2], [0.1, 0.4, 0.5]])  # rows sum to one
@@ -35,18 +35,14 @@ def generate_random_params(num_paths, num_bm):
         weights = np.random.rand(num_paths, num_bm)
         weights = weights / weights.sum(axis=1, keepdims=True)
 
-        """
-        correlation = np.random.uniform(-1, 1, size=(num_paths, num_bm))
-        np.fill_diagonal(correlation, 1)
-        correlation = (correlation + correlation.T) / 2
-        eigvals, eigvecs = np.linalg.eigh(correlation)
-        eigvals[eigvals < 0] = 1e-5
-        correlation = eigvecs @ np.diag(eigvals) @ eigvecs.T  # correlation matrix with p_ij entries
-        """
-
     vola_matrix = np.sqrt(weights * total_vola.T)  # [sigma] = vola_matrix
 
     return mu, vola_matrix  # mu is drift, vola_matrix
+
+
+def heston_params():
+    lambda_0, v0, kappa, theta, xi, rho = 1, 0.04, 10, 0.04, 0.2, -0.2
+    return lambda_0, v0, kappa, theta, xi, rho
 
 
 class Data_Puller:

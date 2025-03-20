@@ -13,10 +13,9 @@ import warnings
 import eval_actor
 from track_learning import monitor_plot
 from help_fct import CustomTD3Policy, find_largest_td3_folder, ActionLoggingCallback, fuse_folders, analytical_solutions, action_normalizer, expected_utility, analytical_entry_wealth_offset, get_dataset_configuration
-from data_generator import generate_random_params
+from data_generator import generate_random_params, heston_params
 from portfolio_env import PortfolioEnv
 from hyperparameter_tuning import optimize_td3, test_optimized_td3
-import data_generator
 
 """
 tensorboard --logdir ./TD3/logs
@@ -34,7 +33,7 @@ def main(args, i=0):
         data_params = dict(data_params=dict(mu=mu, vola_matrix=vola_matrix, window_size=args.window_size, num_paths=args.num_paths, num_bm=args.num_bm, grid_points=args.grid_points))
         spec = ('mu={}_sigma={}_q={}'.format(data_params['data_params']['mu'], data_params['data_params']['vola_matrix'], args.sig_q))
     elif args.dataset == 'Heston':
-        lambda_0, v0, kappa, theta, xi, rho = 1, 0.04, 2.5, 0.04, 0.4, -0.7
+        lambda_0, v0, kappa, theta, xi, rho = heston_params()
         data_params = dict(data_params=dict(lambda_0=lambda_0, v0=v0, kappa=kappa, theta=theta, xi=xi, rho=rho, window_size=args.window_size, num_paths=args.num_paths, grid_points=args.grid_points))
         spec = ('mu={}_sigma={}_q={}'.format(data_params['data_params']['lambda_0'], data_params['data_params']['v0'], args.sig_q))
     elif args.dataset == 'YFinance':

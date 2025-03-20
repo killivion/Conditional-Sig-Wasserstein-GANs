@@ -254,14 +254,14 @@ class LoadData:
         return S, t
 
 if __name__ == "__main__": #Testing
-    test = 1
+    test = 0
     if test == 0:
         import matplotlib.pyplot as plt
         from TD3.data_generator import generate_random_params
 
         num_paths = 1000
         num_bm = 1
-        window_size = 1000
+        window_size = 252
         grid_points = 252
         mu, vola_matrix = generate_random_params(num_paths = 1, num_bm = 1)
         T = window_size/grid_points
@@ -271,10 +271,15 @@ if __name__ == "__main__": #Testing
             "sigma": 0.2
         }
 
-        plot = False
+        lambda_0, v0, kappa, theta, xi, rho = 1, 0.04, 10, 0.04, 0.2, -0.2
+        data_params=dict(lambda_0=lambda_0, v0=v0, kappa=kappa, theta=theta, xi=xi, rho=rho,
+                                            window_size=window_size, num_paths=num_paths,
+                                            grid_points=grid_points)
+
+        plot = True
         models = {
             "Blackscholes": {**GBM_parameter, "window_size": window_size, "num_paths": num_paths},
-            #"Heston": {**Heston_parameter, **general_parameter},
+            "Heston": {**data_params, "window_size": window_size, "num_paths": num_paths},
             #"VarianceGamma": {**VarGamma_parameter, **general_parameter},
             #"Kou_Jump_Diffusion": {**Kou_parameter, **general_parameter},
             #"Levy_Ito": {**LevyIto_parameter, **general_parameter},

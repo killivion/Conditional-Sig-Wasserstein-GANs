@@ -14,7 +14,7 @@ from lib.data import download_man_ahl_dataset, download_mit_ecg_dataset
 from lib.data import get_data
 from lib.plot import savefig, create_summary
 from lib.utils import pickle_it
-from TD3.data_generator import generate_random_params
+from TD3.data_generator import generate_random_params, heston_params
 
 
 def get_algo_config(dataset, data_params):
@@ -107,8 +107,9 @@ def get_dataset_configuration(dataset, window_size, num_paths, num_bm, grid_poin
                      for mu, vola_matrix in [(param_mu, param_vola_matrix)]
                      )
     elif dataset == 'Heston':
+        lambda_0, v0, kappa, theta, xi, rho = heston_params()
         generator = (('mu={}_sigma={}_q={}'.format(lambda_0, v0, q), dict(data_params=dict(lambda_0=lambda_0, v0=v0, kappa=kappa, theta=theta, xi=xi, rho=rho, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
-                     for lambda_0, v0, kappa, theta, xi, rho in [(0.06, 0.2, 1.5, 0.2, 0.3, -0.7)]
+                     for lambda_0, v0, kappa, theta, xi, rho in [(lambda_0, v0, kappa, theta, xi, rho)]
         )
     elif dataset == 'VarianceGamma':
         generator = (('mu={}_sigma={}_q={}'.format(mu, sigma, q), dict(data_params=dict(mu=mu, sigma=sigma, nu=nu, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
