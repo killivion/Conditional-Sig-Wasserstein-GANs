@@ -139,7 +139,7 @@ class PortfolioEnv(gym.Env):
             self.vola_matrix = np.sign(self.data_params['data_params']['vola_matrix']) * np.sqrt(np.abs(self.data_params['data_params']['vola_matrix']))
         elif self.args.dataset == 'Heston':
             self.mu = np.insert(self.data_params['data_params']['lambda_0'], 0, self.args.risk_free_rate)
-            self.vola_matrix = np.array([self.data_params['data_params']['v0_sqrt']])
+            self.vola_matrix = np.array([self.data_params['data_params']['v0']])
         else:
             self.mu = np.array([0])
             self.vola_matrix = np.array([1])
