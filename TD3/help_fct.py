@@ -160,7 +160,7 @@ def find_confidence_intervals(analytical_risky_action, data_params, args):  # On
         big_sigma = np.diag(data_params['data_params']['vola_matrix'] @ data_params['data_params']['vola_matrix'].T)[0]
         mu_adj = (data_params['data_params']['mu'][0] - big_sigma) * dt
     elif args.dataset == 'Heston':  # needs adjustment
-        big_sigma = np.array([data_params['data_params']['v0_sqrt']]) @ np.array([data_params['data_params']['v0_sqrt']]).T
+        big_sigma = np.array([data_params['data_params']['v0']]) @ np.array([data_params['data_params']['v0']]).T
         mu_adj = (data_params['data_params']['lambda_0'] - big_sigma) * dt
     else: # needs adjustment
         mu_adj = np.array([0.05])
