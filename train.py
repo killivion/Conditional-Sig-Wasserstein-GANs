@@ -107,8 +107,8 @@ def get_dataset_configuration(dataset, window_size, num_paths, num_bm, grid_poin
                      for mu, vola_matrix in [(param_mu, param_vola_matrix)]
                      )
     elif dataset == 'Heston':
-        generator = (('mu={}_sigma={}_q={}'.format(lambda_0, v0_sqrt, q), dict(data_params=dict(lambda_0=lambda_0, v0_sqrt=v0_sqrt, kappa=kappa, sigma=sigma, xi=xi, rho=rho, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
-                     for lambda_0, v0_sqrt, kappa, sigma, xi, rho in [(0.06, 0.2, 1.5, 0.2, 0.3, -0.7)]
+        generator = (('mu={}_sigma={}_q={}'.format(lambda_0, v0, q), dict(data_params=dict(lambda_0=lambda_0, v0=v0, kappa=kappa, theta=theta, xi=xi, rho=rho, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
+                     for lambda_0, v0, kappa, theta, xi, rho in [(0.06, 0.2, 1.5, 0.2, 0.3, -0.7)]
         )
     elif dataset == 'VarianceGamma':
         generator = (('mu={}_sigma={}_q={}'.format(mu, sigma, q), dict(data_params=dict(mu=mu, sigma=sigma, nu=nu, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
