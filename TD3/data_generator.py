@@ -47,7 +47,7 @@ def heston_params():
 
 class Data_Puller:
     def __init__(self, args, spec, data_params):
-        self.seed = 5 if args.dataset == 'correlated_Blackscholes' else 10
+        self.seed = 5 if args.dataset == 'correlated_Blackscholes' else 9  # 9 for Heston
 
         if args.dataset == 'YFinance' and not args.GAN_sampling:
             print(f"Data from: {data_params['data_params']['ticker']}, {data_params['data_params']['start']}, {data_params['data_params']['end']}")
