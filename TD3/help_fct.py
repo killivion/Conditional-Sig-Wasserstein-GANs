@@ -116,7 +116,7 @@ def analytical_solutions(args, data_params):
         analytical_risky_action = np.array([data_params['data_params']['lambda_0']/(args.p)])
         analytical_utility = expected_utility(analytical_risky_action, args, data_params)
     else:
-        big_sigma = np.array([0.2 * 0.2])
+        big_sigma = np.array([[0.2 * 0.2]])
         risky_lambda = np.array([0.06 - args.risk_free_rate])
         analytical_risky_action = 1 / args.p * risky_lambda.T @ (np.linalg.inv(big_sigma))
         analytical_utility = expected_utility(analytical_risky_action, args, data_params)

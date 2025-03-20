@@ -51,6 +51,8 @@ def generate_random_params(num_paths, num_bm):
 
 class Data_Puller:
     def __init__(self, args, spec, data_params):
+        self.seed = 5 if args.dataset == 'correlated_Blackscholes' else 10
+
         if args.dataset == 'YFinance' and not args.GAN_sampling:
             print(f"Data from: {data_params['data_params']['ticker']}, {data_params['data_params']['start']}, {data_params['data_params']['end']}")
             self.sample_data = yf.download(tickers=data_params['data_params']['ticker'], start=data_params['data_params']['start'], end=data_params['data_params']['end'], progress=False)['Close']
@@ -59,7 +61,7 @@ class Data_Puller:
             import DataLoader as DataLoader
             self.loader = DataLoader.LoadData(dataset=args.dataset, isSigLib=False, data_params=data_params)
         if args.GAN_sampling:
-            self.experiment_dir = f'./numerical_results/{args.dataset}/{spec}/seed=5/'
+            self.experiment_dir = f'./numerical_results/{args.dataset}/{spec}/seed={self.seed}/'
             print(self.experiment_dir)
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
             #base_config = BaseConfig(device=device)
@@ -68,7 +70,7 @@ class Data_Puller:
             self.x_past = x_real[:, :self.p]
             dim = self.x_past.shape[-1]
 
-            stats = torch.load(f'./numerical_results/{args.dataset}/{spec}/seed=5/meanstd.pt', weights_only=True)
+            stats = torch.load(f'./numerical_results/{args.dataset}/{spec}/seed={self.seed}/meanstd.pt', weights_only=True)
             self.real_mean, self.reaL_std = stats['mean'], stats['std']
 
             G_weights = load_pickle(os.path.join(self.experiment_dir, 'SigCWGAN/G_weights.torch'))
