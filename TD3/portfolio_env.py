@@ -23,7 +23,7 @@ class PortfolioEnv(gym.Env):
 
         self.action_shape = self.num_stocks+1 if self.num_stocks > 1 else 1  # if there is only one asset, we only get the action for the asset: action then gives exposure to volatility
         if args.allow_lending:
-            self.action_space = gym.spaces.Box(low=-8, high=8, shape=(self.action_shape,), dtype=np.float32)
+            self.action_space = gym.spaces.Box(low=-5, high=5, shape=(self.action_shape,), dtype=np.float32)
         else:
             self.action_space = gym.spaces.Box(low=0, high=1, shape=(self.action_shape,), dtype=np.float32)
 
