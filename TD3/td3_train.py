@@ -102,7 +102,7 @@ def run(args, data_params, returns, stock_data, spec):
         print("No saved model found; starting new training.")
         #model = TD3(CustomTD3Policy, vec_env, buffer_size=args.buffer_size, gamma=1, learning_rate=args.learning_rate, action_noise=action_noise, batch_size=args.batch_size, verbose=0, tensorboard_log="./logs/", train_freq=(args.train_freq, "step"), policy_kwargs={'allow_lending': args.allow_lending})
         model = TD3("MlpPolicy", vec_env, buffer_size=args.buffer_size, gamma=1, learning_rate=args.learning_rate, action_noise=action_noise, batch_size=args.batch_size, verbose=0, tensorboard_log="./logs/", train_freq=(args.train_freq, "episode"))
-        model.learning_starts = args.total_timesteps / 5
+        model.learning_starts = args.total_timesteps / 1.25
         already_trained_timesteps = 0
 
     # Train, Test, Eval [Evaluate], Compare [with some benchmark]
