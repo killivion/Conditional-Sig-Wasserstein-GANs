@@ -117,13 +117,13 @@ class PortfolioEnv(gym.Env):
                 elif self.args.dataset == 'Heston':
                     correction1, correction2 = 1/10, 1
                 else:
-                    correction1, correction2 = 1, 1
+                    correction1, correction2 = 10, 2
 
-                normalized_reward = ((reward - self.lower_CI) / self.upper_CI - 1) * correction1  # normalization such that most values lie in [-1, 1]
+                normalized_reward = ((reward - self.lower_CI) / self.upper_CI - 0.9) * correction1  # normalization such that most values lie in [-1, 1]
                 if self.args.allow_lending:  # adjusts for bigger range of values
                     normalized_reward /= self.box_ends * correction2
                 if self.args.grid_points != 1:
-                    normalized_reward /= 30 * self.args.window_size/self.args.grid_points
+                    normalized_reward /= 5 * self.args.window_size/self.args.grid_points
                 #    normalized_reward *= self.args.grid_points / self.args.window_size / 1.5
 
 
