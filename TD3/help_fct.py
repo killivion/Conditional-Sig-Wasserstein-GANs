@@ -117,6 +117,7 @@ def analytical_solutions(args, data_params):
         big_sigma = np.array([[0.2 * 0.2]])
         risky_lambda = np.array([0.06 - args.risk_free_rate])
         analytical_risky_action = 1 / args.p * risky_lambda.T @ (np.linalg.inv(big_sigma))
+        #1.1530409404042308
 
     analytical_utility = expected_utility(analytical_risky_action, args, data_params)
 
@@ -154,16 +155,16 @@ def find_confidence_intervals(analytical_risky_action, data_params, args):  # On
     dt = (1/args.grid_points)
     if args.dataset == 'correlated_Blackscholes':
         big_sigma = np.diag(data_params['data_params']['vola_matrix'] @ data_params['data_params']['vola_matrix'].T)[0]
-        mu_adj = (data_params['data_params']['mu'][0] - big_sigma/2) * dt
+        mu_adj = (data_params['data_params']['mu'][0] - big_sigma/2)
     elif args.dataset == 'Heston':  # needs adjustment
         big_sigma = np.array([data_params['data_params']['v0']]) @ np.array([data_params['data_params']['v0']]).T
-        mu_adj = (args.risk_free_rate + (data_params['data_params']['lambda_0']-1/2) * big_sigma) * dt
+        mu_adj = (args.risk_free_rate + (data_params['data_params']['lambda_0']-1/2) * big_sigma)
     else:  # needs adjustment
         mu_adj = np.array([0.05])
         big_sigma = np.array([0.04])
 
 
-    interval = mu_adj + np.array([-1, 1]) * z_c * np.sqrt(big_sigma) * np.sqrt(dt)  # exp((1-p)[(μ-σ^2/2)T (+/-) 1.96σ*sqrt(T)])
+    interval = mu_adj * dt + np.array([-1, 1]) * z_c * np.sqrt(big_sigma) * np.sqrt(dt)  # exp((1-p)[(μ-σ^2/2)T (+/-) 1.96σ*sqrt(T)])
     cf_low, cf_high = np.exp((1 - args.p) * interval)  # Extreme case x0=1 is invested in asset 1
     cf_low2, cf_high2 = sum(analytical_risky_action) * np.exp((1-args.p)*interval) + (1 - sum(analytical_risky_action)) * np.exp((1 - args.p) * args.risk_free_rate * dt)  # simplified that all risky action is in asset 1
 

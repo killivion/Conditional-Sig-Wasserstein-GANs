@@ -135,7 +135,7 @@ def run(args, data_params, returns, stock_data, spec):
             obs, info = env.reset()
             action, _ = model.predict(obs, deterministic=True)
             norm_action = action_normalizer(action)
-            print(f"Current action: {norm_action}, Risky Fraciton is {sum(norm_action[1:])}, Expected Utility: {expected_utility(norm_action[1:], args, data_params)}, Entry_Wealth_Offset: {analytical_entry_wealth_offset(action, args, data_params)}")
+            print(f"Current action: {norm_action}, Risky Fraction is {sum(norm_action[1:])}, Expected Utility: {expected_utility(norm_action[1:], args, data_params)}, Entry_Wealth_Offset: {analytical_entry_wealth_offset(action, args, data_params)}")
             print(f"Non-normalized action: {action}")
 
 if __name__ == '__main__':
@@ -173,7 +173,7 @@ if __name__ == '__main__':
     parser.add_argument('-model_ID', default=1, type=int)
     #parser.add_argument('-laps', default=1, type=int)
     parser.add_argument('-statement', default='RevertAction', type=str)
-    parser.add_argument('-mode', default='train', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
+    parser.add_argument('-mode', default='test_solution', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
 
     parser.add_argument('--learning_rates', default=[0.0001], type=float, nargs="+")
     parser.add_argument('--batch_sizes', default=[1024], type=int, nargs="+")
