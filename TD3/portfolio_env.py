@@ -21,7 +21,7 @@ class PortfolioEnv(gym.Env):
         if args.time_dependent:
             feature_size += self.num_stocks + 1
 
-        self.action_shape = self.num_stocks+1 if self.num_stocks > 1 else 1  # if there is only one asset, we only get the action for the asset: action then gives exposure to volatility
+        self.action_shape = self.num_stocks+1 if self.num_stocks > 1 else 1  # if there is only one asset, we only get the action for the asset: Then action is somewhat a measure for the exposure to volatility
         if args.allow_lending:
             self.box_ends = 3
             self.action_space = gym.spaces.Box(low=-self.box_ends, high=self.box_ends, shape=(self.action_shape,), dtype=np.float32)
@@ -112,9 +112,9 @@ class PortfolioEnv(gym.Env):
             #if len(self.reward_window) >= 1000:
             #    self.fixed = True
             if self.args.mode not in ['compare', 'eval', 'test']:  # Normalizes via Confidence-Intervals of the extrema: Investing all in stock [in multi-dimensional: uses exemplary CI of the first stock and assumes that all is invested in this one], then adjust that it is not the extrema
-                normalized_reward = ((reward - self.lower_CI) / self.upper_CI * 1.5 - 2) * self.args.grid_points / self.args.window_size  # normalizition such that most values lie in [-1, 1]
+                normalized_reward = ((reward - self.lower_CI) / self.upper_CI * 1.5 - 1.5)  # * self.args.grid_points / self.args.window_size  # normalization such that most values lie in [-1, 1]
                 if self.args.allow_lending:  # adjusts for bigger range of values
-                    normalized_reward /= self.box_ends
+                    normalized_reward /= self.box_ends/1.5
             else:
                 normalized_reward = reward
             #    normalized_reward = (reward - self.mean_reward) / (np.sqrt(self.std_reward) if self.std_reward > 0 else 1.0) if self.args.mode not in ['compare', 'eval', 'tuning'] else reward
