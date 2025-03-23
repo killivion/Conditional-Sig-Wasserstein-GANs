@@ -113,7 +113,7 @@ class PortfolioEnv(gym.Env):
             #    self.fixed = True
             if self.args.mode not in ['compare', 'eval', 'test']:  # Normalizes via Confidence-Intervals of the extrema: Investing all in stock [in multi-dimensional: uses exemplary CI of the first stock and assumes that all is invested in this one], then adjust that it is not the extrema
                 if self.args.dataset == 'correlated_Blackscholes':
-                    correction1, correction2 = 10*1.5, 2
+                    correction1, correction2 = 1.5, 2
                 elif self.args.dataset == 'Heston':
                     correction1, correction2 = 1/10, 1
                 else:
@@ -123,7 +123,7 @@ class PortfolioEnv(gym.Env):
                 if self.args.allow_lending:  # adjusts for bigger range of values
                     normalized_reward /= self.box_ends * correction2
                 if self.args.grid_points != 1:
-                    normalized_reward /= 5 * self.args.window_size/self.args.grid_points
+                    normalized_reward /= 30 * self.args.window_size/self.args.grid_points
                 #    normalized_reward *= self.args.grid_points / self.args.window_size / 1.5
 
 
