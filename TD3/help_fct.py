@@ -162,7 +162,7 @@ def find_confidence_intervals(analytical_risky_action, data_params, args):  # On
     elif args.dataset == 'Heston':  # needs adjustment
         big_sigma = np.array([data_params['data_params']['v0']]) @ np.array([data_params['data_params']['v0']]).T
         mu_adj = (data_params['data_params']['lambda_0'] - big_sigma) * dt
-    else: # needs adjustment
+    else:  # needs adjustment
         mu_adj = np.array([0.05])
         big_sigma = np.array([0.2])
 

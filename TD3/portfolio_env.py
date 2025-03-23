@@ -23,7 +23,8 @@ class PortfolioEnv(gym.Env):
 
         self.action_shape = self.num_stocks+1 if self.num_stocks > 1 else 1  # if there is only one asset, we only get the action for the asset: action then gives exposure to volatility
         if args.allow_lending:
-            self.action_space = gym.spaces.Box(low=-5, high=5, shape=(self.action_shape,), dtype=np.float32)
+            self.box_ends = 3
+            self.action_space = gym.spaces.Box(low=-self.box_ends, high=self.box_ends, shape=(self.action_shape,), dtype=np.float32)
         else:
             self.action_space = gym.spaces.Box(low=0, high=1, shape=(self.action_shape,), dtype=np.float32)
 
@@ -110,11 +111,10 @@ class PortfolioEnv(gym.Env):
             #    self.std_reward = np.std(self.reward_window) if self.reward_window else 1.0
             #if len(self.reward_window) >= 1000:
             #    self.fixed = True
-            if self.args.mode not in ['compare', 'eval', 'test']:
-                if self.args.allow_lending:
-                    normalized_reward = 2 * (reward + 0.1) if self.args.mode not in ['compare', 'eval'] else reward
-                else:  # Normalizes via Confidence-Intervals of the extrema: Investing all in stock [in multi-dimensional: uses exemplary CI of the first stock and assumes that all is invested in this one]
-                    normalized_reward = (reward - self.lower_CI) / self.upper_CI * 3 - 2  # normalizition such that most values lie in [-1, 1]
+            if self.args.mode not in ['compare', 'eval', 'test']:  # Normalizes via Confidence-Intervals of the extrema: Investing all in stock [in multi-dimensional: uses exemplary CI of the first stock and assumes that all is invested in this one], then adjust that it is not the extrema
+                normalized_reward = ((reward - self.lower_CI) / self.upper_CI * 1.5 - 2) * self.args.grid_size / self.args.window_size  # normalizition such that most values lie in [-1, 1]
+                if self.args.allow_lending:  # adjusts for bigger range of values
+                    normalized_reward /= self.box_ends
             else:
                 normalized_reward = reward
             #    normalized_reward = (reward - self.mean_reward) / (np.sqrt(self.std_reward) if self.std_reward > 0 else 1.0) if self.args.mode not in ['compare', 'eval', 'tuning'] else reward
