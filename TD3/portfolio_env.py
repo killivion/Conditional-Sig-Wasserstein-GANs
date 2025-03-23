@@ -112,9 +112,12 @@ class PortfolioEnv(gym.Env):
             #if len(self.reward_window) >= 1000:
             #    self.fixed = True
             if self.args.mode not in ['compare', 'eval', 'test']:  # Normalizes via Confidence-Intervals of the extrema: Investing all in stock [in multi-dimensional: uses exemplary CI of the first stock and assumes that all is invested in this one], then adjust that it is not the extrema
-                normalized_reward = ((reward - self.lower_CI) / self.upper_CI * 1.5 - 1.5)  # * self.args.grid_points / self.args.window_size  # normalization such that most values lie in [-1, 1]
+                normalized_reward = ((reward - self.lower_CI) / self.upper_CI - 1) * 1/2    # normalization such that most values lie in [-1, 1]
                 if self.args.allow_lending:  # adjusts for bigger range of values
-                    normalized_reward /= self.box_ends/1.5
+                    normalized_reward /= self.box_ends * 1.5
+                if self.args.grid_points/self.args.window_size > 1:
+                    normalized_reward *= self.args.grid_points / self.args.window_size / 10
+
             else:
                 normalized_reward = reward
             #    normalized_reward = (reward - self.mean_reward) / (np.sqrt(self.std_reward) if self.std_reward > 0 else 1.0) if self.args.mode not in ['compare', 'eval', 'tuning'] else reward
