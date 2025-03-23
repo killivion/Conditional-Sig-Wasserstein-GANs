@@ -112,20 +112,20 @@ class PortfolioEnv(gym.Env):
             #if len(self.reward_window) >= 1000:
             #    self.fixed = True
             if self.args.mode not in ['compare', 'eval', 'test']:  # Normalizes via Confidence-Intervals of the extrema: Investing all in stock [in multi-dimensional: uses exemplary CI of the first stock and assumes that all is invested in this one], then adjust that it is not the extrema
-                if self.args.dataset == 'Heston':
-                    normalized_reward = ((reward - self.lower_CI) / self.upper_CI - 1) * 1.5  # normalization such that most values lie in [-1, 1]
-                    if self.args.allow_lending:  # adjusts for bigger range of values
-                        normalized_reward /= self.box_ends * 2
-                    if self.args.grid_points / self.args.window_size > 1:
-                        normalized_reward /= 2
-                    #    normalized_reward *= self.args.grid_points / self.args.window_size / 1.5
-
+                if self.args.dataset == 'correlated_Blackscholes':
+                    correction1 = 1.5
+                    correction2 = 2
                 elif self.args.dataset == 'Heston':
-                    normalized_reward = ((reward - self.lower_CI) / self.upper_CI - 1) / 10  # normalization such that most values lie in [-1, 1]
-                    if self.args.allow_lending:  # adjusts for bigger range of values
-                        normalized_reward /= self.box_ends
-                    if self.args.grid_points/self.args.window_size > 1:
-                            normalized_reward /= 2
+                    correction1 = 1/10
+                    correction2 = 1
+
+                normalized_reward = ((reward - self.lower_CI) / self.upper_CI - 1) * correction1  # normalization such that most values lie in [-1, 1]
+                if self.args.allow_lending:  # adjusts for bigger range of values
+                    normalized_reward /= self.box_ends * correction2
+                if self.args.grid_points / self.args.window_size > 1:
+                    normalized_reward /= 2
+                #    normalized_reward *= self.args.grid_points / self.args.window_size / 1.5
+
 
             else:
                 normalized_reward = reward
