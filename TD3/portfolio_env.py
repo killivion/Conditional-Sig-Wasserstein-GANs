@@ -113,17 +113,24 @@ class PortfolioEnv(gym.Env):
             #    self.fixed = True
             if self.args.mode not in ['compare', 'eval', 'test']:  # Normalizes via Confidence-Intervals of the extrema: Investing all in stock [in multi-dimensional: uses exemplary CI of the first stock and assumes that all is invested in this one], then adjust that it is not the extrema
                 if self.args.dataset == 'correlated_Blackscholes':
-                    correction1, correction2 = 1.5, 2
+                    c1, c2, c3 = 1.5, 2, 1
                 elif self.args.dataset == 'Heston':
-                    correction1, correction2 = 1/10, 1
+                    c1, c2, c3 = 1/10, 1, 0
                 else:
-                    correction1, correction2 = 10, 2
+                    c1, c2, c3 = 1, 2, 0.8
 
-                normalized_reward = ((reward - self.lower_CI) / self.upper_CI - 0.9) * correction1  # normalization such that most values lie in [-1, 1]
+                normalized_reward = ((reward - self.lower_CI) / self.upper_CI - 0.9) * c1  # normalization such that most values lie in [-1, 1]
                 if self.args.allow_lending:  # adjusts for bigger range of values
-                    normalized_reward /= self.box_ends * correction2
+                    normalized_reward /= self.box_ends * c2
                 if self.args.grid_points != 1:
-                    normalized_reward /= 30 * self.args.window_size/self.args.grid_points
+                    normalized_reward = (normalized_reward - c3)/ (60 * self.args.window_size/self.args.grid_points)
+                    if self.args.dataset == 'YFinance':  # revert
+                        if self.args.window_size == 1:
+                            normalized_reward /= 2
+                        elif self.args.window_size == 10:
+                            normalized_reward /= 0.75
+                        elif self.args.window_size == 252:
+                            normalized_reward /= 0.18
                 #    normalized_reward *= self.args.grid_points / self.args.window_size / 1.5
 
 
