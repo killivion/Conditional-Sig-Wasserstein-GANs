@@ -119,7 +119,9 @@ class PortfolioEnv(gym.Env):
                 else:
                     c1, c2, c3 = 1, 2, 0.8
 
-                normalized_reward = ((reward - self.lower_CI) / self.upper_CI - 0.9) * c1  # normalization such that most values lie in [-1, 1]
+                normalized_reward = ((reward - self.lower_CI) / self.upper_CI - 0.9) * c1 / self.args.window_size  # normalization such that most values lie in [-1, 1]
+
+                """
                 if self.args.allow_lending:  # adjusts for bigger range of values
                     normalized_reward /= self.box_ends * c2
                 if self.args.grid_points != 1:
@@ -134,7 +136,7 @@ class PortfolioEnv(gym.Env):
                         elif self.args.window_size == 252:
                             normalized_reward = normalized_reward + 16/self.args.window_size
                 #    normalized_reward *= self.args.grid_points / self.args.window_size / 1.5
-
+                """
 
             else:
                 normalized_reward = reward
