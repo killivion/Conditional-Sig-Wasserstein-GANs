@@ -102,7 +102,7 @@ def run(args, data_params, returns, stock_data, spec):
         print("No saved model found; starting new training.")
         #model = TD3(CustomTD3Policy, vec_env, buffer_size=args.buffer_size, gamma=1, learning_rate=args.learning_rate, action_noise=action_noise, batch_size=args.batch_size, verbose=0, tensorboard_log="./logs/", train_freq=(args.train_freq, "step"), policy_kwargs={'allow_lending': args.allow_lending})
         model = TD3("MlpPolicy", vec_env, buffer_size=args.buffer_size, gamma=1, learning_rate=args.learning_rate, action_noise=action_noise, batch_size=args.batch_size, verbose=0, tensorboard_log="./logs/", train_freq=(args.train_freq, "episode"))
-        model.learning_starts = args.total_timesteps / 1.25
+        model.learning_starts = args.total_timesteps / 5
         already_trained_timesteps = 0
 
     # Train, Test, Eval [Evaluate], Compare [with some benchmark]
@@ -155,6 +155,7 @@ if __name__ == '__main__':
     #parser.add_argument('-learning_starts', default=100000, type=int)
     parser.add_argument('-p', default=0.8, type=float)
     parser.add_argument('-risk_free_rate', default=0.04, type=float)
+    parser.add_argument('-window_size', default=252, type=int)
     parser.add_argument('-grid_points', default=252, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
     parser.add_argument('-num_bm', default=1, type=int)  # Number of random sources N
@@ -165,6 +166,7 @@ if __name__ == '__main__':
     parser.add_argument('-buffer_size', default=1000000, type=int)
     #parser.add_argument('-learning_rate', default=0.001, type=float)
 
+    parser.add_argument('-total_timesteps', default=100000, type=int)
     parser.add_argument('-num_episodes', default=100, type=int)
     parser.add_argument('-n_trials', default=50, type=int)
 
@@ -173,8 +175,6 @@ if __name__ == '__main__':
     parser.add_argument('-statement', default='RevertAction', type=str)
     parser.add_argument('-mode', default='train', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
 
-    parser.add_argument('-total_timesteps', default=5000, type=int)
-    parser.add_argument('-window_size', default=10, type=int)
 
 
     parser.add_argument('--learning_rates', default=[0.0001], type=float, nargs="+")
@@ -183,6 +183,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if not torch.cuda.is_available():
         args.time_dependent = True
+        args.allow_lending = True
     #    args.GAN_sampling = True
 
     args.batch_size = args.batch_sizes[0]

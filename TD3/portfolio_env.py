@@ -113,30 +113,22 @@ class PortfolioEnv(gym.Env):
             #    self.fixed = True
             if self.args.mode not in ['compare', 'eval', 'test']:  # Normalizes via Confidence-Intervals of the extrema: Investing all in stock [in multi-dimensional: uses exemplary CI of the first stock and assumes that all is invested in this one], then adjust that it is not the extrema
                 if self.args.dataset == 'correlated_Blackscholes':
-                    c1, c2, c3 = 1.5, 2, 0.7
+                    c1, c2 = 1.5, 2
                 elif self.args.dataset == 'Heston':
-                    c1, c2, c3 = 1/10, 1, 0
+                    c1, c2 = 1/10, 1
                 else:
-                    c1, c2, c3 = 1, 2, 0.8
-
-                normalized_reward = ((reward - self.lower_CI) / self.upper_CI - 0.9) * c1 / self.args.window_size  # normalization such that most values lie in [-1, 1]
-
-                """
-                if self.args.allow_lending:  # adjusts for bigger range of values
+                    c1, c2 = 1, 1.5
+                normalized_reward = ((reward - self.lower_CI) / self.upper_CI - 0.9) * c1  # normalization such that most values lie in [-1, 1]
+                if self.args.window_size == 252:
+                    normalized_reward = (normalized_reward - (35/self.args.window_size)) / 10
+                elif self.args.window_size == 10:
+                    normalized_reward = (normalized_reward - (1.5/self.args.window_size)) / 2
+                if self.args.dataset == 'Heston':
+                    normalized_reward += 3 / self.args.window_size
+                elif self.args.dataset == 'YFinance':
+                    normalized_reward += 1 / self.args.window_size
+                if self.args.allow_lending:
                     normalized_reward /= self.box_ends * c2
-                if self.args.grid_points != 1:
-                    normalized_reward = (normalized_reward - c3)/ (60 * self.args.window_size/self.args.grid_points)
-                    if self.args.window_size == 252:
-                        normalized_reward *= 4
-                    if self.args.dataset == 'YFinance':  # revert
-                        if self.args.window_size == 1:
-                            normalized_reward = normalized_reward/2 + 1.5
-                        elif self.args.window_size == 10:
-                            normalized_reward = normalized_reward/0.75 + 4/self.args.window_size
-                        elif self.args.window_size == 252:
-                            normalized_reward = normalized_reward + 16/self.args.window_size
-                #    normalized_reward *= self.args.grid_points / self.args.window_size / 1.5
-                """
 
             else:
                 normalized_reward = reward
