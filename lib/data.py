@@ -223,7 +223,8 @@ def get_test_stocks(dataset, isSigLib, spec, data_params):
         mean = torch.mean(data_raw, dim=(0, 1))
         std = torch.std(data_raw, dim=(0, 1))
         stats = {'mean': mean, 'std': std}
-        torch.save(stats, f'./numerical_results/{dataset}/{spec}/seed=5/meanstd.pt')
+        seed_num = 5 if not dataset == 'Heston' else 9
+        torch.save(stats, f'./numerical_results/{dataset}/{spec}/seed={seed_num}/meanstd.pt')
     else:  # for TD3
         data_pre = loader.create_dataset(output_type="DataFrame")
         data_raw, pipeline = 1, 1  # dummy return so it doesnt bug
