@@ -162,9 +162,9 @@ if __name__ == '__main__':
 
     parser.add_argument('-action_noise_sigma', default=0.02, type=float)
     parser.add_argument('-train_freq', default=1, type=int)
-    #parser.add_argument('-batch_size', default=256, type=int)
+    #parser.add_argument('-batch_size', default=1024, type=int)
     parser.add_argument('-buffer_size', default=1000000, type=int)
-    #parser.add_argument('-learning_rate', default=0.001, type=float)
+    #parser.add_argument('-learning_rate', default=0.0001, type=float)
 
     parser.add_argument('-total_timesteps', default=100000, type=int)
     parser.add_argument('-num_episodes', default=100, type=int)
@@ -174,7 +174,6 @@ if __name__ == '__main__':
     #parser.add_argument('-laps', default=1, type=int)
     parser.add_argument('-statement', default='RevertAction', type=str)
     parser.add_argument('-mode', default='train', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
-
 
 
     parser.add_argument('--learning_rates', default=[0.0001], type=float, nargs="+")

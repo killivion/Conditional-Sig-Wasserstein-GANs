@@ -203,7 +203,7 @@ class LoadData:
 
         return S, t
 
-    def get_yfinance_data(self, S0 = 1., ticker="^GSPC", start="2020-01-01", end="2024-01-01", window_size=22, split=False, plot=False):
+    def get_yfinance_data(self, S0 = 1., ticker="^GSPC", start="2000-01-01", end="2025-01-01", window_size=22, split=False, plot=False):
         """Download and reformat yfinance data starting at S0. "
         Parameters: ticker: List of Stocks that are viewed, start, end: None"""
 
@@ -243,13 +243,13 @@ class LoadData:
             t[1:, 0] = t_raw[:-1, -1]
             t[:, 1:] = t_raw - t[:, 0].reshape(-1, 1)
             t[:, 0] = 0
-            t = t / 365.25  # convert days to years
+            t = t / 252  # convert days to years
             S = np.zeros((n, window_size))
             S[:, 0] = S0
             S[:, 1:] = np.cumprod(returns, axis=1)
         else:
             t = np.arange(0, S.shape[1], 1)
-            t = t / 365.25  # convert days to years
+            t = t / 252  # convert days to years
 
         return S, t
 
@@ -259,9 +259,9 @@ if __name__ == "__main__": #Testing
         import matplotlib.pyplot as plt
         from TD3.data_generator import generate_random_params
 
-        num_paths = 1000
+        num_paths = 10000
         num_bm = 1
-        window_size = 252
+        window_size = 6250
         grid_points = 252
         mu, vola_matrix = generate_random_params(num_paths = 1, num_bm = 1)
         T = window_size/grid_points
@@ -279,11 +279,11 @@ if __name__ == "__main__": #Testing
         plot = True
         models = {
             "Blackscholes": {**GBM_parameter, "window_size": window_size, "num_paths": num_paths},
-            "Heston": {**data_params, "window_size": window_size, "num_paths": num_paths},
+            #"Heston": {**data_params, "window_size": window_size, "num_paths": num_paths},
             #"VarianceGamma": {**VarGamma_parameter, **general_parameter},
             #"Kou_Jump_Diffusion": {**Kou_parameter, **general_parameter},
             #"Levy_Ito": {**LevyIto_parameter, **general_parameter},
-            #"YFinance": YFinance_parameter,
+            "YFinance": {"S0": 1},
             #"correlated_Blackscholes": {"mu": mu, "vola_matrix": vola_matrix, "window_size": window_size, "num_paths": num_paths, "num_bm": 1},
         }
 
@@ -298,7 +298,8 @@ if __name__ == "__main__": #Testing
                 prices_df = model.create_dataset("DataFrame")
                 clear_output(wait=True)
 
-                print('%s %s %s' % (model_name, prices_df.iloc[:, -1].mean()**(1 / T) - 1, prices_df.iloc[:, -1].std()/np.sqrt(T)))
+                print('%s %s %s' % (model_name, np.log(prices_df.iloc[:, -1]).mean()/ T - 1, np.log(prices_df).iloc[:, -1].std()/ np.sqrt(T)))
+                print('%s %s %s' % (model_name, prices_df.iloc[:, -1].mean()**(1 / T) - 1, prices_df.iloc[:, -1].std()**(1/np.sqrt(T))))
 
                 ax = axes[i]
                 prices_df.T.plot(ax=ax, alpha=0.5, linewidth=0.3, legend=False)
@@ -396,13 +397,13 @@ if __name__ == "__main__": #Testing
     elif test == 2:
         risk_free_rate = 0.04
         p = 0.8
-        #vola_matrix = np.array([[0.04]])
-        #mu = np.array([0.06])
+        vola_matrix = np.array([[0.04]])
+        mu = np.array([0.08])
 
-        sigma = np.array([0.2, 0.25])
-        correlation = np.array([[1, 0.3], [0.3, 1]])
-        vola_matrix = np.outer(sigma, sigma) * correlation
-        mu = np.array([0.05, 0.07])
+        #sigma = np.array([0.2, 0.25])
+        #correlation = np.array([[1, 0.3], [0.3, 1]])
+        #vola_matrix = np.outer(sigma, sigma) * correlation
+        #mu = np.array([0.05, 0.07])
 
         cholesky = np.linalg.cholesky(vola_matrix)
 

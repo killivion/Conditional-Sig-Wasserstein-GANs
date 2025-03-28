@@ -5,16 +5,12 @@ import numpy as np
 import shutil
 from scipy.stats import norm
 import torch
-
 try:
     from stable_baselines3.td3.policies import TD3Policy
     from stable_baselines3.common.callbacks import BaseCallback
 except ImportError:
     pass
 
-#import generate
-
-from sklearn.model_selection import train_test_split
 
 def generate_random_params(num_paths, num_bm):
     if num_paths == 2 and num_bm == 2:
@@ -79,7 +75,6 @@ class CustomTD3Policy(TD3Policy):
 
 
 def action_normalizer(action):
-    # return action
     if action.shape[0] == 1:
         return np.insert(action, 0, 1-action)
     else:
@@ -134,7 +129,7 @@ def expected_utility(action, args, data_params):
     else:
         big_sigma = np.array([[0.2 * 0.2]])
         risky_lambda = np.array([0.08 - args.risk_free_rate])
-    expected_utility = np.exp((1 - args.p) * (args.risk_free_rate + action.T @ risky_lambda - args.p / 2 * (action.T @ big_sigma @ action)))
+    expected_utility = np.exp((1 - args.p) * (args.risk_free_rate + action.T @ risky_lambda - args.p / 2 * (action.T @ big_sigma @ action)) * args.window_size/args.grid_points)
 
     return expected_utility
 
@@ -149,7 +144,7 @@ def analytical_entry_wealth_offset(action, args, data_params):
     return entry_wealth_offset
 
 
-def find_confidence_intervals(analytical_risky_action, data_params, args):  # One could upgrade to joint confidence regions: with elliptical regions using the Mahalanobis distance
+def find_confidence_intervals(analytical_risky_action, data_params, args):  # An extension to this could include joint confidence regions: elliptical regions using the Mahalanobis distance
     confidence = 0.95
     z_c = norm.ppf((1 + confidence) / 2)
     dt = (1/args.grid_points)
@@ -162,7 +157,6 @@ def find_confidence_intervals(analytical_risky_action, data_params, args):  # On
     else:  # needs adjustment
         mu_adj = np.array([0.05])
         big_sigma = np.array([0.04])
-
 
     interval = mu_adj * dt + np.array([-1, 1]) * z_c * np.sqrt(big_sigma) * np.sqrt(dt)  # exp((1-p)[(μ-σ^2/2)T (+/-) 1.96σ*sqrt(T)])
     cf_low, cf_high = np.exp((1 - args.p) * interval)  # Extreme case x0=1 is invested in asset 1
@@ -258,7 +252,7 @@ class ActionLoggingCallback(BaseCallback):
 def get_dataset_configuration(dataset, window_size, num_paths, grid_points):
     if dataset == 'Blackscholes':
         generator = (('mu={}_sigma={}_window_size={}'.format(mu, sigma, window_size), dict(data_params=dict(mu=mu, sigma=sigma, window_size=window_size, num_paths=num_paths, grid_points=grid_points)))
-                     for mu, sigma in [(0.07, 0.2)]
+                     for mu, sigma in [(0.06, 0.2)]
         )
     elif dataset == 'YFinance':
         generator = ((

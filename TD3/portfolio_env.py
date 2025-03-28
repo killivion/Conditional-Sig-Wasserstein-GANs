@@ -33,9 +33,6 @@ class PortfolioEnv(gym.Env):
         # Initialize state
         self.current_step, self.portfolio_value = 0, 1
         self.first_episode, self.episode_cycle = True, 0
-        #self.max_intermediary_reward, self.max_terminal_reward = 0, 0
-        #self.reward_normalization_window = args.learning_starts / 2
-        #self.reward_window, self.fixed = [], False  # deque(maxlen=1000)
         self.analytical_risky_action, self.analytical_utility = analytical_solutions(self.args, self.data_params)
         self.lower_CI, self.upper_CI = find_confidence_intervals(self.analytical_risky_action, self.data_params, self.args)
         self.step_count, self.i_steps = 0, 2
@@ -52,7 +49,7 @@ class PortfolioEnv(gym.Env):
 
         done = self.current_step >= len(self.stock_returns)
 
-        self.action = action_normalizer(action)  # normalizes to 1 or adds risk-free action
+        self.action = action_normalizer(action)  # normalizes to 1 or adds risk-free action depending on dimension
         self.action_return = self.action @ self.stock_returns[self.current_step-1]
         self.portfolio_value *= self.action_return
         self.optimal_return = np.insert(self.analytical_risky_action, 0, 1 - sum(self.analytical_risky_action)) @ self.stock_returns[self.current_step-1]
@@ -105,11 +102,6 @@ class PortfolioEnv(gym.Env):
             reward = (self.action_return ** (1 - self.args.p)) if not self.action_return <= 0 else 0 * abs(self.action_return)  # / (1 - self.args.p) leave out the constant divisor since it only scales the expectation
             optimal_utility = (self.optimal_return ** (1 - self.args.p)) if not self.optimal_return <= 0 else 0
             reward = reward - optimal_utility
-            #self.reward_window.append(reward)
-            #if not self.fixed:
-            #    self.mean_reward = np.mean(self.reward_window) if self.reward_window else 0.0
-            #    self.std_reward = np.std(self.reward_window) if self.reward_window else 1.0
-            #if len(self.reward_window) >= 1000:
             #    self.fixed = True
             if self.args.mode not in ['compare', 'eval', 'test']:  # Normalizes via Confidence-Intervals of the extrema: Investing all in stock [in multi-dimensional: uses exemplary CI of the first stock and assumes that all is invested in this one], then adjust that it is not the extrema
                 if self.args.dataset == 'correlated_Blackscholes':
@@ -156,12 +148,12 @@ class PortfolioEnv(gym.Env):
             self.mu = np.insert(self.data_params['data_params']['lambda_0'], 0, self.args.risk_free_rate)
             self.vola_matrix = np.array([self.data_params['data_params']['v0']])
         else:
-            self.mu = np.array([0])
-            self.vola_matrix = np.array([1])
+            self.mu = np.array([0.06])
+            self.vola_matrix = np.array([0.2])
 
         # Normalization:
-        #if self.num_stocks != 2:
-        #    self.mu = (self.mu - np.mean(self.mu)) / np.std(self.mu)
-        #   self.vola_matrix = self.vola_matrix / np.max(self.vola_matrix)
+        if self.num_stocks != 2:
+            self.mu = (self.mu - np.mean(self.mu)) / np.std(self.mu)
+            self.vola_matrix = self.vola_matrix / np.max(self.vola_matrix)
 
 
