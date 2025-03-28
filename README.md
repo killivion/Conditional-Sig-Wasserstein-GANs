@@ -1,10 +1,8 @@
-# The authors' official PyTorch SigCWGAN implementation.
+https://github.com/DLR-RM/stable-baselines3/tree/master/stable_baselines3/td3
+[#papers](https://arxiv.org/abs/1802.09477)
+https://github.com/SigCGANs/Conditional-Sig-Wasserstein-GANs
+[#papers](https://onlinelibrary.wiley.com/doi/full/10.1111/mafi.12423)
 
-This repository is the official implementation of [Conditional Sig-Wasserstein GANs for Time Series Generation]
-
-Authors:
-
-Paper Link:
 
 ## Requirements
 
