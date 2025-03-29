@@ -47,7 +47,9 @@ def heston_params():
 
 class Data_Puller:
     def __init__(self, args, spec, data_params):
-        self.seed = 5 if args.dataset == 'correlated_Blackscholes' else 9  # 9 for Heston
+        seed_mapping = {'correlated_Blackscholes': 5,'Heston': 9,'YFinance': 42,}
+        self.seed = seed_mapping.get(args.dataset, 5)
+        self.grid_points = args.grid_points
 
         if args.dataset == 'YFinance' and not args.GAN_sampling:
             print(f"Data from: {data_params['data_params']['ticker']}, {data_params['data_params']['start']}, {data_params['data_params']['end']}")
@@ -112,7 +114,8 @@ class Data_Puller:
         logrtn_recovered = pipeline.inverse_transform(data, self.real_mean, self.reaL_std)
         logrtn_recovered = logrtn_recovered.detach().cpu().numpy() if isinstance(logrtn_recovered,torch.Tensor) else logrtn_recovered
         logrtn_recovered = logrtn_recovered.squeeze(-1)
-
+        if self.grid_points != 252:
+            logrtn_recovered = logrtn_recovered * np.sqrt(252/self.grid_points) + 0.04 *  (252-self.grid_points)/252
         log_prices_reconstructed = np.cumsum(logrtn_recovered, axis=1)
         price_paths_reconstructed = np.exp(log_prices_reconstructed)
         price_paths_reconstructed = np.insert(price_paths_reconstructed, 0, 1)

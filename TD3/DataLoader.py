@@ -10,6 +10,7 @@ class LoadData:
     def __init__(self, dataset: str, isSigLib: bool, data_params: Dict[str, Union[float, int]], seed: int = None):
         self.dataset_functions = {
             "Blackscholes": self.generate_gbm,
+            "Blackscholes2": self.generate_gbm,
             "correlated_Blackscholes": self.generate_correlated_BS,
             "Heston": self.generate_heston,
             "VarianceGamma": self.generate_vargamma,
@@ -259,10 +260,10 @@ if __name__ == "__main__": #Testing
         import matplotlib.pyplot as plt
         from TD3.data_generator import generate_random_params
 
-        num_paths = 10000
+        num_paths = 100000
         num_bm = 1
-        window_size = 6250
-        grid_points = 252
+        window_size = 1
+        grid_points = 1
         mu, vola_matrix = generate_random_params(num_paths = 1, num_bm = 1)
         T = window_size/grid_points
 
@@ -278,12 +279,13 @@ if __name__ == "__main__": #Testing
 
         plot = True
         models = {
-            "Blackscholes": {**GBM_parameter, "window_size": window_size, "num_paths": num_paths},
+            "Blackscholes": {**GBM_parameter, "window_size": window_size, "grid_points": 1, "num_paths": num_paths},
+            "Blackscholes2": {**GBM_parameter, "window_size": window_size, "grid_points": 252,"num_paths": num_paths},
             #"Heston": {**data_params, "window_size": window_size, "num_paths": num_paths},
             #"VarianceGamma": {**VarGamma_parameter, **general_parameter},
             #"Kou_Jump_Diffusion": {**Kou_parameter, **general_parameter},
             #"Levy_Ito": {**LevyIto_parameter, **general_parameter},
-            "YFinance": {"S0": 1},
+            #"YFinance": {"S0": 1},
             #"correlated_Blackscholes": {"mu": mu, "vola_matrix": vola_matrix, "window_size": window_size, "num_paths": num_paths, "num_bm": 1},
         }
 
@@ -298,11 +300,21 @@ if __name__ == "__main__": #Testing
                 prices_df = model.create_dataset("DataFrame")
                 clear_output(wait=True)
 
-                print('%s %s %s' % (model_name, np.log(prices_df.iloc[:, -1]).mean()/ T - 1, np.log(prices_df).iloc[:, -1].std()/ np.sqrt(T)))
-                print('%s %s %s' % (model_name, prices_df.iloc[:, -1].mean()**(1 / T) - 1, prices_df.iloc[:, -1].std()**(1/np.sqrt(T))))
+                #print('%s %s %s' % (model_name, np.log(prices_df.iloc[:, -1]).mean()/ T - 1, np.log(prices_df).iloc[:, -1].std()/ np.sqrt(T)))
+                #print('%s %s %s' % (model_name, prices_df.iloc[:, -1].mean()**(1 / T) - 1, prices_df.iloc[:, -1].std()**(1/np.sqrt(T))))
 
                 ax = axes[i]
-                prices_df.T.plot(ax=ax, alpha=0.5, linewidth=0.3, legend=False)
+                data = np.log(prices_df.iloc[:, -1])
+                if model_name == 'Blackscholes2':
+                    data *= 252
+                    prices_df.iloc[: -1] *= np.exp(np.sqrt(252))
+
+                print('%s %s %s' % (model_name, data.mean() / T - 1,
+                                    data.std() / np.sqrt(T)))
+                print('%s %s %s' % (model_name, prices_df.iloc[:, -1].mean() ** (1 / T) - 1,
+                                    prices_df.iloc[:, -1].std() ** (1 / np.sqrt(T))))
+
+                data.T.plot.hist(bins=100, alpha=0.7) #prices_df.T.plot(ax=ax, alpha=0.5, linewidth=0.3, legend=False)
                 ax.set_title(f"{model_name} Model")
                 ax.set_xlabel('Timeframe (years)')
                 ax.grid(True)
