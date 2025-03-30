@@ -142,14 +142,14 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Heston', 'YFinance', 'correlated_Blackscholes'
+    parser.add_argument('-dataset', default='YFinance', type=str)  # 'Heston', 'YFinance', 'correlated_Blackscholes'
     #parser.add_argument('-utility_function', default="power", type=str)
     parser.add_argument('-allow_lending', action='store_true', help="Enable lending")
     parser.add_argument('-time_dependent', action='store_true', help="Enables stockdata input")
     parser.add_argument('-GAN_sampling', action='store_true', help="Enables GAN sampling")
 
     parser.add_argument('-sig_p', default=3, type=int)
-    parser.add_argument('-sig_q', default=3, type=int)
+    parser.add_argument('-sig_q', default=10, type=int)
 
     parser.add_argument('-episode_reset', default=10000000, type=int)  #currently off
     #parser.add_argument('-learning_starts', default=100000, type=int)
@@ -166,7 +166,7 @@ if __name__ == '__main__':
     parser.add_argument('-buffer_size', default=1000000, type=int)
     #parser.add_argument('-learning_rate', default=0.0001, type=float)
 
-    parser.add_argument('-total_timesteps', default=100000, type=int)
+    parser.add_argument('-total_timesteps', default=10000, type=int)
     parser.add_argument('-num_episodes', default=100, type=int)
     parser.add_argument('-n_trials', default=50, type=int)
 
@@ -181,9 +181,9 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     if not torch.cuda.is_available():
-        args.time_dependent = True
+    #    args.time_dependent = True
         args.allow_lending = True
-    #    args.GAN_sampling = True
+        args.GAN_sampling = True
 
     args.batch_size = args.batch_sizes[0]
     args.learning_rate = args.learning_rates[0]

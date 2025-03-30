@@ -144,7 +144,7 @@ class PortfolioEnv(gym.Env):
             self.vola_matrix = np.array([0.2])
 
         # Normalization:
-        if self.num_stocks != 2:
+        if self.num_stocks != 1:
             self.mu = (self.mu - np.mean(self.mu)) / np.std(self.mu)
             self.vola_matrix = self.vola_matrix / np.max(self.vola_matrix)
 
