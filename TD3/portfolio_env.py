@@ -122,10 +122,16 @@ class PortfolioEnv(gym.Env):
                 if self.args.allow_lending:
                     normalized_reward /= self.box_ends * c2
 
+                if self.args.dataset == 'YFinance' and self.args.GAN_sampling and self.args.grid_points/self.args.window_size == 252:
+                    normalized_reward += -2.5 / self.args.window_size
+                if self.args.dataset == 'YFinance' and self.args.GAN_sampling and self.args.grid_points/self.args.window_size == 1:
+                    normalized_reward *= 3.5
+
+
+
 
             else:
                 normalized_reward = reward
-            #    normalized_reward = (reward - self.mean_reward) / (np.sqrt(self.std_reward) if self.std_reward > 0 else 1.0) if self.args.mode not in ['compare', 'eval', 'tuning'] else reward
             if self.args.mode == 'test':
                 print('Terminal Utility is: %s' % ((self.portfolio_value) ** (1 - self.args.p)))
         else:
