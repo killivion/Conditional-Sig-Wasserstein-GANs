@@ -122,12 +122,10 @@ class PortfolioEnv(gym.Env):
                 if self.args.allow_lending:
                     normalized_reward /= self.box_ends * c2
 
-                if self.args.dataset == 'YFinance' and self.args.GAN_sampling and self.args.grid_points/self.args.window_size == 252:
-                    normalized_reward += -2.5 / self.args.window_size
-                if self.args.dataset == 'YFinance' and self.args.GAN_sampling and self.args.grid_points/self.args.window_size == 1:
-                    normalized_reward *= 3.5
-
-
+                #if self.args.dataset == 'YFinance' and self.args.GAN_sampling and self.args.grid_points/self.args.window_size == 252:
+                #    normalized_reward += -2.5 / self.args.window_size
+                #if self.args.dataset == 'YFinance' and self.args.GAN_sampling and self.args.grid_points/self.args.window_size == 1:
+                #    normalized_reward *= 3.5
 
 
             else:

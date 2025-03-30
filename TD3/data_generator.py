@@ -50,6 +50,7 @@ class Data_Puller:
         seed_mapping = {'correlated_Blackscholes': 5,'Heston': 9,'YFinance': 42,}
         self.seed = seed_mapping.get(args.dataset, 5)
         self.grid_points = args.grid_points
+        self.window_size = args.window_size
 
         if args.dataset == 'YFinance' and not args.GAN_sampling:
             print(f"Data from: {data_params['data_params']['ticker']}, {data_params['data_params']['start']}, {data_params['data_params']['end']}")
@@ -100,7 +101,7 @@ class Data_Puller:
             idx = torch.randint(0, self.x_past.shape[0], (1,)).item()
             x_past_sample = self.x_past[idx:idx+1]
             _x_past = x_past_sample.clone()
-            x_fake_future = self.G.sample(self.q, _x_past)
+            x_fake_future = self.G.sample(self.window_size, _x_past)
             #print(f'x_fake_future: {x_fake_future}')
         S_fake_future = self.inverse_transformer(x_fake_future)
         #print(f'S_fake_future: {S_fake_future}')
