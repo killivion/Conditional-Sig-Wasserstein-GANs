@@ -45,6 +45,7 @@ def main(args, i=0):
         for s, d in generator:
             spec, data_params = s, d  # odd way to do it - easiest at the time, works in 1-d
 
+
     import data_generator
     data_puller = data_generator.Data_Puller(args, spec, data_params)
     returns, stock_data = data_puller.pull_data(args, data_params)
@@ -119,7 +120,6 @@ def run(args, data_params, returns, stock_data, spec):
         #if i == args.laps - 1:
         #    monitor_plot(args)
 
-
     if args.mode == 'test':
     #    print("Params:", data_params)
         eval_actor.test_actor(args, data_params, model, vec_env)
@@ -128,7 +128,6 @@ def run(args, data_params, returns, stock_data, spec):
     elif args.mode == 'compare':
         eval_actor.compare_actor(args, data_params, model, env)
         # trained_rewards, random_rewards, trained_portfolio_values, random_portfolio_values
-
     elif args.mode == 'test_solution':
         print(f"Batch_size: {model.batch_size}, Learning_rate: {model.learning_rate}")  # print(args)
         if already_trained_timesteps > 0:
@@ -142,7 +141,7 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-dataset', default='YFinance', type=str)  # 'Heston', 'YFinance', 'correlated_Blackscholes'
+    parser.add_argument('-dataset', default='correlated_Blackscholes', type=str)  # 'Heston', 'YFinance', 'correlated_Blackscholes'
     #parser.add_argument('-utility_function', default="power", type=str)
     parser.add_argument('-allow_lending', action='store_true', help="Enable lending")
     parser.add_argument('-time_dependent', action='store_true', help="Enables stockdata input")
@@ -155,8 +154,8 @@ if __name__ == '__main__':
     #parser.add_argument('-learning_starts', default=100000, type=int)
     parser.add_argument('-p', default=0.8, type=float)
     parser.add_argument('-risk_free_rate', default=0.04, type=float)
-    parser.add_argument('-window_size', default=252, type=int)
-    parser.add_argument('-grid_points', default=252, type=int)
+    parser.add_argument('-window_size', default=1, type=int)
+    parser.add_argument('-grid_points', default=1, type=int)
     parser.add_argument('-num_paths', default=1, type=int)
     parser.add_argument('-num_bm', default=1, type=int)  # Number of random sources N
 
@@ -173,7 +172,7 @@ if __name__ == '__main__':
     parser.add_argument('-model_ID', default=1, type=int)
     #parser.add_argument('-laps', default=1, type=int)
     parser.add_argument('-statement', default='RevertAction', type=str)
-    parser.add_argument('-mode', default='train', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
+    parser.add_argument('-mode', default='test_solution', type=str)  # 'train' 'compare' 'tuning' 'test_tuning' 'test_solution' # 'test' 'eval' are outdated
 
 
     parser.add_argument('--learning_rates', default=[0.0001], type=float, nargs="+")
@@ -183,7 +182,7 @@ if __name__ == '__main__':
     if not torch.cuda.is_available():
     #    args.time_dependent = True
         args.allow_lending = True
-        args.GAN_sampling = True
+    #    args.GAN_sampling = True
 
     args.batch_size = args.batch_sizes[0]
     args.learning_rate = args.learning_rates[0]

@@ -12,7 +12,6 @@ class PortfolioEnv(gym.Env):
         self.args = args
         self.data_params = data_params
 
-        #self.normalized_stock_returns = (self.stock_returns - 1) / np.std(self.stock_returns, axis=1, keepdims=True)
         self._normalize_parameter()
         import data_generator
         self.data_puller = data_generator.Data_Puller(args, spec, data_params)
@@ -81,7 +80,6 @@ class PortfolioEnv(gym.Env):
                 self.analytical_risky_action, self.analytical_utility = analytical_solutions(self.args, self.data_params)
                 self._normalize_parameter()
             self.stock_returns, self.stock_data = self.data_puller.pull_data(self.args, self.data_params)
-            # self.normalized_stock_returns = (self.stock_returns - 1) / np.std(self.stock_returns, axis=1, keepdims=True)
         obs = self._get_feature_map()
         info = {}
         return obs, info
@@ -121,13 +119,6 @@ class PortfolioEnv(gym.Env):
                     normalized_reward += 1 / self.args.window_size
                 if self.args.allow_lending:
                     normalized_reward /= self.box_ends * c2
-
-                #if self.args.dataset == 'YFinance' and self.args.GAN_sampling and self.args.grid_points/self.args.window_size == 252:
-                #    normalized_reward += -2.5 / self.args.window_size
-                #if self.args.dataset == 'YFinance' and self.args.GAN_sampling and self.args.grid_points/self.args.window_size == 1:
-                #    normalized_reward *= 3.5
-
-
             else:
                 normalized_reward = reward
             if self.args.mode == 'test':
