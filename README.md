@@ -7,7 +7,7 @@ https://github.com/SigCGANs/Conditional-Sig-Wasserstein-GANs
 [#papers](https://onlinelibrary.wiley.com/doi/full/10.1111/mafi.12423)
 
 
-The requirements files are based on Conda for local use in an CPU environemnt, SigCWGAN application in the LRZ AI cluster 'ColabRequirements', and TD3 application in the LRZ AI cluster 'LRZ_requirements'.
+The requirements files are based on Conda for local use in an CPU environemnt (it has to be noted that SigCWGAN cannot be fully utilized in this frame though, SigCWGAN application in the LRZ AI cluster 'ColabRequirements', and TD3 application in the LRZ AI cluster 'LRZ_requirements'.
 
 The Jupyter Notebook code contains sample code to train and generate data under adjustable arguments. 
 The training files train.py and TD3/td3_train.py contain default values and present all adjustable parameters.
