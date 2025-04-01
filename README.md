@@ -1,51 +1,35 @@
+This repository is mainly based on the following to repositorys and their respective underlying papers:
+
 https://github.com/DLR-RM/stable-baselines3/tree/master/stable_baselines3/td3
 [#papers](https://arxiv.org/abs/1802.09477)
 https://github.com/SigCGANs/Conditional-Sig-Wasserstein-GANs
 [#papers](https://onlinelibrary.wiley.com/doi/full/10.1111/mafi.12423)
 
 
-## Requirements
+The requirements files are based on Conda for local use in an CPU environemnt, SigCWGAN application in the LRZ AI cluster 'ColabRequirements', and TD3 application in the LRZ AI cluster 'LRZ_requirements'.
 
-To setup the conda enviroment:
-
-```setup
-conda env create -f requirements.yml
-```
-
-## Datasets
-
-This repository contains implementations of synthetic and empirical datasets.
-
-- Synthetic:
-    - Vector autoregressive (VAR) data
-    - Autoregressive conditionally heteroscedastic (ARCH)
-- Real-world data:
-    - Stock data: https://realized.oxford-man.ox.ac.uk/data
-
-## Baselines
-
-We compare our SigCGAN with several baselines including: TimeGAN, RCGAN, GMMN(GAN with MMD). The baselines functions are in sig_lib/baselines.py
+The Jupyter Notebook code contains sample code to train and generate data under adjustable arguments. 
+The training files train.py and TD3/td3_train.py contain default values and present all adjustable parameters.
 
 
-## Training
 
-To reproduce the numerical results in the paper, save weights and produce a training summaries, run the following line:
 
-```train
+## Training SigCWGAN:
 python train.py -use_cuda -total_steps 1000
-```
-Optionally drop the flag ```-use_cuda``` to run the experiments on CPU.
 
-
-## Evaluation
-
-To evaluate models on different metrics and GPU, run:
-
-```eval
+## Evaluation SigCWGAN:
 python evaluate.py -use_cuda
-```
-As above, optionally drop the flag ```-use_cuda``` to run the evaluation on CPU.
 
-## Numerical Results
+The trained generator and the numerical results will be saved in the 'numerical_results' folder during training process. Running evaluate.py will produce the 'summary.csv' files.
 
-The numerical results will be saved in the 'numerical_results' folder during training process. Running evaluate.py will produce the 'summary.csv' files.
+
+
+## Training TD3:
+python TD3/td3_train.py -mode train -total_timesteps 10000
+
+## Evaluation via Tensorboard
+tensorboard --logdir ./TD3/logs
+
+The trained actor will be saved to 'agent', tensorboard logs are saved to 'logs'
+
+
